@@ -22,3 +22,6 @@ graphify-out/
 
 # Saida de build definida no .dproj
 /out/
+
+# Ficheiros temporarios do script de capturas
+tools/demo/.work/

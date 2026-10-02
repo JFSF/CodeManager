@@ -153,6 +153,20 @@ begin
     AToken := M.Value;
 end;
 
+// depois do caminho de um ficheiro numa lista so se aceita nada ou uma anotacao
+// ("— descricao", "# nota", "(nota)", ": nota"); frases como "existe no codigo mas..." sao prosa
+function IsFileEntry(const AText, AToken: string): Boolean;
+var
+  Rest: string;
+begin
+  Result := AText.StartsWith(AToken);
+  if not Result then
+    Exit;
+  Rest := Copy(AText, Length(AToken) + 1, MaxInt).Trim;
+  Result := (Rest = '') or CharInSet(Rest[1], ['-', '#', '(', ':', '[']) or Rest.StartsWith('—') or
+    Rest.StartsWith('–') or Rest.StartsWith('//');
+end;
+
 function IsSignature(const AText: string): Boolean;
 begin
   Result := GReSig.IsMatch(AText);
@@ -298,7 +312,7 @@ begin
     end;
     Exit;
   end;
-  if FirstFileToken(Txt, Tok) and (Txt.StartsWith(Tok)) then
+  if FirstFileToken(Txt, Tok) and IsFileEntry(Txt, Tok) then
   begin
     Base := StackPath(Indent);
     if NormalizePath(Tok).Contains('/') then
@@ -333,9 +347,8 @@ begin
     else
       Tok := NormalizePath(Tok);
     FPending := Tok;
-  end
-  else
-    FPending := '';
+  end;
+  // sem caminho no paragrafo (texto descritivo): mantem o do titulo anterior
 end;
 
 procedure TPlanParser.AddTree(ALines: TStrings);
@@ -456,10 +469,11 @@ begin
       if Path = '' then
       begin
         M := GReUnit.Match(Content);
-        if M.Success then
-          Path := JoinPath(FHeadingDir, M.Groups[1].Value + '.pas')
-        else if FCurrent <> nil then
-          Path := FCurrent.Path;
+        if (FCurrent <> nil) and (not M.Success or
+           SameText(M.Groups[1].Value + '.pas', TPath.GetFileName(FCurrent.Path))) then
+          Path := FCurrent.Path
+        else if M.Success then
+          Path := JoinPath(FHeadingDir, M.Groups[1].Value + '.pas');
       end;
     end;
     if Path = '' then
@@ -701,57 +715,111 @@ begin
   Inc(ASummary.PlannedMethods, Length(APlan.Methods));
 end;
 
-// primeira pasta comum a todas as units do plano, quando o codigo nao a usa e retira-la faz
-// coincidir pelo menos um caminho (ex.: o plano comeca em "MeuProjeto/src/...", o codigo em "src/...")
+// pasta de topo que o plano usa em (parte d)os caminhos mas o codigo nao tem - o nome do projecto
+// ("MeuProjeto/src/..."): so conta se nenhuma unit do codigo a usa e se retira-la faz coincidir
+// pelo menos um caminho do plano com o codigo
 function PlanRootPrefix(ACode, APlan: TProjectScan): string;
 var
+  Counts: TDictionary<string, Integer>;
   U, C: TUnitInfo;
-  Seg, Rest: string;
-  P: Integer;
-  Hit: Boolean;
+  Seg, Best, Rest: string;
+  P, N, BestN: Integer;
 begin
   Result := '';
-  if APlan.Units.Count = 0 then
-    Exit;
-  Seg := APlan.Units[0].Path;
-  P := Seg.IndexOf('/');
-  if P < 0 then
-    Exit;
-  Seg := Copy(Seg, 1, P);
-  for U in APlan.Units do
-    if not U.Path.StartsWith(Seg + '/', True) then
-      Exit;
-  for C in ACode.Units do
-    if C.Path.StartsWith(Seg + '/', True) then
-      Exit;
-  Hit := False;
-  for U in APlan.Units do
-  begin
-    Rest := Copy(U.Path, Length(Seg) + 2, MaxInt);
-    for C in ACode.Units do
-      if SameText(C.Path, Rest) then
+  Counts := TDictionary<string, Integer>.Create;
+  try
+    for U in APlan.Units do
+    begin
+      P := U.Path.IndexOf('/');
+      if P < 0 then
+        Continue;
+      Seg := LowerCase(Copy(U.Path, 1, P));
+      Counts.TryGetValue(Seg, N);
+      Counts.AddOrSetValue(Seg, N + 1);
+    end;
+    // a primeira pasta mais frequente (candidata)
+    Best := '';
+    BestN := 0;
+    for U in APlan.Units do
+    begin
+      P := U.Path.IndexOf('/');
+      if P < 0 then
+        Continue;
+      Seg := LowerCase(Copy(U.Path, 1, P));
+      if Counts[Seg] > BestN then
       begin
-        Hit := True;
-        Break;
+        Best := Seg;
+        BestN := Counts[Seg];
       end;
-    if Hit then
-      Break;
+    end;
+  finally
+    Counts.Free;
   end;
-  if Hit then
-    Result := Seg + '/';
+  if Best = '' then
+    Exit;
+  for C in ACode.Units do
+    if C.Path.StartsWith(Best + '/', True) then
+      Exit;
+  for U in APlan.Units do
+    if U.Path.StartsWith(Best + '/', True) then
+    begin
+      Rest := Copy(U.Path, Length(Best) + 2, MaxInt);
+      for C in ACode.Units do
+        if SameText(C.Path, Rest) then
+        begin
+          // devolve com a capitalizacao do plano
+          Result := Copy(U.Path, 1, Length(Best) + 1);
+          Exit;
+        end;
+    end;
 end;
 
+// copia do plano sem o prefixo (so onde existe); units que passam a ter o mesmo caminho juntam-se
 function WithoutPrefix(APlan: TProjectScan; const APrefix: string): TProjectScan;
 var
   U, N: TUnitInfo;
+  Index: TDictionary<string, TUnitInfo>;
+  Rel: string;
+  M: TMethodInfo;
+  Known: Boolean;
+  K: Integer;
 begin
   Result := TProjectScan.Create;
-  for U in APlan.Units do
-  begin
-    N := TUnitInfo.Create;
-    SetUnitPath(N, Copy(U.Path, Length(APrefix) + 1, MaxInt));
-    N.Methods := Copy(U.Methods);
-    Result.Units.Add(N);
+  Index := TDictionary<string, TUnitInfo>.Create;
+  try
+    for U in APlan.Units do
+    begin
+      if U.Path.StartsWith(APrefix, True) then
+        Rel := Copy(U.Path, Length(APrefix) + 1, MaxInt)
+      else
+        Rel := U.Path;
+      if Index.TryGetValue(LowerCase(Rel), N) then
+      begin
+        for M in U.Methods do
+        begin
+          Known := False;
+          for K := 0 to High(N.Methods) do
+            if SameText(N.Methods[K].Name, M.Name) then
+            begin
+              Known := True;
+              Break;
+            end;
+          if not Known then
+          begin
+            SetLength(N.Methods, Length(N.Methods) + 1);
+            N.Methods[High(N.Methods)] := M;
+          end;
+        end;
+        Continue;
+      end;
+      N := TUnitInfo.Create;
+      SetUnitPath(N, Rel);
+      N.Methods := Copy(U.Methods);
+      Result.Units.Add(N);
+      Index.Add(LowerCase(Rel), N);
+    end;
+  finally
+    Index.Free;
   end;
   RecountScan(Result);
 end;

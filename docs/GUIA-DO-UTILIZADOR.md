@@ -1,0 +1,206 @@
+# Guia do utilizador
+
+Este guia percorre a aplicação ecrã a ecrã. As imagens mostram o CodeManager a analisar o seu próprio código-fonte
+(o histórico da evolução é de demonstração).
+
+- [Para que serve](#para-que-serve)
+- [Primeiros passos](#primeiros-passos)
+- [Projeto](#projeto)
+- [Mapa](#mapa)
+- [Checklist](#checklist)
+- [Painel](#painel)
+- [Plano (documento .md)](#plano-documento-md)
+- [Exportar e imprimir](#exportar-e-imprimir)
+- [Tema claro e escuro](#tema-claro-e-escuro)
+- [Atalhos e pequenos truques](#atalhos-e-pequenos-truques)
+- [Onde ficam os dados](#onde-ficam-os-dados)
+- [Resolução de problemas](#resolução-de-problemas)
+
+## Para que serve
+
+O CodeManager ajuda a **rever e acompanhar um projeto Delphi**. Lê as units (`.pas`), os programas (`.dpr`) e os
+pacotes (`.dpk`) de uma pasta e mostra-te:
+
+- a **estrutura**: pastas → ficheiros → métodos (o **Mapa**);
+- uma **checklist de revisão**: marcar o que já reviste, o que compila, o que passou no Sonar, o que é prioritário;
+- um **painel** com o progresso e a distribuição do código, incluindo a evolução ao longo dos dias;
+- opcionalmente, um **plano em Markdown** com o que o projeto *deveria* ter, para ver o que falta e o que sobra.
+
+Nada do que fazes altera os ficheiros do teu projeto: a aplicação só os lê.
+
+## Primeiros passos
+
+1. Abre a aplicação. Na página **Projeto**, dá um nome ao projeto e escolhe a **pasta raiz** (o botão da pasta
+   ao lado do campo abre o seletor).
+2. Carrega em **Analisar projeto**. A barra mostra o avanço e, no fim, o resumo («Análise concluída: …»).
+3. Vai ao **Mapa** para explorar, à **Checklist** para rever e ao **Painel** para ver o conjunto.
+
+O progresso grava-se sozinho (cerca de meio segundo depois de cada alteração). Podes ter **vários projetos**,
+cada um com o seu progresso.
+
+![Página Projeto](images/01-projeto.png)
+
+## Projeto
+
+É aqui que configuras e analisas.
+
+| Campo / botão | Para que serve |
+|---|---|
+| **Projetos** (lista à esquerda) | Os teus projetos. Clica num para o abrir; **Novo projeto** cria outro. |
+| **Nome do projeto** | Aparece nos títulos, nos ficheiros exportados e na lista. |
+| **Localização do projeto** | A pasta raiz a analisar (inclui subpastas). |
+| **Pasta onde guardar as páginas HTML** | Destino do «Exportar mapa/checklist (HTML)». |
+| **Documento do plano (.md)** | Opcional. Ver [Plano](#plano-documento-md). |
+| **Pastas a ignorar** | Nomes de pastas separados por vírgulas. Em branco usa as predefinidas: `.git`, `.svn`, `.hg`, `modules`, `bin`, `out`, `__history`, `__recovery`, `node_modules`. |
+| **Abrir a página no navegador depois de exportar** | Abre o HTML assim que é gerado. |
+| **Acompanhar alterações na pasta do projeto** | Reanálise automática quando gravas ficheiros. Ver [abaixo](#acompanhar-alterações). |
+| **Analisar projeto** | Lê a pasta (e o plano, se houver). Corre em segundo plano. |
+| **Exportar mapa / checklist (HTML)** | Gera as páginas offline. |
+| **Fechar projeto como finalizado** | Marca o projeto como terminado: aparece um selo na janela e no mapa exportado. Volta a abrir com **Reabrir projeto**. |
+| **Remover projeto** | Tira-o da lista e apaga o progresso e o histórico guardados. Os ficheiros do projeto não são tocados. |
+
+Enquanto o projeto não tem análise, a lista mostra os **Primeiros passos**.
+
+### Acompanhar alterações
+
+Liga **Acompanhar alterações na pasta do projeto** e deixa o CodeManager aberto enquanto trabalhas no IDE. Quando
+gravas, crias, apagas ou mudas o nome a uma unit (ou a uma pasta), a aplicação volta a analisar **só o que mudou** e
+atualiza o Mapa, a Checklist e as estatísticas sem perderes o scroll nem as pastas abertas. Os ficheiros e métodos
+novos ou alterados ficam realçados durante alguns segundos.
+
+> Vê o que está **gravado em disco**, não o texto por gravar no editor. Se alterares o documento do plano, é preciso
+> voltar a carregar em **Analisar projeto**.
+
+## Mapa
+
+A árvore do projeto: **pastas → ficheiros → métodos**.
+
+![Mapa com o cruzamento plano × código](images/03-mapa-plano.png)
+
+- **Pesquisa** no topo (atalho: tecla `/`): filtra por pasta, ficheiro ou método.
+- Clica no **pill** com o número de métodos (`35 métodos`) para abrir ou fechar os métodos de um ficheiro. Os botões
+  **Expandir tudo**, **Colapsar tudo**, **Abrir métodos** e **Fechar métodos** fazem-no de uma vez.
+- As caixas **C** (*Compila*) e **S** (*Sonar*) assinalam, por ficheiro ou por método, que compila sem erros e que
+  passou na análise do SonarQube.
+- Passa o rato por cima de um nome ou assinatura cortado com «…» para ver o texto completo.
+- A coluna da direita mostra as **estatísticas** (e a cobertura do plano, se houver) e as ações de **exportar e
+  imprimir** a estrutura.
+
+## Checklist
+
+A página de revisão: ficheiros agrupados por pasta, com o progresso à vista.
+
+![Checklist de revisão](images/04-checklist.png)
+
+| Elemento | O que faz |
+|---|---|
+| Caixa à esquerda do ficheiro | **Concluído.** Num ficheiro com métodos é *automática*: fica concluído quando **todos** os métodos estiverem marcados (a caixa com um traço significa «por concluir»). Num ficheiro sem métodos, marcas tu. |
+| Etiqueta | A **camada** (a pasta imediata). |
+| ★ | **Prioridade.** O botão **Só prioritários** filtra por elas. |
+| **C** / **S** | Compila / Sonar. |
+| `41/41` | Métodos revistos / total. Clica para abrir os métodos e marcá-los um a um. |
+| ✎ | **Nota** sobre o ficheiro (grava-se à medida que escreves). |
+
+À direita:
+
+- **Progresso:** o anel dos ficheiros concluídos, a barra dos métodos revistos e uma barra por camada.
+- **Filtrar por camada:** clica nas camadas para ver só essas.
+- **Ações:** expandir/colapsar, **Markdown** (copia a checklist para a área de transferência), **Exportar HTML**,
+  **Exportar/Importar** o progresso (`.json`) e **Reiniciar progresso**.
+
+O ficheiro de progresso exportado tem o mesmo formato das páginas HTML, por isso podes levar o progresso de uma
+para a outra.
+
+## Painel
+
+Uma vista de conjunto, com gráficos que seguem o tema.
+
+![Painel](images/05-painel.png)
+
+- **Cartões de números:** ficheiros concluídos, métodos revistos, Compila e Sonar, cada um com uma mini-curva dos
+  últimos registos.
+- **Evolução do progresso:** a percentagem de ficheiros concluídos e de métodos revistos ao longo dos dias. A
+  aplicação regista **um ponto por dia** de cada vez que as estatísticas mudam; a curva aparece a partir do segundo
+  dia.
+- **Progresso por camada**, **Estado dos ficheiros**, **Maiores units** (as 10 com mais métodos), **Métodos por
+  camada**, **Métodos por ficheiro** (histograma) e **Compila e Sonar por camada**.
+- Passa o rato pelos gráficos para ver os valores.
+- Em janelas estreitas os cartões reorganizam-se em menos colunas.
+
+<details>
+<summary>Painel completo (clica para ver)</summary>
+
+![Painel completo](images/06-painel-completo.png)
+
+</details>
+
+## Plano (documento .md)
+
+Se tens (ou vais escrever) um documento Markdown com a estrutura e o código previstos, aponta o projeto para ele em
+**Documento do plano**. Com pasta de código **e** plano, o **Mapa** compara-os:
+
+| Etiqueta | Significa |
+|---|---|
+| `PLANEADO` | Está no plano e ainda não existe no código |
+| `EXTRA` | Existe no código mas não está no plano |
+| `MOVIDO` | Existe, mas noutra pasta |
+
+Os métodos planeados que ainda não existem aparecem em itálico. As estatísticas passam a incluir a **cobertura do
+plano**. Sem pasta de código, o documento é analisado sozinho (útil para rever o desenho antes de haver código).
+
+O formato, as regras de correspondência e um exemplo estão em [FORMATO-DO-PLANO.md](FORMATO-DO-PLANO.md).
+
+## Exportar e imprimir
+
+| O quê | Onde | Formatos |
+|---|---|---|
+| **Estrutura** (pastas → ficheiros → métodos) | Mapa › *Exportar e imprimir estrutura* | Markdown, TXT (árvore), CSV (separador `;`, abre em colunas no Excel) e JSON |
+| **Páginas offline** | Projeto ou Mapa/Checklist › *Exportar … (HTML)* | Duas páginas HTML autónomas, com o progresso atual embutido |
+| **Checklist** | Checklist › *Markdown* | Copia para a área de transferência |
+| **Progresso** | Checklist › *Exportar / Importar* | JSON |
+| **Papel / PDF** | Mapa › *Imprimir…* | Diálogo de impressão do Windows. Para PDF, escolhe a impressora «Microsoft Print to PDF». |
+
+Nas exportações da estrutura podes incluir os **métodos** e o **estado e notas** (concluído, Compila, Sonar,
+prioridade, nota). A impressão usa A4 (ou o papel da impressora), letra monoespaçada, quebra de linhas longas com
+guias, cabeçalho corrido e rodapé «Página X de N».
+
+## Tema claro e escuro
+
+O botão da lua/sol, em baixo na barra lateral, alterna o tema (a barra de título do Windows acompanha). Na primeira
+execução a aplicação segue o tema do Windows.
+
+| Mapa | Checklist | Painel |
+|---|---|---|
+| ![Mapa escuro](images/09-mapa-escuro.png) | ![Checklist escura](images/08-checklist-escuro.png) | ![Painel escuro](images/07-painel-escuro.png) |
+
+## Atalhos e pequenos truques
+
+- `/` — põe o foco na pesquisa do Mapa ou da Checklist.
+- Dicas ao pairar nos nomes cortados, nas etiquetas do plano e nos projetos da lista.
+- O botão **Só prioritários** e as camadas combinam-se com a pesquisa.
+- Podes **Reiniciar progresso** (Checklist) para recomeçar uma revisão: apaga marcas, notas e prioridades.
+
+## Onde ficam os dados
+
+Na pasta `%APPDATA%\CodeManager`:
+
+| Ficheiro | Conteúdo |
+|---|---|
+| `settings.json` | Os projetos e o tema |
+| `progress-<id>.json` | O progresso de cada projeto |
+| `history-<id>.json` | O histórico diário de cada projeto (alimenta a evolução) |
+
+Para fazer uma cópia de segurança, copia essa pasta. Mais pormenores em [ARQUITETURA.md](ARQUITETURA.md#onde-ficam-os-dados).
+
+## Resolução de problemas
+
+| Sintoma | O que verificar |
+|---|---|
+| «Indique uma pasta de projeto válida» | A pasta não existe ou foi movida. Corrige o campo ou escolhe-a de novo. |
+| «Nao foi encontrada nenhuma unidade…» | A pasta não tem `.pas`, `.dpr` ou `.dpk` fora das pastas ignoradas. Confirma as exclusões. |
+| Faltam ficheiros no Mapa | Estão numa pasta ignorada (ex.: `bin`, `out`, `modules`). Altera **Pastas a ignorar**. |
+| Um método não aparece | O analisador lê declarações de `procedure`, `function`, `constructor` e `destructor` (incluindo de classes e records). Código dentro de comentários ou strings é ignorado. |
+| O vigia não reage | Confirma que **Acompanhar alterações** está ligado e que gravaste em disco. Em pastas de rede o Windows pode não avisar. |
+| O plano mostra tudo `PLANEADO`/`EXTRA` | Os caminhos do plano não coincidem com os do código. Ver [FORMATO-DO-PLANO.md](FORMATO-DO-PLANO.md#avisos-e-problemas-comuns). |
+| A evolução só tem um ponto | O histórico regista um ponto por dia; a curva aparece a partir do segundo dia. |
+| Perdi o progresso | Procura em `%APPDATA%\CodeManager` os `progress-<id>.json`. Remover um projeto da lista apaga o seu progresso. |

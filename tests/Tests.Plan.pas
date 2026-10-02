@@ -27,6 +27,11 @@ type
     [Test] procedure PathInTheFirstLineComment;
     [Test] procedure UnitNameFallsBackToTheLastFolderHeading;
     [Test] procedure BlockWithoutAnyPathIsIgnoredWithAWarning;
+    [Test] procedure ParagraphBetweenHeadingAndBlockKeepsTheFile;
+    [Test] procedure UnitNameDifferentFromTheCurrentFileCreatesAnotherFile;
+    [Test] procedure ExplicitHeadingPathWinsOverTheUnitName;
+    [Test] procedure ProseBulletsThatMentionAFileAreNotFiles;
+    [Test] procedure BulletWithAnnotationIsStillAFile;
     [Test] procedure SnippetWithoutInterfaceKeywordIsRead;
     [Test] procedure AsciiTreeListsTheFiles;
     [Test] procedure TopFolderOfATreeIsKeptAsWritten;
@@ -64,6 +69,7 @@ type
     [Test] procedure PathsAreComparedIgnoringCase;
     [Test] procedure ProjectNameFolderInThePlanIsIgnoredWhenTheCodeLacksIt;
     [Test] procedure RealTopFolderIsKept;
+    [Test] procedure ProjectNameFolderOnlyInSomePathsIsStrippedAndDuplicatesMerge;
     [Test] procedure MethodMatchedBySimpleNameWhenUnique;
     [Test] procedure MethodsWithTheSameSimpleNameAreNotGuessed;
     [Test] procedure SummaryCountsFilesAndMethods;
@@ -214,6 +220,83 @@ begin
   Assert.AreEqual(0, Integer(FScan.Units.Count));
   Assert.IsTrue(Length(FWarnings) >= 1);
   Assert.IsTrue(FWarnings[0].Contains('Linha 3'), 'o aviso indica a linha do bloco');
+end;
+
+procedure TParsePlanTests.ParagraphBetweenHeadingAndBlockKeepsTheFile;
+begin
+  Parse(Join([
+    '## src/Services/CM.Pdf.pas',
+    '',
+    'Exportação direta para PDF, sem passar pela impressora.',
+    '',
+    '```pascal',
+    'unit CM.Pdf;',
+    'interface',
+    'procedure Exportar;',
+    'implementation',
+    'end.',
+    '```']));
+  Assert.AreEqual('src/Services/CM.Pdf.pas', Paths, 'um so ficheiro, na pasta do titulo');
+  Assert.AreEqual('Exportar', Names('src/Services/CM.Pdf.pas'));
+end;
+
+procedure TParsePlanTests.UnitNameDifferentFromTheCurrentFileCreatesAnotherFile;
+begin
+  // o segundo bloco nao tem titulo: a unit CM.B nao e o ficheiro anterior (CM.A)
+  Parse(Join([
+    '### src/Core/',
+    '## src/Core/CM.A.pas',
+    '```pascal',
+    'unit CM.A;',
+    'interface',
+    'procedure DoA;',
+    'implementation',
+    'end.',
+    '```',
+    '',
+    '```pascal',
+    'unit CM.B;',
+    'interface',
+    'procedure DoB;',
+    'implementation',
+    'end.',
+    '```']));
+  Assert.AreEqual('src/Core/CM.A.pas|src/Core/CM.B.pas', Paths);
+  Assert.AreEqual('DoA', Names('src/Core/CM.A.pas'));
+  Assert.AreEqual('DoB', Names('src/Core/CM.B.pas'));
+end;
+
+procedure TParsePlanTests.ExplicitHeadingPathWinsOverTheUnitName;
+begin
+  Parse(Join([
+    '## src/Core/CM.A.pas',
+    '```pascal',
+    'unit CM.Outro;',
+    'interface',
+    'procedure Run;',
+    'implementation',
+    'end.',
+    '```']));
+  Assert.AreEqual('src/Core/CM.A.pas', Paths);
+end;
+
+procedure TParsePlanTests.ProseBulletsThatMentionAFileAreNotFiles;
+begin
+  Parse(Join([
+    '- `src/Infrastructure/CM.Resources.pas` existe no código mas não está no plano;',
+    '- O ficheiro `src/Core/CM.X.pas` e importante',
+    '- `src/Core/CM.Real.pas`']));
+  Assert.AreEqual('src/Core/CM.Real.pas', Paths);
+end;
+
+procedure TParsePlanTests.BulletWithAnnotationIsStillAFile;
+begin
+  Parse(Join([
+    '- `src/A.pas` — leitura do plano',
+    '- `src/B.pas` # nota',
+    '- `src/C.pas` (novo)',
+    '- `src/D.pas`: parser']));
+  Assert.AreEqual('src/A.pas|src/B.pas|src/C.pas|src/D.pas', Paths);
 end;
 
 procedure TParsePlanTests.SnippetWithoutInterfaceKeywordIsRead;
@@ -535,6 +618,21 @@ begin
   Merge;
   Assert.AreEqual('src/A.pas|src/B.pas', UnitPaths(FMerged));
   Assert.AreEqual(1, FSummary.ImplementedFiles);
+end;
+
+procedure TMergePlanTests.ProjectNameFolderOnlyInSomePathsIsStrippedAndDuplicatesMerge;
+begin
+  // uma arvore com raiz "Proj/" e titulos relativos a raiz descrevem o mesmo ficheiro
+  FPlan := NewScan(2, [MakeUnitInfo('Proj/src/A.pas', 'src', [Meth('One')]),
+    MakeUnitInfo('src/A.pas', 'src', [Meth('Two')]),
+    MakeUnitInfo('Proj/src/B.pas', 'src', [])]);
+  FCode := NewScan(1, [MakeUnitInfo('src/A.pas', 'src', [Meth('One'), Meth('Two')])]);
+  Merge;
+  Assert.AreEqual(2, FSummary.PlannedFiles, 'A.pas e B.pas (os dois A.pas juntaram-se)');
+  Assert.AreEqual(1, FSummary.ImplementedFiles);
+  Assert.AreEqual(1, FSummary.MissingFiles);
+  Assert.AreEqual(2, FSummary.ImplementedMethods, 'One e Two, vindos das duas mencoes');
+  Assert.AreEqual(0, FSummary.ExtraFiles);
 end;
 
 procedure TMergePlanTests.MethodMatchedBySimpleNameWhenUnique;
