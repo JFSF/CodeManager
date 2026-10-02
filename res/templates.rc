@@ -1,0 +1,2 @@
+TPL_CHECKLIST RCDATA "templates\checklist.html"
+TPL_MAP       RCDATA "templates\map.html"

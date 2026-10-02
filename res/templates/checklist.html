@@ -1,0 +1,1060 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__PROJECT_NAME__ — Checklist de Código-Fonte</title>
+<style>
+  :root {
+    --bg: #f6f7f4;
+    --surface: #ffffff;
+    --surface-2: #eef0eb;
+    --border: #dcded7;
+    --text: #1b1e1a;
+    --text-dim: #63685f;
+    --text-faint: #93978c;
+    --accent: #23705f;
+    --accent-strong: #17493d;
+    --accent-soft: #e3ede9;
+    --star: #b8860b;
+    --pending: #96730f;
+    --done-strike: #8b9088;
+    --flag-compila: #2f6fed;
+    --flag-sonar: #8b5cf6;
+    --shadow: 0 1px 2px rgba(20, 24, 18, 0.06), 0 4px 14px rgba(20, 24, 18, 0.05);
+    --radius: 10px;
+    --mono: "Cascadia Code", "Cascadia Mono", Consolas, "SFMono-Regular", ui-monospace, Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Segoe UI Variable", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171a; --surface: #1b1f22; --surface-2: #202426; --border: #2c3134;
+      --text: #e9ebe6; --text-dim: #9aa09a; --text-faint: #666c67;
+      --accent: #4fb89b; --accent-strong: #7fd6bc; --accent-soft: #1e2f2b; --star: #e0b23c;
+      --pending: #d7a53a;
+      --done-strike: #565b56;
+      --flag-compila: #6fa8ff;
+      --flag-sonar: #c9a6ff;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.28);
+    }
+  }
+  html[data-theme="dark"] {
+    --bg: #14171a; --surface: #1b1f22; --surface-2: #202426; --border: #2c3134;
+    --text: #e9ebe6; --text-dim: #9aa09a; --text-faint: #666c67;
+    --accent: #4fb89b; --accent-strong: #7fd6bc; --accent-soft: #1e2f2b; --star: #e0b23c;
+    --pending: #d7a53a;
+    --done-strike: #565b56;
+    --flag-compila: #6fa8ff;
+    --flag-sonar: #c9a6ff;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.28);
+  }
+  html[data-theme="light"] {
+    --bg: #f6f7f4; --surface: #ffffff; --surface-2: #eef0eb; --border: #dcded7;
+    --text: #1b1e1a; --text-dim: #63685f; --text-faint: #93978c;
+    --accent: #23705f; --accent-strong: #17493d; --accent-soft: #e3ede9; --star: #b8860b;
+    --pending: #96730f;
+    --done-strike: #8b9088;
+    --flag-compila: #2f6fed;
+    --flag-sonar: #8b5cf6;
+    --shadow: 0 1px 2px rgba(20, 24, 18, 0.06), 0 4px 14px rgba(20, 24, 18, 0.05);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text); font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell {
+    max-width: 1240px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem;
+    display: grid; grid-template-columns: 310px minmax(0, 1fr); gap: 2rem; align-items: start;
+  }
+  @media (max-width: 900px) { .shell { grid-template-columns: 1fr; } }
+
+  /* ---- Header ---- */
+  .page-head {
+    grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: flex-end;
+    gap: 1.5rem; flex-wrap: wrap; border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem; margin-bottom: 0.5rem;
+  }
+  .page-head h1 { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; margin: 0 0 0.35rem; }
+  .page-head .eyebrow {
+    font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 0.5rem; display: block;
+  }
+  .page-head p.sub { margin: 0; color: var(--text-dim); font-size: 0.92rem; max-width: 50ch; }
+  .head-right { display: flex; align-items: flex-end; gap: 0.9rem; }
+  .page-head .meta { text-align: right; font-family: var(--mono); font-size: 0.76rem; color: var(--text-faint); line-height: 1.6; }
+  #themeToggle {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);
+    border-radius: 8px; width: 34px; height: 34px; cursor: pointer; font-size: 1rem;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  #themeToggle:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ---- Sidebar ---- */
+  .sidebar { position: sticky; top: 1.5rem; display: flex; flex-direction: column; gap: 1.1rem; max-height: calc(100vh - 3rem); overflow-y: auto; padding-right: 2px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem 1.25rem; box-shadow: var(--shadow); }
+
+  .progress-ring-row { display: flex; align-items: center; gap: 1rem; }
+  .progress-ring-row svg { flex-shrink: 0; }
+  .progress-num { font-family: var(--mono); font-size: 1.55rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
+  .progress-label { color: var(--text-dim); font-size: 0.8rem; margin-top: 0.3rem; }
+  .progress-frac { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--text-faint); font-size: 0.78rem; }
+
+  .layer-bars { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.9rem; }
+  .layer-bar-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.72rem; font-family: var(--mono); color: var(--text-dim); }
+  .layer-bar-row .lname { width: 92px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .layer-bar-row .ltrack { flex: 1; height: 5px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+  .layer-bar-row .ltrack > span { display: block; height: 100%; background: var(--accent); }
+  .layer-bar-row .lfrac { flex-shrink: 0; color: var(--text-faint); width: 34px; text-align: right; }
+
+  .search-box { display: flex; align-items: center; gap: 0.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.55rem 0.75rem; box-shadow: var(--shadow); }
+  .search-box svg { color: var(--text-faint); flex-shrink: 0; }
+  .search-box input { border: none; outline: none; background: transparent; color: var(--text); font-family: var(--sans); font-size: 0.88rem; width: 100%; }
+  .search-box input::placeholder { color: var(--text-faint); }
+  .search-hint { font-family: var(--mono); font-size: 0.68rem; color: var(--text-faint); border: 1px solid var(--border); border-radius: 4px; padding: 0.05rem 0.35rem; }
+
+  .chip-filter-row { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  button.tag {
+    font-family: var(--mono); font-size: 0.68rem; padding: 0.25rem 0.55rem; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text-dim); cursor: pointer;
+  }
+  button.tag.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.tag:hover { border-color: var(--accent); }
+
+  .action-row { display: flex; gap: 0.5rem; }
+  button.chip {
+    flex: 1; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);
+    border-radius: var(--radius); padding: 0.5rem 0.6rem; font-family: var(--sans); font-size: 0.78rem;
+    cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  button.chip:hover { border-color: var(--accent); color: var(--accent); }
+  button.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button.chip.warn:hover { border-color: #b8452f; color: #b8452f; }
+  input#importFile { display: none; }
+
+  .starOnlyRow { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: var(--text-dim); }
+  .starOnlyRow input { cursor: pointer; }
+
+  nav.groupnav { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 0.5rem; max-height: 34vh; overflow-y: auto; }
+  nav.groupnav a { display: flex; justify-content: space-between; gap: 0.5rem; padding: 0.4rem 0.6rem; border-radius: 6px; text-decoration: none; color: var(--text-dim); font-family: var(--mono); font-size: 0.72rem; line-height: 1.4; }
+  nav.groupnav a:hover { background: var(--surface-2); color: var(--text); }
+  nav.groupnav a .n { font-variant-numeric: tabular-nums; color: var(--text-faint); flex-shrink: 0; }
+  nav.groupnav a.complete .n { color: var(--accent); }
+
+  .vendor-note { font-size: 0.76rem; color: var(--text-faint); line-height: 1.55; padding: 0 0.15rem; }
+  .vendor-note strong { color: var(--text-dim); }
+
+  /* ---- Main list ---- */
+  main { min-width: 0; }
+  .group { margin-bottom: 1.6rem; }
+  .group-head {
+    position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; background: var(--bg); padding: 0.55rem 0.15rem; cursor: pointer; border-bottom: 1px solid var(--border);
+  }
+  .group-head .gpath { font-family: var(--mono); font-size: 0.85rem; color: var(--text); display: flex; align-items: baseline; gap: 0.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .group-head .gpath .seg-dim { color: var(--text-faint); }
+  .group-head .gcount { font-family: var(--mono); font-size: 0.74rem; color: var(--text-faint); font-variant-numeric: tabular-nums; flex-shrink: 0; display: flex; align-items: center; gap: 0.5rem; }
+  .group-head .mini-bar { width: 46px; height: 4px; border-radius: 2px; background: var(--surface-2); overflow: hidden; }
+  .group-head .mini-bar > span { display: block; height: 100%; background: var(--accent); }
+  .group-head .caret { transition: transform 0.15s ease; color: var(--text-faint); flex-shrink: 0; }
+  .group.collapsed .caret { transform: rotate(-90deg); }
+  .group.collapsed .filelist { display: none; }
+
+  .filelist { list-style: none; margin: 0; padding: 0; }
+  .filelist li { border-bottom: 1px solid var(--border); }
+  .filelist li:last-child { border-bottom: none; }
+
+  .row { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.5rem 0.15rem 0.5rem 0.1rem; border-radius: 6px; }
+  .row:hover { background: var(--surface-2); }
+  .row .rowmain { display: flex; align-items: center; gap: 0.6rem; flex: 1; min-width: 0; cursor: pointer; }
+
+  .row input[type="checkbox"]:not(.flagbox) {
+    appearance: none; -webkit-appearance: none; width: 17px; height: 17px; flex-shrink: 0;
+    border: 1.5px solid var(--border); border-radius: 5px; background: var(--surface); position: relative;
+    cursor: pointer; transition: background 0.12s ease, border-color 0.12s ease; margin-top: 1px;
+  }
+  .row input[type="checkbox"]:not(.flagbox):hover { border-color: var(--accent); }
+  .row input[type="checkbox"]:not(.flagbox):checked { background: var(--accent); border-color: var(--accent); }
+  .row input[type="checkbox"]:not(.flagbox):checked::after {
+    content: ""; position: absolute; left: 5px; top: 1.5px; width: 4px; height: 8px;
+    border: solid white; border-width: 0 2px 2px 0; transform: rotate(40deg);
+  }
+  .row input[type="checkbox"]:not(.flagbox):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .row input[type="checkbox"].pending {
+    background: var(--pending); border-color: var(--pending); cursor: default;
+  }
+  .row input[type="checkbox"].pending:hover { border-color: var(--pending); }
+
+  .row .fname { font-family: var(--mono); font-size: 0.84rem; color: var(--text); overflow-wrap: anywhere; }
+  .row .fext { color: var(--accent); }
+  .row.done .fname { color: var(--done-strike); text-decoration: line-through; text-decoration-color: var(--done-strike); text-decoration-thickness: 1px; }
+  .row.done .fext { color: var(--done-strike); }
+
+  .layertag {
+    font-family: var(--mono); font-size: 0.62rem; padding: 0.08rem 0.4rem; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent-strong); flex-shrink: 0; white-space: nowrap;
+  }
+
+  .starbtn {
+    background: none; border: none; cursor: pointer; font-size: 0.95rem; line-height: 1; padding: 2px;
+    color: var(--text-faint); flex-shrink: 0;
+  }
+  .starbtn.on { color: var(--star); }
+
+  .flagchk {
+    display: inline-flex; align-items: center; gap: 0.22rem; font-family: var(--mono); font-size: 0.66rem;
+    color: var(--text-faint); cursor: pointer; user-select: none; flex-shrink: 0;
+  }
+  .flagchk:hover { color: var(--text-dim); }
+  .flagbox {
+    appearance: none; -webkit-appearance: none; width: 14px; height: 14px; flex-shrink: 0;
+    border: 1.5px solid var(--border); border-radius: 4px; background: var(--surface); position: relative;
+    cursor: pointer; transition: background 0.12s ease, border-color 0.12s ease;
+  }
+  .flagbox:hover { border-color: var(--text-dim); }
+  .flagbox:checked::after {
+    content: ""; position: absolute; left: 3px; top: 0; width: 3.5px; height: 7px;
+    border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(40deg);
+  }
+  .flagbox.compila:checked { background: var(--flag-compila); border-color: var(--flag-compila); }
+  .flagbox.sonar:checked { background: var(--flag-sonar); border-color: var(--flag-sonar); }
+  .flagbox:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .notebtn {
+    background: none; border: none; cursor: pointer; color: var(--text-faint); flex-shrink: 0;
+    padding: 2px; display: flex; align-items: center;
+  }
+  .notebtn:hover, .notebtn.has { color: var(--accent); }
+
+  .noterow { display: none; padding: 0 0.15rem 0.6rem 2.3rem; }
+  .noterow.open { display: block; }
+  .noterow textarea {
+    width: 100%; min-height: 46px; resize: vertical; font-family: var(--sans); font-size: 0.8rem;
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 0.45rem 0.6rem;
+    color: var(--text); outline: none;
+  }
+  .noterow textarea:focus { border-color: var(--accent); }
+
+  .empty-state { color: var(--text-faint); font-size: 0.85rem; padding: 2rem 0.5rem; text-align: center; font-family: var(--mono); }
+
+  footer.page-foot {
+    grid-column: 1 / -1; margin-top: 1rem; padding-top: 1.25rem; border-top: 1px solid var(--border);
+    font-size: 0.78rem; color: var(--text-faint); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+  }
+
+  .toast {
+    position: fixed; bottom: 1.25rem; left: 50%; transform: translateX(-50%) translateY(12px); opacity: 0;
+    background: var(--accent-strong); color: #fff; font-size: 0.82rem; padding: 0.55rem 1rem; border-radius: 8px;
+    box-shadow: var(--shadow); pointer-events: none; transition: opacity 0.18s ease, transform 0.18s ease; z-index: 10;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .methods-stat { margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
+  .methods-stat .mstat-row { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--mono); font-size: 0.72rem; color: var(--text-dim); margin-bottom: 0.35rem; }
+  .methods-stat .mstat-row .mstat-pct { color: var(--star); font-weight: 600; }
+  .methods-stat .mstat-bar { height: 5px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+  .methods-stat .mstat-bar > span { display: block; height: 100%; background: var(--star); }
+
+  .methodsbtn {
+    display: flex; align-items: center; gap: 0.3rem; background: none; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 999px; color: var(--text-faint);
+    font-family: var(--mono); font-size: 0.66rem; padding: 0.1rem 0.5rem; flex-shrink: 0;
+  }
+  .methodsbtn .mdot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-faint); flex-shrink: 0; }
+  .methodsbtn.complete { color: var(--accent); border-color: var(--accent); }
+  .methodsbtn.complete .mdot { background: var(--accent); }
+  .methodsbtn:hover { border-color: var(--star); color: var(--star); }
+  .methodsbtn.open { background: var(--surface-2); }
+
+  .methodsrow { display: none; padding: 0.2rem 0.15rem 0.7rem 2.3rem; }
+  .methodsrow.open { display: block; }
+  .methodlist { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--border); }
+  .methoditem { display: flex; align-items: flex-start; gap: 0.55rem; padding: 0.3rem 0 0.3rem 0.75rem; }
+
+  .methoditem input[type="checkbox"]:not(.flagbox) {
+    appearance: none; -webkit-appearance: none; width: 15px; height: 15px; flex-shrink: 0;
+    border: 1.5px solid var(--border); border-radius: 4px; background: var(--surface); position: relative;
+    cursor: pointer; transition: background 0.12s ease, border-color 0.12s ease; margin-top: 2px;
+  }
+  .methoditem input[type="checkbox"]:not(.flagbox):hover { border-color: var(--star); }
+  .methoditem input[type="checkbox"]:not(.flagbox):checked { background: var(--star); border-color: var(--star); }
+  .methoditem input[type="checkbox"]:not(.flagbox):checked::after {
+    content: ""; position: absolute; left: 4px; top: 1px; width: 3px; height: 7px;
+    border: solid white; border-width: 0 2px 2px 0; transform: rotate(40deg);
+  }
+  .methoditem input[type="checkbox"]:not(.flagbox):focus-visible { outline: 2px solid var(--star); outline-offset: 2px; }
+  .methoditem .flagchk { margin-top: 2px; }
+
+  .methoditem .mkind { font-family: var(--mono); font-size: 0.62rem; color: var(--text-faint); flex-shrink: 0; padding-top: 0.15rem; min-width: 78px; }
+  .methoditem .msig { font-family: var(--mono); font-size: 0.78rem; color: var(--text); overflow-wrap: anywhere; }
+  .methoditem.done .msig { color: var(--done-strike); text-decoration: line-through; text-decoration-color: var(--done-strike); text-decoration-thickness: 1px; }
+  .methoditem.done .mkind { color: var(--done-strike); }
+
+  .print-summary { display: none; }
+
+  @page { margin: 14mm 12mm; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  @media print {
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+      box-shadow: none !important;
+      transition: none !important;
+      animation: none !important;
+    }
+    html { font-size: 10.5pt; }
+    :root, html[data-theme="dark"], html[data-theme="light"] {
+      --bg: #ffffff; --surface: #ffffff; --surface-2: #f1f2ee; --border: #b9bcb2;
+      --text: #000000; --text-dim: #2c2f28; --text-faint: #52554d;
+      --accent: #175a49; --accent-strong: #0f3f34; --accent-soft: #dcece5; --star: #7a5906;
+      --pending: #6e520a; --done-strike: #63665e;
+      --flag-compila: #1c4fb8; --flag-sonar: #5b21a6;
+    }
+    body { background: #fff; color: #000; }
+    .sidebar, #themeToggle, .action-row, .search-box, .chip-filter-row, .starOnlyRow,
+    .notebtn, .methodsbtn, .toast, input#importFile { display: none !important; }
+    .starbtn, .flagchk { pointer-events: none; }
+    .print-summary {
+      display: block; margin: 0 0 1.1rem; padding: 0.55rem 0.85rem;
+      border: 1px solid #000; border-radius: 6px; font-family: var(--mono); font-size: 0.78rem;
+    }
+    .shell { grid-template-columns: 1fr; display: block; max-width: none; padding: 0; }
+    .page-head { border-bottom: 2px solid #000; align-items: baseline; }
+    .group { page-break-inside: auto; margin-bottom: 1rem; }
+    .group-head { position: static; cursor: default; background: #fff; border-bottom: 1.5px solid #000; page-break-after: avoid; }
+    .group.collapsed .filelist { display: block !important; }
+    .filelist li { page-break-inside: avoid; border-bottom-color: #ccc; }
+    .row { page-break-inside: avoid; }
+    .methodsrow { display: block !important; padding-left: 1.8rem; }
+    .methoditem { page-break-inside: avoid; }
+    .methodlist { border-left-color: #999; }
+    .noterow { display: none !important; padding-left: 1.8rem; }
+    .noterow.has-content { display: block !important; }
+    .noterow textarea { border: 1px solid #999; background: #fafafa; color: #000; resize: none; }
+    .layertag { border: 1px solid var(--accent-strong); }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="page-head">
+    <div>
+      <span class="eyebrow">Código-fonte próprio</span>
+      <h1>Checklist de Código-Fonte — __PROJECT_NAME__</h1>
+      <p class="sub">Marca cada unidade como revista/concluída, marca prioridades e anota notas — e dentro de cada unidade, revê método a método. Tudo fica guardado neste navegador — ficheiro 100% offline, sem servidor.</p>
+    </div>
+    <div class="head-right">
+      <div class="meta" id="genmeta"></div>
+      <button id="themeToggle" type="button" title="Alternar tema">🌓</button>
+    </div>
+  </header>
+
+  <div class="print-summary" id="printSummary"></div>
+
+  <aside class="sidebar">
+    <div class="card">
+      <div class="progress-ring-row">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="27" fill="none" stroke="var(--surface-2)" stroke-width="7"></circle>
+          <circle id="ring" cx="32" cy="32" r="27" fill="none" stroke="var(--accent)" stroke-width="7"
+                  stroke-linecap="round" transform="rotate(-90 32 32)"
+                  stroke-dasharray="169.6" stroke-dashoffset="169.6"></circle>
+        </svg>
+        <div>
+          <div class="progress-num" id="pct">0%</div>
+          <div class="progress-label">concluído</div>
+          <div class="progress-frac" id="frac">0 / 0 ficheiros</div>
+        </div>
+      </div>
+      <div class="layer-bars" id="layerBars"></div>
+      <div class="methods-stat" id="methodsStat"></div>
+    </div>
+
+    <div class="search-box">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input id="search" type="text" placeholder="Filtrar por nome ou pasta…" autocomplete="off">
+      <span class="search-hint">/</span>
+    </div>
+
+    <div class="chip-filter-row" id="layerChips"></div>
+    <label class="starOnlyRow"><input type="checkbox" id="starOnly"> mostrar só marcados com ★</label>
+
+    <div class="action-row">
+      <button class="chip" id="printBtn" type="button" title="Limpa filtros activos e imprime a checklist completa, com todas as secções e métodos expandidos">🖨️ Imprimir (boa qualidade)</button>
+    </div>
+    <div class="action-row">
+      <button class="chip" id="expandAll" type="button">Expandir tudo</button>
+      <button class="chip" id="collapseAll" type="button">Colapsar tudo</button>
+    </div>
+    <div class="action-row">
+      <button class="chip" id="expandMethods" type="button">Expandir métodos</button>
+      <button class="chip" id="collapseMethods" type="button">Colapsar métodos</button>
+    </div>
+    <div class="action-row">
+      <button class="chip" id="exportJson" type="button">Exportar progresso</button>
+      <button class="chip" id="importJson" type="button">Importar</button>
+      <input type="file" id="importFile" accept="application/json">
+    </div>
+    <div class="action-row">
+      <button class="chip" id="exportMd" type="button">Copiar Markdown</button>
+      <button class="chip warn" id="resetProgress" type="button">Reiniciar</button>
+    </div>
+
+    <nav class="groupnav" id="groupnav" aria-label="Ir para pasta"></nav>
+
+    <p class="vendor-note">__EXCLUDED_NOTE__</p>
+    <p class="vendor-note">
+      A checklist de métodos (botão com contador junto a cada ficheiro) é extraída automaticamente das
+      declarações <code>function</code>/<code>procedure</code>/<code>constructor</code>/<code>destructor</code>
+      de cada unit. É uma heurística de análise estática, não um parser Delphi completo — units sem métodos
+      declarados (DTOs, modelos simples, exceções, tipos) não mostram o botão.
+    </p>
+    <p class="vendor-note">
+      Para units com métodos, a caixa de conclusão do ficheiro deixa de ser manual: fica
+      <strong style="color: var(--pending);">amarelo-escura</strong> enquanto houver métodos por marcar e só
+      passa a <strong style="color: var(--accent);">verde</strong> — unit totalmente implementada — quando
+      todos os métodos estiverem marcados.
+    </p>
+  </aside>
+
+  <main id="main"></main>
+
+  <footer class="page-foot">
+    <span>__PROJECT_NAME__ · __ROOT_DISPLAY__</span>
+    <span id="footcount"></span>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  // path (relative to the project root, forward slashes) for every .pas/.dpr unit found by the scan.
+  // Some folders were excluded — see the note in the sidebar for which ones.
+  var FILES = __FILES_JSON__;
+
+  // path -> [{name, kind, sig}] for every function/procedure/constructor/destructor found by
+  // static analysis of each unit's interface (and, for free functions, implementation) section.
+  // Units with no methods (DTOs, plain models, exceptions, simple type aliases) are absent here.
+  var METHODS = __METHODS_JSON__;
+
+  var STORAGE_KEY = "__STORAGE_KEY__";
+  var THEME_KEY = "offline-checklist-theme";
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  // state[path] = { done: bool, star: bool, note: string, ts: number }
+  var state = loadState();
+  // Progresso vindo da aplicação CodeManager: só é usado se este navegador ainda não tiver estado próprio.
+  try { if (localStorage.getItem(STORAGE_KEY) === null) state = __SEED_STATE__; } catch (e) {}
+  function rec(path) { return state[path] || (state[path] = {}); }
+
+  function methodsOf(path) { return METHODS[path] || []; }
+  function methodDone(path, name) {
+    var r = state[path];
+    return !!(r && r.m && r.m[name]);
+  }
+  function setMethodDone(path, name, val) {
+    var r = rec(path);
+    if (!r.m) r.m = {};
+    r.m[name] = val;
+    saveState();
+  }
+  function methodFlag(path, name, key) {
+    var r = state[path];
+    return !!(r && r[key] && r[key][name]);
+  }
+  function setMethodFlag(path, name, key, val) {
+    var r = rec(path);
+    if (!r[key]) r[key] = {};
+    r[key][name] = val;
+    saveState();
+  }
+  function makeFlagCheckbox(label, title, kind, checked, onChange) {
+    var lab = document.createElement("label");
+    lab.className = "flagchk";
+    lab.title = title;
+    var inp = document.createElement("input");
+    inp.type = "checkbox";
+    inp.className = "flagbox " + kind;
+    inp.checked = checked;
+    inp.addEventListener("change", function () { onChange(inp.checked); });
+    var span = document.createElement("span");
+    span.textContent = label;
+    lab.appendChild(inp);
+    lab.appendChild(span);
+    return lab;
+  }
+  function methodCounts(path) {
+    var list = methodsOf(path), done = 0;
+    list.forEach(function (mm) { if (methodDone(path, mm.name)) done++; });
+    return { done: done, total: list.length };
+  }
+  function globalMethodStats() {
+    var done = 0, total = 0;
+    Object.keys(METHODS).forEach(function (p) {
+      METHODS[p].forEach(function (mm) {
+        total++;
+        if (methodDone(p, mm.name)) done++;
+      });
+    });
+    return { done: done, total: total };
+  }
+  function updateMethodsStat() {
+    var el = document.getElementById("methodsStat");
+    if (!el) return;
+    var s = globalMethodStats();
+    var pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
+    el.innerHTML =
+      "<div class='mstat-row'><span>Métodos revistos</span><span class='mstat-pct'>" + s.done + " / " + s.total + " (" + pct + "%)</span></div>" +
+      "<div class='mstat-bar'><span style='width:" + pct + "%'></span></div>";
+  }
+
+  // ---- classify each file by its immediate parent folder (generic across any project layout) ----
+  function classify(path) {
+    var idx = path.lastIndexOf("/");
+    if (idx === -1) return "Raiz";
+    var dir = path.slice(0, idx);
+    var segIdx = dir.lastIndexOf("/");
+    return segIdx === -1 ? dir : dir.slice(segIdx + 1);
+  }
+
+  function sortedLayers(keysObj) {
+    return Object.keys(keysObj).sort(function (a, b) { return a.localeCompare(b); });
+  }
+
+  var activeLayers = {}; // empty = all shown
+  var starOnly = false;
+
+  // group by directory
+  var groups = {};
+  var order = [];
+  FILES.forEach(function (p) {
+    var idx = p.lastIndexOf("/");
+    var dir = idx === -1 ? "(raiz)" : p.slice(0, idx);
+    var name = p.slice(idx + 1);
+    if (!groups[dir]) { groups[dir] = []; order.push(dir); }
+    groups[dir].push({ path: p, name: name, layer: classify(p) });
+  });
+  order.sort();
+
+  var total = FILES.length;
+
+  function extOf(name) {
+    var i = name.lastIndexOf(".");
+    return i === -1 ? "" : name.slice(i);
+  }
+
+  function toast(msg) {
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._h);
+    toast._h = setTimeout(function () { t.classList.remove("show"); }, 1800);
+  }
+
+  function passesFilters(it) {
+    if (starOnly && !(state[it.path] && state[it.path].star)) return false;
+    var layerKeys = Object.keys(activeLayers);
+    if (layerKeys.length && !activeLayers[it.layer]) return false;
+    return true;
+  }
+
+  function renderLayerChips() {
+    var wrap = document.getElementById("layerChips");
+    wrap.innerHTML = "";
+    var present = {};
+    FILES.forEach(function (p) { present[classify(p)] = true; });
+    sortedLayers(present).forEach(function (layer) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "tag" + (activeLayers[layer] ? " active" : "");
+      b.textContent = layer;
+      b.addEventListener("click", function () {
+        if (activeLayers[layer]) delete activeLayers[layer];
+        else activeLayers[layer] = true;
+        render();
+      });
+      wrap.appendChild(b);
+    });
+  }
+
+  function renderLayerBars() {
+    var wrap = document.getElementById("layerBars");
+    wrap.innerHTML = "";
+    var counts = {};
+    FILES.forEach(function (p) {
+      var l = classify(p);
+      counts[l] = counts[l] || { done: 0, total: 0 };
+      counts[l].total++;
+      if (state[p] && state[p].done) counts[l].done++;
+    });
+    sortedLayers(counts).forEach(function (l) {
+      var c = counts[l];
+      var pct = Math.round((c.done / c.total) * 100);
+      var row = document.createElement("div");
+      row.className = "layer-bar-row";
+      row.innerHTML = "<span class='lname' title='" + l + "'>" + l + "</span>" +
+        "<span class='ltrack'><span style='width:" + pct + "%'></span></span>" +
+        "<span class='lfrac'>" + c.done + "/" + c.total + "</span>";
+      wrap.appendChild(row);
+    });
+  }
+
+  function render() {
+    var main = document.getElementById("main");
+    var nav = document.getElementById("groupnav");
+    main.innerHTML = "";
+    nav.innerHTML = "";
+
+    var query = document.getElementById("search").value.trim().toLowerCase();
+
+    order.forEach(function (dir, gi) {
+      var items = groups[dir];
+      var filtered = items.filter(function (it) {
+        if (query && it.path.toLowerCase().indexOf(query) === -1) return false;
+        return passesFilters(it);
+      });
+
+      var navLink = document.createElement("a");
+      var navDone = items.filter(function (it) { return state[it.path] && state[it.path].done; }).length;
+      navLink.href = "#grp-" + gi;
+      navLink.innerHTML = "<span>" + dir.replace("src/", "").replace("tests/", "t/") + "</span><span class='n'>" + navDone + "/" + items.length + "</span>";
+      if (navDone === items.length) navLink.className = "complete";
+      nav.appendChild(navLink);
+
+      if (!filtered.length) return;
+
+      var section = document.createElement("section");
+      section.className = "group";
+      section.id = "grp-" + gi;
+
+      var head = document.createElement("div");
+      head.className = "group-head";
+      var parts = dir.split("/");
+      var pathHtml = parts.map(function (seg, i) {
+        return i === parts.length - 1 ? seg : "<span class='seg-dim'>" + seg + "/</span>";
+      }).join("");
+      var doneInGroup = items.filter(function (it) { return state[it.path] && state[it.path].done; }).length;
+      var pctGroup = Math.round((doneInGroup / items.length) * 100);
+      head.innerHTML =
+        "<span class='gpath'>" + pathHtml + "</span>" +
+        "<span class='gcount'>" +
+          "<span class='mini-bar'><span style='width:" + pctGroup + "%'></span></span>" +
+          doneInGroup + "/" + items.length +
+          "<svg class='caret' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5'><polyline points='6 9 12 15 18 9'></polyline></svg>" +
+        "</span>";
+      head.addEventListener("click", function () { section.classList.toggle("collapsed"); });
+      section.appendChild(head);
+
+      var ul = document.createElement("ul");
+      ul.className = "filelist";
+      filtered.forEach(function (it) {
+        var li = document.createElement("li");
+        var r = rec(it.path);
+
+        var mlist = methodsOf(it.path);
+        var hasMethods = mlist.length > 0;
+        if (hasMethods) {
+          var mc0 = methodCounts(it.path);
+          r.done = mc0.done === mc0.total;
+        }
+
+        var row = document.createElement("div");
+        row.className = "row" + (r.done ? " done" : "");
+
+        var main2 = document.createElement("label");
+        main2.className = "rowmain";
+
+        var cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = !!r.done;
+        if (hasMethods) {
+          cb.classList.toggle("pending", !r.done);
+          cb.title = "Esta unit fica concluída automaticamente quando todos os métodos estiverem marcados.";
+          cb.addEventListener("click", function (e) { e.preventDefault(); });
+        } else {
+          cb.addEventListener("change", function () {
+            r.done = cb.checked;
+            r.ts = Date.now();
+            saveState();
+            row.classList.toggle("done", cb.checked);
+            updateProgress();
+            updateNavAndHeaders();
+            renderLayerBars();
+            updateMethodsStat();
+          });
+        }
+
+        var tag = document.createElement("span");
+        tag.className = "layertag";
+        tag.textContent = it.layer;
+
+        var span = document.createElement("span");
+        var ext = extOf(it.name);
+        var base = it.name.slice(0, it.name.length - ext.length);
+        span.className = "fname";
+        span.title = r.ts ? ("última alteração: " + new Date(r.ts).toLocaleString()) : "";
+        span.innerHTML = base + "<span class='fext'>" + ext + "</span>";
+
+        main2.appendChild(cb);
+        main2.appendChild(tag);
+        main2.appendChild(span);
+
+        var star = document.createElement("button");
+        star.type = "button";
+        star.className = "starbtn" + (r.star ? " on" : "");
+        star.title = "Marcar prioridade";
+        star.textContent = r.star ? "★" : "☆";
+        star.addEventListener("click", function () {
+          r.star = !r.star;
+          saveState();
+          star.classList.toggle("on", r.star);
+          star.textContent = r.star ? "★" : "☆";
+          if (starOnly) render();
+        });
+
+        var noteBtn = document.createElement("button");
+        noteBtn.type = "button";
+        noteBtn.className = "notebtn" + (r.note ? " has" : "");
+        noteBtn.title = "Nota";
+        noteBtn.innerHTML = "&#9998;";
+
+        var flagCompila = makeFlagCheckbox("C", "Compila sem erros", "compila", !!r.compila, function (val) {
+          r.compila = val;
+          saveState();
+        });
+        var flagSonar = makeFlagCheckbox("S", "SonarQube aprovado", "sonar", !!r.sonar, function (val) {
+          r.sonar = val;
+          saveState();
+        });
+
+        row.appendChild(main2);
+        row.appendChild(star);
+        row.appendChild(flagCompila);
+        row.appendChild(flagSonar);
+
+        var mbtn = null, methodsRow = null;
+        if (hasMethods) {
+          var mcounts = methodCounts(it.path);
+          mbtn = document.createElement("button");
+          mbtn.type = "button";
+          mbtn.className = "methodsbtn" + (mcounts.done === mcounts.total ? " complete" : "");
+          mbtn.title = "Checklist de métodos desta unit";
+          mbtn.innerHTML = "<span class='mdot'></span>" + mcounts.done + "/" + mcounts.total;
+
+          methodsRow = document.createElement("div");
+          methodsRow.className = "methodsrow";
+          var mul = document.createElement("ul");
+          mul.className = "methodlist";
+          mlist.forEach(function (mm) {
+            var mli = document.createElement("li");
+            mli.className = "methoditem" + (methodDone(it.path, mm.name) ? " done" : "");
+
+            var mcb = document.createElement("input");
+            mcb.type = "checkbox";
+            mcb.checked = methodDone(it.path, mm.name);
+            mcb.addEventListener("change", function () {
+              setMethodDone(it.path, mm.name, mcb.checked);
+              mli.classList.toggle("done", mcb.checked);
+              var nc = methodCounts(it.path);
+              mbtn.classList.toggle("complete", nc.done === nc.total);
+              mbtn.innerHTML = "<span class='mdot'></span>" + nc.done + "/" + nc.total;
+
+              var allDone = nc.done === nc.total;
+              r.done = allDone;
+              r.ts = Date.now();
+              saveState();
+              cb.checked = allDone;
+              cb.classList.toggle("pending", !allDone);
+              row.classList.toggle("done", allDone);
+              updateProgress();
+              updateNavAndHeaders();
+              renderLayerBars();
+              updateMethodsStat();
+            });
+
+            var mFlagCompila = makeFlagCheckbox("C", "Método compila sem erros", "compila",
+              methodFlag(it.path, mm.name, "mc"), function (val) {
+                setMethodFlag(it.path, mm.name, "mc", val);
+              });
+            var mFlagSonar = makeFlagCheckbox("S", "Método aprovado no SonarQube", "sonar",
+              methodFlag(it.path, mm.name, "mq"), function (val) {
+                setMethodFlag(it.path, mm.name, "mq", val);
+              });
+
+            var mkind = document.createElement("span");
+            mkind.className = "mkind";
+            mkind.textContent = mm.kind;
+
+            var msig = document.createElement("span");
+            msig.className = "msig";
+            msig.textContent = mm.sig;
+
+            mli.appendChild(mcb);
+            mli.appendChild(mFlagCompila);
+            mli.appendChild(mFlagSonar);
+            mli.appendChild(mkind);
+            mli.appendChild(msig);
+            mul.appendChild(mli);
+          });
+          methodsRow.appendChild(mul);
+
+          mbtn.addEventListener("click", function () {
+            methodsRow.classList.toggle("open");
+            mbtn.classList.toggle("open");
+          });
+
+          row.appendChild(mbtn);
+        }
+
+        row.appendChild(noteBtn);
+
+        var noteRow = document.createElement("div");
+        noteRow.className = "noterow" + (r.note ? " has-content" : "");
+        var ta = document.createElement("textarea");
+        ta.placeholder = "Nota sobre este ficheiro…";
+        ta.value = r.note || "";
+        ta.addEventListener("input", function () {
+          r.note = ta.value;
+          saveState();
+          noteBtn.classList.toggle("has", !!r.note);
+          noteRow.classList.toggle("has-content", !!r.note);
+        });
+        noteRow.appendChild(ta);
+
+        noteBtn.addEventListener("click", function () {
+          noteRow.classList.toggle("open");
+          if (noteRow.classList.contains("open")) ta.focus();
+        });
+
+        li.appendChild(row);
+        li.appendChild(noteRow);
+        if (methodsRow) li.appendChild(methodsRow);
+        ul.appendChild(li);
+      });
+      section.appendChild(ul);
+      main.appendChild(section);
+    });
+
+    if ((query || starOnly || Object.keys(activeLayers).length) && !main.children.length) {
+      var empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = "Nenhum ficheiro corresponde aos filtros activos.";
+      main.appendChild(empty);
+    }
+
+    renderLayerChips();
+    updateProgress();
+    renderLayerBars();
+    updateMethodsStat();
+  }
+
+  function updateNavAndHeaders() {
+    var navLinks = document.querySelectorAll("#groupnav a");
+    order.forEach(function (dir, gi) {
+      var items = groups[dir];
+      var doneInGroup = items.filter(function (it) { return state[it.path] && state[it.path].done; }).length;
+      var link = navLinks[gi];
+      if (link) {
+        link.querySelector(".n").textContent = doneInGroup + "/" + items.length;
+        link.className = doneInGroup === items.length ? "complete" : "";
+      }
+      var section = document.getElementById("grp-" + gi);
+      if (section) {
+        var gcount = section.querySelector(".gcount");
+        if (gcount) {
+          var pctGroup = Math.round((doneInGroup / items.length) * 100);
+          gcount.querySelector(".mini-bar span").style.width = pctGroup + "%";
+          gcount.childNodes[1].textContent = doneInGroup + "/" + items.length + " ";
+        }
+      }
+    });
+  }
+
+  function updateProgress() {
+    var doneCount = 0;
+    FILES.forEach(function (p) { if (state[p] && state[p].done) doneCount++; });
+    var pct = total ? Math.round((doneCount / total) * 100) : 0;
+    document.getElementById("pct").textContent = pct + "%";
+    document.getElementById("frac").textContent = doneCount + " / " + total + " ficheiros";
+    document.getElementById("footcount").textContent = doneCount + " de " + total + " ficheiros marcados";
+    var circumference = 169.6;
+    var offset = circumference - (pct / 100) * circumference;
+    document.getElementById("ring").style.strokeDashoffset = offset;
+    updatePrintSummary();
+  }
+
+  function updatePrintSummary() {
+    var el = document.getElementById("printSummary");
+    if (!el) return;
+    var doneCount = 0;
+    FILES.forEach(function (p) { if (state[p] && state[p].done) doneCount++; });
+    var ms = globalMethodStats();
+    el.innerHTML =
+      doneCount + " / " + total + " ficheiros concluídos" +
+      (ms.total ? " &middot; " + ms.done + " / " + ms.total + " métodos revistos" : "") +
+      " &middot; impresso em " + new Date().toLocaleString();
+  }
+
+  // ---- controls ----
+  document.getElementById("printBtn").addEventListener("click", function () {
+    document.getElementById("search").value = "";
+    document.getElementById("starOnly").checked = false;
+    starOnly = false;
+    activeLayers = {};
+    render();
+    setTimeout(function () { window.print(); }, 50);
+  });
+  document.getElementById("search").addEventListener("input", render);
+  document.getElementById("starOnly").addEventListener("change", function (e) {
+    starOnly = e.target.checked;
+    render();
+  });
+  document.getElementById("expandAll").addEventListener("click", function () {
+    document.querySelectorAll(".group").forEach(function (g) { g.classList.remove("collapsed"); });
+  });
+  document.getElementById("collapseAll").addEventListener("click", function () {
+    document.querySelectorAll(".group").forEach(function (g) { g.classList.add("collapsed"); });
+  });
+  document.getElementById("expandMethods").addEventListener("click", function () {
+    document.querySelectorAll(".methodsrow").forEach(function (r) { r.classList.add("open"); });
+    document.querySelectorAll(".methodsbtn").forEach(function (b) { b.classList.add("open"); });
+  });
+  document.getElementById("collapseMethods").addEventListener("click", function () {
+    document.querySelectorAll(".methodsrow").forEach(function (r) { r.classList.remove("open"); });
+    document.querySelectorAll(".methodsbtn").forEach(function (b) { b.classList.remove("open"); });
+  });
+  document.getElementById("resetProgress").addEventListener("click", function () {
+    if (!confirm("Reiniciar o progresso, notas e prioridades de todos os " + total + " ficheiros?")) return;
+    state = {};
+    saveState();
+    render();
+    toast("Progresso reiniciado");
+  });
+
+  document.getElementById("exportJson").addEventListener("click", function () {
+    var blob = new Blob([JSON.stringify({ version: 2, exportedAt: new Date().toISOString(), state: state }, null, 2)],
+      { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "__EXPORT_SLUG__-checklist-progresso-" + new Date().toISOString().slice(0, 10) + ".json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast("Progresso exportado");
+  });
+
+  document.getElementById("importJson").addEventListener("click", function () {
+    document.getElementById("importFile").click();
+  });
+  document.getElementById("importFile").addEventListener("change", function (e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var data = JSON.parse(reader.result);
+        var incoming = data.state || data;
+        if (typeof incoming !== "object") throw new Error("formato inválido");
+        state = incoming;
+        saveState();
+        render();
+        toast("Progresso importado");
+      } catch (err) {
+        alert("Ficheiro inválido: " + err.message);
+      }
+      e.target.value = "";
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById("exportMd").addEventListener("click", function () {
+    var lines = [];
+    order.forEach(function (dir) {
+      lines.push("### " + dir);
+      groups[dir].forEach(function (it) {
+        var r = state[it.path];
+        var mark = r && r.done ? "x" : " ";
+        var compila = r && r.compila ? " [Compila]" : "";
+        var sonar = r && r.sonar ? " [Sonar]" : "";
+        var star = r && r.star ? " ★" : "";
+        var note = r && r.note ? "  <!-- " + r.note.replace(/\n/g, " ") + " -->" : "";
+        lines.push("- [" + mark + "] " + it.path + compila + sonar + star + note);
+        methodsOf(it.path).forEach(function (mm) {
+          var mdone = r && r.m && r.m[mm.name] ? "x" : " ";
+          var mCompila = r && r.mc && r.mc[mm.name] ? " [Compila]" : "";
+          var mSonar = r && r.mq && r.mq[mm.name] ? " [Sonar]" : "";
+          lines.push("  - [" + mdone + "] `" + mm.sig + "`" + mCompila + mSonar);
+        });
+      });
+      lines.push("");
+    });
+    var md = "# Checklist de Código-Fonte — __PROJECT_NAME_JS__\n\n" + lines.join("\n");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(md).then(function () { toast("Markdown copiado"); },
+        function () { fallbackCopy(md); });
+    } else {
+      fallbackCopy(md);
+    }
+  });
+  function fallbackCopy(text) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); toast("Markdown copiado"); }
+    catch (e) { alert("Não foi possível copiar automaticamente."); }
+    ta.remove();
+  }
+
+  // ---- theme toggle (light -> dark -> system) ----
+  function applyTheme(mode) {
+    var root = document.documentElement;
+    if (mode === "system") { delete root.dataset.theme; }
+    else { root.dataset.theme = mode; }
+    try { localStorage.setItem(THEME_KEY, mode); } catch (e) {}
+  }
+  var savedTheme = "system";
+  try { savedTheme = localStorage.getItem(THEME_KEY) || "system"; } catch (e) {}
+  applyTheme(savedTheme);
+  document.getElementById("themeToggle").addEventListener("click", function () {
+    var next = savedTheme === "light" ? "dark" : savedTheme === "dark" ? "system" : "light";
+    savedTheme = next;
+    applyTheme(next);
+    toast("Tema: " + next);
+  });
+
+  // ---- keyboard shortcut: "/" focuses search ----
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "/" && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") {
+      e.preventDefault();
+      document.getElementById("search").focus();
+    }
+  });
+
+  document.getElementById("genmeta").innerHTML =
+    "gerado __GENERATED_DATE__<br>" + total + " ficheiros · " + globalMethodStats().total + " métodos em " + Object.keys(METHODS).length + " units · __ROOT_DISPLAY_JS__";
+
+  render();
+})();
+</script>
+</body>
+</html>

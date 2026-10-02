@@ -1,0 +1,150 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{6B0F3C1E-7A52-4D6B-9C1A-3E5D8B2F4A90}</ProjectGuid>
+        <ProjectVersion>20.3</ProjectVersion>
+        <!-- Chart4D (GetIt). Para outra pasta defina a variavel de ambiente Chart4DDir. -->
+        <Chart4DDir Condition="'$(Chart4DDir)'==''">$(USERPROFILE)\Documents\Embarcadero\Studio\37.0\CatalogRepository\Chart4D-13\1.2.0</Chart4DDir>
+        <FrameworkType>FMX</FrameworkType>
+        <MainSource>CodeManager.dpr</MainSource>
+        <Base>True</Base>
+        <Config Condition="'$(Config)'==''">Debug</Config>
+        <Platform Condition="'$(Platform)'==''">Win64</Platform>
+        <TargetedPlatforms>3</TargetedPlatforms>
+        <AppType>Application</AppType>
+        <ProjectName Condition="'$(ProjectName)'==''">CodeManager</ProjectName>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Base)'=='true') or '$(Base_Win32)'!=''">
+        <Base_Win32>true</Base_Win32>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win64' and '$(Base)'=='true') or '$(Base_Win64)'!=''">
+        <Base_Win64>true</Base_Win64>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Debug' or '$(Cfg_1)'!=''">
+        <Cfg_1>true</Cfg_1>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win64' and '$(Cfg_1)'=='true') or '$(Cfg_1_Win64)'!=''">
+        <Cfg_1_Win64>true</Cfg_1_Win64>
+        <CfgParent>Cfg_1</CfgParent>
+        <Cfg_1>true</Cfg_1>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' or '$(Cfg_2)'!=''">
+        <Cfg_2>true</Cfg_2>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Base)'!=''">
+        <SanitizedProjectName>CodeManager</SanitizedProjectName>
+        <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Winapi;System.Win;FMX;$(DCC_Namespace)</DCC_Namespace>
+        <DCC_UnitSearchPath>src\Core;src\Infrastructure;src\Services;src\UI;src\UI\Pages;$(Chart4DDir)\Source;$(Chart4DDir)\Source\FMX;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_ResourcePath>.;$(DCC_ResourcePath)</DCC_ResourcePath>
+        <DCC_ObjPath>.;$(DCC_ObjPath)</DCC_ObjPath>
+        <DCC_IncludePath>.;$(DCC_IncludePath)</DCC_IncludePath>
+        <DCC_ExeOutput>.\out\bin\$(Platform)\$(Config)</DCC_ExeOutput>
+        <DCC_DcuOutput>.\out\obj\$(Platform)\$(Config)</DCC_DcuOutput>
+        <DCC_E>false</DCC_E>
+        <DCC_N>false</DCC_N>
+        <DCC_S>false</DCC_S>
+        <DCC_F>false</DCC_F>
+        <DCC_K>false</DCC_K>
+        <Icon_MainIcon>res\CodeManager.ico</Icon_MainIcon>
+        <VerInfo_Locale>2070</VerInfo_Locale>
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <VerInfo_Keys>CompanyName=;FileDescription=CodeManager - mapa e checklist de codigo-fonte Delphi;FileVersion=1.0.0.0;InternalName=CodeManager;LegalCopyright=;LegalTrademarks=;OriginalFilename=CodeManager.exe;ProductName=CodeManager;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <DCC_DcpOutput>.\out\dcp\$(Platform)\$(Config)</DCC_DcpOutput>
+        <DCC_BplOutput>.\out\bpl\$(Platform)\$(Config)</DCC_BplOutput>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Base_Win32)'!=''">
+        <DCC_Namespace>Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
+        <BT_BuildType>Debug</BT_BuildType>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Base_Win64)'!=''">
+        <DCC_Namespace>Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
+        <BT_BuildType>Debug</BT_BuildType>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_1)'!=''">
+        <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
+        <DCC_DebugDCUs>true</DCC_DebugDCUs>
+        <DCC_Optimize>false</DCC_Optimize>
+        <DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
+        <DCC_DebugInfoInExe>true</DCC_DebugInfoInExe>
+        <DCC_RemoteDebug>true</DCC_RemoteDebug>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
+        <Manifest_File>(None)</Manifest_File>
+        <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_2)'!=''">
+        <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
+        <DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
+        <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
+        <DCC_DebugInformation>0</DCC_DebugInformation>
+    </PropertyGroup>
+    <ItemGroup>
+        <DelphiCompile Include="$(MainSource)">
+            <MainSource>MainSource</MainSource>
+        </DelphiCompile>
+        <DCCReference Include="src\Core\CM.Analyzer.pas"/>
+        <DCCReference Include="src\Core\CM.Store.pas"/>
+        <DCCReference Include="src\Core\CM.Stats.pas"/>
+        <DCCReference Include="src\Services\CM.Html.pas"/>
+        <DCCReference Include="src\Services\CM.Export.pas"/>
+        <DCCReference Include="src\Services\CM.Print.pas"/>
+        <DCCReference Include="src\Infrastructure\CM.Watcher.pas"/>
+        <DCCReference Include="src\Infrastructure\CM.Resources.pas"/>
+        <DCCReference Include="src\UI\CM.Theme.pas"/>
+        <DCCReference Include="src\UI\CM.Controls.pas"/>
+        <DCCReference Include="src\UI\CM.TreeList.pas"/>
+        <DCCReference Include="src\UI\CM.Layouts.pas"/>
+        <DCCReference Include="src\UI\Pages\CM.Pages.Host.pas"/>
+        <DCCReference Include="src\UI\Pages\CM.Pages.Project.pas"/>
+        <DCCReference Include="src\UI\Pages\CM.Pages.Map.pas"/>
+        <DCCReference Include="src\UI\Pages\CM.Pages.Checklist.pas"/>
+        <DCCReference Include="src\UI\Pages\CM.Pages.Dashboard.pas"/>
+        <DCCReference Include="src\UI\CM.MainForm.pas"/>
+        <BuildConfiguration Include="Base">
+            <Key>Base</Key>
+        </BuildConfiguration>
+        <BuildConfiguration Include="Debug">
+            <Key>Cfg_1</Key>
+            <CfgParent>Base</CfgParent>
+        </BuildConfiguration>
+        <BuildConfiguration Include="Release">
+            <Key>Cfg_2</Key>
+            <CfgParent>Base</CfgParent>
+        </BuildConfiguration>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Delphi.Personality.12</Borland.Personality>
+        <Borland.ProjectType>Application</Borland.ProjectType>
+        <BorlandProject>
+            <Delphi.Personality>
+                <Source>
+                    <Source Name="MainSource">CodeManager.dpr</Source>
+                </Source>
+                <Excluded_Packages>
+                    <Excluded_Packages Name="C:\Users\Public\Documents\Embarcadero\Studio\37.0\Bpl\RadSuiteExpertD13.bpl">(untitled)</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k370.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp370.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                </Excluded_Packages>
+            </Delphi.Personality>
+            <Platforms>
+                <Platform value="Win32">True</Platform>
+                <Platform value="Win64">True</Platform>
+            </Platforms>
+        </BorlandProject>
+        <ProjectFileVersion>12</ProjectFileVersion>
+    </ProjectExtensions>
+    <Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')"/>
+    <Import Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj" Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')"/>
+    <Import Project="$(MSBuildProjectName).deployproj" Condition="Exists('$(MSBuildProjectName).deployproj')"/>
+</Project>

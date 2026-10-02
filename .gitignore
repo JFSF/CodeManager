@@ -1,0 +1,24 @@
+# Artefactos de build
+bin/
+obj/
+tests/bin/
+tests/obj/
+*.dcu
+*.exe
+*.map
+*.drc
+*.rsm
+
+# IDE / ferramentas
+*.local
+*.identcache
+*.dsk
+*.stat
+__history/
+__recovery/
+.sonar/
+.scannerwork/
+graphify-out/
+
+# Saida de build definida no .dproj
+/out/

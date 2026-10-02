@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__PROJECT_NAME__ — Mapa de Código-Fonte</title>
+<style>
+  :root {
+    --bg: #f6f7f4;
+    --surface: #ffffff;
+    --surface-2: #eef0eb;
+    --border: #dcded7;
+    --text: #1b1e1a;
+    --text-dim: #63685f;
+    --text-faint: #93978c;
+    --accent: #23705f;
+    --accent-strong: #17493d;
+    --accent-soft: #e3ede9;
+    --flag-compila: #2f6fed;
+    --flag-sonar: #8b5cf6;
+    --shadow: 0 1px 2px rgba(20, 24, 18, 0.06), 0 4px 14px rgba(20, 24, 18, 0.05);
+    --radius: 10px;
+    --mono: "Cascadia Code", "Cascadia Mono", Consolas, "SFMono-Regular", ui-monospace, Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Segoe UI Variable", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171a; --surface: #1b1f22; --surface-2: #202426; --border: #2c3134;
+      --text: #e9ebe6; --text-dim: #9aa09a; --text-faint: #666c67;
+      --accent: #4fb89b; --accent-strong: #7fd6bc; --accent-soft: #1e2f2b;
+      --flag-compila: #6fa8ff;
+      --flag-sonar: #c9a6ff;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.28);
+    }
+  }
+  html[data-theme="dark"] {
+    --bg: #14171a; --surface: #1b1f22; --surface-2: #202426; --border: #2c3134;
+    --text: #e9ebe6; --text-dim: #9aa09a; --text-faint: #666c67;
+    --accent: #4fb89b; --accent-strong: #7fd6bc; --accent-soft: #1e2f2b;
+    --flag-compila: #6fa8ff;
+    --flag-sonar: #c9a6ff;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.28);
+  }
+  html[data-theme="light"] {
+    --bg: #f6f7f4; --surface: #ffffff; --surface-2: #eef0eb; --border: #dcded7;
+    --text: #1b1e1a; --text-dim: #63685f; --text-faint: #93978c;
+    --accent: #23705f; --accent-strong: #17493d; --accent-soft: #e3ede9;
+    --flag-compila: #2f6fed;
+    --flag-sonar: #8b5cf6;
+    --shadow: 0 1px 2px rgba(20, 24, 18, 0.06), 0 4px 14px rgba(20, 24, 18, 0.05);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text); font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell {
+    max-width: 1240px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem;
+    display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 2rem; align-items: start;
+  }
+  @media (max-width: 900px) { .shell { grid-template-columns: 1fr; } }
+
+  .finalized-banner {
+    grid-column: 1 / -1; display: flex; align-items: center; gap: 0.6rem;
+    background: var(--accent-soft); color: var(--accent-strong); border: 1px solid var(--accent);
+    border-radius: var(--radius); padding: 0.7rem 1rem; font-size: 0.88rem; font-weight: 700;
+  }
+
+  .page-head {
+    grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: flex-end;
+    gap: 1.5rem; flex-wrap: wrap; border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem; margin-bottom: 0.5rem;
+  }
+  .page-head h1 { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; margin: 0 0 0.35rem; }
+  .page-head .eyebrow {
+    font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 0.5rem; display: block;
+  }
+  .page-head p.sub { margin: 0; color: var(--text-dim); font-size: 0.92rem; max-width: 56ch; }
+  .head-right { display: flex; align-items: flex-end; gap: 0.9rem; }
+  .page-head .meta { text-align: right; font-family: var(--mono); font-size: 0.76rem; color: var(--text-faint); line-height: 1.6; }
+  #themeToggle {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);
+    border-radius: 8px; width: 34px; height: 34px; cursor: pointer; font-size: 1rem;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  #themeToggle:hover { border-color: var(--accent); color: var(--accent); }
+
+  .sidebar { position: sticky; top: 1.5rem; display: flex; flex-direction: column; gap: 1.1rem; max-height: calc(100vh - 3rem); overflow-y: auto; padding-right: 2px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem 1.25rem; box-shadow: var(--shadow); }
+  .stat-row { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--mono); font-size: 0.8rem; color: var(--text-dim); padding: 0.22rem 0; }
+  .stat-row b { color: var(--text); font-variant-numeric: tabular-nums; font-size: 0.92rem; }
+
+  .search-box { display: flex; align-items: center; gap: 0.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.55rem 0.75rem; box-shadow: var(--shadow); }
+  .search-box svg { color: var(--text-faint); flex-shrink: 0; }
+  .search-box input { border: none; outline: none; background: transparent; color: var(--text); font-family: var(--sans); font-size: 0.88rem; width: 100%; }
+  .search-box input::placeholder { color: var(--text-faint); }
+  .search-hint { font-family: var(--mono); font-size: 0.68rem; color: var(--text-faint); border: 1px solid var(--border); border-radius: 4px; padding: 0.05rem 0.35rem; }
+
+  .action-row { display: flex; gap: 0.5rem; }
+  button.chip {
+    flex: 1; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);
+    border-radius: var(--radius); padding: 0.5rem 0.6rem; font-family: var(--sans); font-size: 0.78rem;
+    cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  button.chip:hover { border-color: var(--accent); color: var(--accent); }
+  button.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .vendor-note { font-size: 0.76rem; color: var(--text-faint); line-height: 1.55; padding: 0 0.15rem; }
+  .vendor-note code { background: var(--surface-2); border-radius: 4px; padding: 0.02rem 0.3rem; }
+
+  main { min-width: 0; }
+
+  .dir { margin-bottom: 0.1rem; }
+  .dir-head {
+    display: flex; align-items: center; gap: 0.5rem; padding: 0.42rem 0.5rem; border-radius: 6px;
+    cursor: pointer; font-family: var(--mono); font-size: 0.85rem; color: var(--text);
+  }
+  .dir-head:hover { background: var(--surface-2); }
+  .dir-head .caret { transition: transform 0.15s ease; color: var(--text-faint); flex-shrink: 0; }
+  .dir.collapsed > .dir-children { display: none; }
+  .dir.collapsed .caret { transform: rotate(-90deg); }
+  .dir-head .dname { color: var(--accent-strong); font-weight: 600; }
+  .dir-head .dcount { margin-left: auto; font-size: 0.7rem; color: var(--text-faint); flex-shrink: 0; }
+  .dir-children { padding-left: 1.3rem; border-left: 1px solid var(--border); margin-left: 0.7rem; }
+
+  .file-wrap { border-bottom: 1px solid transparent; }
+  .file-row { display: flex; align-items: center; gap: 0.55rem; padding: 0.34rem 0.5rem; border-radius: 6px; }
+  .file-row:hover { background: var(--surface-2); }
+  .file-row .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-faint); flex-shrink: 0; }
+  .file-row .fname { font-family: var(--mono); font-size: 0.84rem; color: var(--text); overflow-wrap: anywhere; }
+  .file-row .fext { color: var(--accent); }
+
+  .flagchk {
+    display: inline-flex; align-items: center; gap: 0.22rem; font-family: var(--mono); font-size: 0.66rem;
+    color: var(--text-faint); cursor: pointer; user-select: none; flex-shrink: 0;
+  }
+  .flagchk:hover { color: var(--text-dim); }
+  .flagbox {
+    appearance: none; -webkit-appearance: none; width: 14px; height: 14px; flex-shrink: 0;
+    border: 1.5px solid var(--border); border-radius: 4px; background: var(--surface); position: relative;
+    cursor: pointer; transition: background 0.12s ease, border-color 0.12s ease;
+  }
+  .flagbox:hover { border-color: var(--text-dim); }
+  .flagbox:checked::after {
+    content: ""; position: absolute; left: 3px; top: 0; width: 3.5px; height: 7px;
+    border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(40deg);
+  }
+  .flagbox.compila:checked { background: var(--flag-compila); border-color: var(--flag-compila); }
+  .flagbox.sonar:checked { background: var(--flag-sonar); border-color: var(--flag-sonar); }
+  .flagbox:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .methodsbtn {
+    display: flex; align-items: center; gap: 0.3rem; background: none; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 999px; color: var(--text-faint);
+    font-family: var(--mono); font-size: 0.66rem; padding: 0.1rem 0.5rem; flex-shrink: 0; margin-left: auto;
+  }
+  .methodsbtn:hover, .methodsbtn.open { border-color: var(--accent); color: var(--accent); }
+
+  .methodsrow { display: none; padding: 0.2rem 0.15rem 0.6rem 1.85rem; }
+  .methodsrow.open { display: block; }
+  .methodlist { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--border); }
+  .methoditem { display: flex; align-items: flex-start; gap: 0.55rem; padding: 0.28rem 0 0.28rem 0.75rem; }
+  .methoditem .mkind { font-family: var(--mono); font-size: 0.62rem; color: var(--text-faint); flex-shrink: 0; padding-top: 0.15rem; min-width: 78px; }
+  .methoditem .msig { font-family: var(--mono); font-size: 0.78rem; color: var(--text); overflow-wrap: anywhere; }
+
+  .empty-state { color: var(--text-faint); font-size: 0.85rem; padding: 2rem 0.5rem; text-align: center; font-family: var(--mono); }
+
+  footer.page-foot {
+    grid-column: 1 / -1; margin-top: 1rem; padding-top: 1.25rem; border-top: 1px solid var(--border);
+    font-size: 0.78rem; color: var(--text-faint); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+  }
+
+  .print-summary { display: none; }
+
+  @page { margin: 14mm 12mm; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  @media print {
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+      box-shadow: none !important;
+      transition: none !important;
+      animation: none !important;
+    }
+    html { font-size: 10.5pt; }
+    :root, html[data-theme="dark"], html[data-theme="light"] {
+      --bg: #ffffff; --surface: #ffffff; --surface-2: #f1f2ee; --border: #b9bcb2;
+      --text: #000000; --text-dim: #2c2f28; --text-faint: #52554d;
+      --accent: #175a49; --accent-strong: #0f3f34; --accent-soft: #dcece5;
+      --flag-compila: #1c4fb8; --flag-sonar: #5b21a6;
+    }
+    body { background: #fff; color: #000; }
+    .sidebar, #themeToggle, .search-box, .action-row, .methodsbtn { display: none !important; }
+    .flagchk { pointer-events: none; }
+    .print-summary {
+      display: block; margin: 0 0 1.1rem; padding: 0.55rem 0.85rem;
+      border: 1px solid #000; border-radius: 6px; font-family: var(--mono); font-size: 0.78rem;
+    }
+    .shell { grid-template-columns: 1fr; display: block; max-width: none; padding: 0; }
+    .page-head { border-bottom: 2px solid #000; align-items: baseline; }
+    .dir.collapsed > .dir-children { display: block !important; }
+    .dir-head { page-break-after: avoid; cursor: default; }
+    .methodsrow { display: block !important; padding-left: 1.85rem; }
+    .file-wrap, .methoditem { page-break-inside: avoid; }
+    .methodlist { border-left-color: #999; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  __FINALIZED_BANNER__
+  <header class="page-head">
+    <div>
+      <span class="eyebrow">Mapa de código-fonte</span>
+      <h1>__PROJECT_NAME__</h1>
+      <p class="sub">Estrutura de pastas, ficheiros por pasta e métodos de cada unit — vista gerada por análise estática do código-fonte, com checkboxes de Compila/Sonar guardadas neste navegador.</p>
+    </div>
+    <div class="head-right">
+      <div class="meta">gerado __GENERATED_DATE__<br>__ROOT_DISPLAY__</div>
+      <button id="themeToggle" type="button" title="Alternar tema">🌓</button>
+    </div>
+  </header>
+
+  <div class="print-summary" id="printSummary"></div>
+
+  <aside class="sidebar">
+    <div class="card">
+      <div class="stat-row"><span>Pastas</span><b id="statFolders">0</b></div>
+      <div class="stat-row"><span>Ficheiros</span><b id="statFiles">0</b></div>
+      <div class="stat-row"><span>Métodos</span><b id="statMethods">0</b></div>
+      <div class="stat-row"><span>Units com métodos</span><b id="statUnits">0</b></div>
+      <div class="stat-row"><span>Ficheiros · Compila</span><b id="statFilesCompila">0</b></div>
+      <div class="stat-row"><span>Ficheiros · Sonar</span><b id="statFilesSonar">0</b></div>
+      <div class="stat-row"><span>Métodos · Compila</span><b id="statMethodsCompila">0</b></div>
+      <div class="stat-row"><span>Métodos · Sonar</span><b id="statMethodsSonar">0</b></div>
+    </div>
+
+    <div class="search-box">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input id="search" type="text" placeholder="Filtrar por pasta, ficheiro ou método…" autocomplete="off">
+      <span class="search-hint">/</span>
+    </div>
+
+    <div class="action-row">
+      <button class="chip" id="printBtn" type="button" title="Expande tudo e imprime o mapa completo">🖨️ Imprimir (boa qualidade)</button>
+    </div>
+    <div class="action-row">
+      <button class="chip" id="expandAll" type="button">Expandir tudo</button>
+      <button class="chip" id="collapseAll" type="button">Colapsar tudo</button>
+    </div>
+    <div class="action-row">
+      <button class="chip" id="expandMethods" type="button">Expandir métodos</button>
+      <button class="chip" id="collapseMethods" type="button">Colapsar métodos</button>
+    </div>
+
+    <p class="vendor-note">__EXCLUDED_NOTE__</p>
+    <p class="vendor-note">
+      Os métodos de cada unit são extraídos automaticamente das declarações
+      <code>function</code>/<code>procedure</code>/<code>constructor</code>/<code>destructor</code>.
+      É uma heurística de análise estática, não um parser Delphi completo — units sem métodos
+      declarados (DTOs, modelos simples, exceções, tipos) não mostram o contador.
+    </p>
+    <p class="vendor-note">
+      As checkboxes <strong>C</strong> (Compila) e <strong>S</strong> (Sonar) junto a cada unit e
+      método ficam guardadas no navegador (localStorage) e sobrevivem a novas gerações desta página
+      no mesmo browser — ao contrário da estrutura de pastas/ficheiros/métodos, que é sempre recalculada.
+    </p>
+  </aside>
+
+  <main id="main"></main>
+
+  <footer class="page-foot">
+    <span>__PROJECT_NAME__ · __ROOT_DISPLAY__</span>
+    <span id="footcount"></span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var FILES = __FILES_JSON__;
+  var METHODS = __METHODS_JSON__;
+
+  var THEME_KEY = "offline-structure-map-theme";
+  var STORAGE_KEY = "__STORAGE_KEY__";
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  // state[path] = { compila: bool, sonar: bool, mc: {method: bool}, mq: {method: bool} }
+  var state = loadState();
+  // Progresso vindo da aplicação CodeManager: só é usado se este navegador ainda não tiver estado próprio.
+  try { if (localStorage.getItem(STORAGE_KEY) === null) state = __SEED_STATE__; } catch (e) {}
+  function rec(path) { return state[path] || (state[path] = {}); }
+  function methodFlag(path, name, key) {
+    var r = state[path];
+    return !!(r && r[key] && r[key][name]);
+  }
+  function setMethodFlag(path, name, key, val) {
+    var r = rec(path);
+    if (!r[key]) r[key] = {};
+    r[key][name] = val;
+    saveState();
+  }
+  function makeFlagCheckbox(label, title, kind, checked, onChange) {
+    var lab = document.createElement("label");
+    lab.className = "flagchk";
+    lab.title = title;
+    var inp = document.createElement("input");
+    inp.type = "checkbox";
+    inp.className = "flagbox " + kind;
+    inp.checked = checked;
+    inp.addEventListener("change", function () { onChange(inp.checked); });
+    var span = document.createElement("span");
+    span.textContent = label;
+    lab.appendChild(inp);
+    lab.appendChild(span);
+    return lab;
+  }
+
+  function methodsOf(path) { return METHODS[path] || []; }
+
+  function extOf(name) {
+    var i = name.lastIndexOf(".");
+    return i === -1 ? "" : name.slice(i);
+  }
+
+  // ---- nested folder/file tree from a flat list of "a/b/c.pas" paths ----
+  function buildTree(files) {
+    var root = { name: "", path: "", type: "dir", childrenMap: {}, children: [] };
+    files.forEach(function (f) {
+      var parts = f.split("/");
+      var node = root;
+      var acc = "";
+      for (var i = 0; i < parts.length; i++) {
+        var seg = parts[i];
+        acc = acc ? acc + "/" + seg : seg;
+        var isFile = i === parts.length - 1;
+        if (!node.childrenMap[seg]) {
+          var n = { name: seg, path: acc, type: isFile ? "file" : "dir", childrenMap: {}, children: [] };
+          node.childrenMap[seg] = n;
+          node.children.push(n);
+        }
+        node = node.childrenMap[seg];
+      }
+    });
+    sortTree(root);
+    return root;
+  }
+
+  function sortTree(node) {
+    node.children.sort(function (a, b) {
+      if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+    node.children.forEach(function (c) { if (c.type === "dir") sortTree(c); });
+  }
+
+  function countTree(node) {
+    var folders = 0, files = 0;
+    (function walk(n) {
+      n.children.forEach(function (c) {
+        if (c.type === "dir") { folders++; walk(c); }
+        else { files++; }
+      });
+    })(node);
+    return { folders: folders, files: files };
+  }
+
+  function matchesQuery(node, query) {
+    if (node.type === "file") {
+      if (node.name.toLowerCase().indexOf(query) !== -1) return true;
+      var ms = methodsOf(node.path);
+      for (var i = 0; i < ms.length; i++) {
+        if (ms[i].name.toLowerCase().indexOf(query) !== -1 || ms[i].sig.toLowerCase().indexOf(query) !== -1) return true;
+      }
+      return false;
+    }
+    return node.name.toLowerCase().indexOf(query) !== -1;
+  }
+
+  function filterTree(node, query) {
+    var filteredChildren = [];
+    node.children.forEach(function (c) {
+      if (c.type === "dir") {
+        var fc = filterTree(c, query);
+        if (fc) filteredChildren.push(fc);
+      } else if (matchesQuery(c, query)) {
+        filteredChildren.push(c);
+      }
+    });
+    if (filteredChildren.length || matchesQuery(node, query)) {
+      return { name: node.name, path: node.path, type: node.type, children: filteredChildren };
+    }
+    return null;
+  }
+
+  function renderFile(node) {
+    var wrap = document.createElement("div");
+    wrap.className = "file-wrap";
+
+    var row = document.createElement("div");
+    row.className = "file-row";
+
+    var dot = document.createElement("span");
+    dot.className = "dot";
+    row.appendChild(dot);
+
+    var ext = extOf(node.name);
+    var base = node.name.slice(0, node.name.length - ext.length);
+    var span = document.createElement("span");
+    span.className = "fname";
+    span.innerHTML = base + "<span class='fext'>" + ext + "</span>";
+    row.appendChild(span);
+
+    var r = rec(node.path);
+    var flagCompila = makeFlagCheckbox("C", "Compila sem erros", "compila", !!r.compila, function (val) {
+      r.compila = val;
+      saveState();
+      updateStats();
+    });
+    var flagSonar = makeFlagCheckbox("S", "SonarQube aprovado", "sonar", !!r.sonar, function (val) {
+      r.sonar = val;
+      saveState();
+      updateStats();
+    });
+    row.appendChild(flagCompila);
+    row.appendChild(flagSonar);
+
+    var mlist = methodsOf(node.path);
+    var methodsRow = null;
+    if (mlist.length) {
+      var mbtn = document.createElement("button");
+      mbtn.type = "button";
+      mbtn.className = "methodsbtn";
+      mbtn.textContent = mlist.length + (mlist.length === 1 ? " método" : " métodos");
+
+      methodsRow = document.createElement("div");
+      methodsRow.className = "methodsrow";
+      var mul = document.createElement("ul");
+      mul.className = "methodlist";
+      mlist.forEach(function (mm) {
+        var mli = document.createElement("li");
+        mli.className = "methoditem";
+        var mFlagCompila = makeFlagCheckbox("C", "Método compila sem erros", "compila",
+          methodFlag(node.path, mm.name, "mc"), function (val) {
+            setMethodFlag(node.path, mm.name, "mc", val);
+            updateStats();
+          });
+        var mFlagSonar = makeFlagCheckbox("S", "Método aprovado no SonarQube", "sonar",
+          methodFlag(node.path, mm.name, "mq"), function (val) {
+            setMethodFlag(node.path, mm.name, "mq", val);
+            updateStats();
+          });
+        var mkind = document.createElement("span");
+        mkind.className = "mkind";
+        mkind.textContent = mm.kind;
+        var msig = document.createElement("span");
+        msig.className = "msig";
+        msig.textContent = mm.sig;
+        mli.appendChild(mFlagCompila);
+        mli.appendChild(mFlagSonar);
+        mli.appendChild(mkind);
+        mli.appendChild(msig);
+        mul.appendChild(mli);
+      });
+      methodsRow.appendChild(mul);
+
+      mbtn.addEventListener("click", function () {
+        methodsRow.classList.toggle("open");
+        mbtn.classList.toggle("open");
+      });
+      row.appendChild(mbtn);
+    }
+
+    wrap.appendChild(row);
+    if (methodsRow) wrap.appendChild(methodsRow);
+    return wrap;
+  }
+
+  function renderTree(node, container) {
+    node.children.forEach(function (c) {
+      if (c.type === "dir") {
+        var counts = countTree(c);
+        var dirEl = document.createElement("div");
+        dirEl.className = "dir";
+
+        var head = document.createElement("div");
+        head.className = "dir-head";
+        head.innerHTML =
+          "<svg class='caret' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5'><polyline points='6 9 12 15 18 9'></polyline></svg>" +
+          "<span class='dname'>" + c.name + "/</span>" +
+          "<span class='dcount'>" + counts.files + " ficheiro" + (counts.files === 1 ? "" : "s") + "</span>";
+        head.addEventListener("click", function () { dirEl.classList.toggle("collapsed"); });
+
+        var childrenWrap = document.createElement("div");
+        childrenWrap.className = "dir-children";
+        renderTree(c, childrenWrap);
+
+        dirEl.appendChild(head);
+        dirEl.appendChild(childrenWrap);
+        container.appendChild(dirEl);
+      } else {
+        container.appendChild(renderFile(c));
+      }
+    });
+  }
+
+  var fullTree = buildTree(FILES);
+
+  function computeFlagStats() {
+    var filesCompila = 0, filesSonar = 0;
+    FILES.forEach(function (p) {
+      var r = state[p];
+      if (r && r.compila) filesCompila++;
+      if (r && r.sonar) filesSonar++;
+    });
+    var methodsCompila = 0, methodsSonar = 0, totalMethods = 0;
+    Object.keys(METHODS).forEach(function (p) {
+      METHODS[p].forEach(function (mm) {
+        totalMethods++;
+        if (methodFlag(p, mm.name, "mc")) methodsCompila++;
+        if (methodFlag(p, mm.name, "mq")) methodsSonar++;
+      });
+    });
+    return {
+      filesCompila: filesCompila, filesSonar: filesSonar, totalFiles: FILES.length,
+      methodsCompila: methodsCompila, methodsSonar: methodsSonar, totalMethods: totalMethods
+    };
+  }
+
+  function updateStats() {
+    var c = countTree(fullTree);
+    var totalMethods = 0, unitsWithMethods = 0;
+    Object.keys(METHODS).forEach(function (p) {
+      totalMethods += METHODS[p].length;
+      unitsWithMethods++;
+    });
+    document.getElementById("statFolders").textContent = c.folders;
+    document.getElementById("statFiles").textContent = c.files;
+    document.getElementById("statMethods").textContent = totalMethods;
+    document.getElementById("statUnits").textContent = unitsWithMethods;
+    document.getElementById("footcount").textContent = c.files + " ficheiro(s) · " + totalMethods + " método(s)";
+
+    var fs = computeFlagStats();
+    document.getElementById("statFilesCompila").textContent = fs.filesCompila + " / " + fs.totalFiles;
+    document.getElementById("statFilesSonar").textContent = fs.filesSonar + " / " + fs.totalFiles;
+    document.getElementById("statMethodsCompila").textContent = fs.methodsCompila + " / " + fs.totalMethods;
+    document.getElementById("statMethodsSonar").textContent = fs.methodsSonar + " / " + fs.totalMethods;
+    updatePrintSummary(fs);
+  }
+
+  function updatePrintSummary(fs) {
+    var el = document.getElementById("printSummary");
+    if (!el) return;
+    fs = fs || computeFlagStats();
+    el.innerHTML =
+      "Ficheiros: " + fs.filesCompila + "/" + fs.totalFiles + " compila &middot; " + fs.filesSonar + "/" + fs.totalFiles + " sonar" +
+      " — Métodos: " + fs.methodsCompila + "/" + fs.totalMethods + " compila &middot; " + fs.methodsSonar + "/" + fs.totalMethods + " sonar" +
+      "<br>impresso em " + new Date().toLocaleString();
+  }
+
+  function render() {
+    var main = document.getElementById("main");
+    main.innerHTML = "";
+    var query = document.getElementById("search").value.trim().toLowerCase();
+    var tree = query ? filterTree(fullTree, query) : fullTree;
+
+    if (!tree || !tree.children.length) {
+      var empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = "Nenhum resultado para esta pesquisa.";
+      main.appendChild(empty);
+    } else {
+      renderTree(tree, main);
+    }
+  }
+
+  document.getElementById("search").addEventListener("input", render);
+  document.getElementById("printBtn").addEventListener("click", function () {
+    document.getElementById("search").value = "";
+    render();
+    document.querySelectorAll(".dir").forEach(function (d) { d.classList.remove("collapsed"); });
+    document.querySelectorAll(".methodsrow").forEach(function (r) { r.classList.add("open"); });
+    document.querySelectorAll(".methodsbtn").forEach(function (b) { b.classList.add("open"); });
+    updatePrintSummary();
+    setTimeout(function () { window.print(); }, 50);
+  });
+  document.getElementById("expandAll").addEventListener("click", function () {
+    document.querySelectorAll(".dir").forEach(function (d) { d.classList.remove("collapsed"); });
+  });
+  document.getElementById("collapseAll").addEventListener("click", function () {
+    document.querySelectorAll(".dir").forEach(function (d) { d.classList.add("collapsed"); });
+  });
+  document.getElementById("expandMethods").addEventListener("click", function () {
+    document.querySelectorAll(".methodsrow").forEach(function (r) { r.classList.add("open"); });
+    document.querySelectorAll(".methodsbtn").forEach(function (b) { b.classList.add("open"); });
+  });
+  document.getElementById("collapseMethods").addEventListener("click", function () {
+    document.querySelectorAll(".methodsrow").forEach(function (r) { r.classList.remove("open"); });
+    document.querySelectorAll(".methodsbtn").forEach(function (b) { b.classList.remove("open"); });
+  });
+
+  // ---- theme toggle (light -> dark -> system) ----
+  function applyTheme(mode) {
+    var root = document.documentElement;
+    if (mode === "system") { delete root.dataset.theme; }
+    else { root.dataset.theme = mode; }
+    try { localStorage.setItem(THEME_KEY, mode); } catch (e) {}
+  }
+  var savedTheme = "system";
+  try { savedTheme = localStorage.getItem(THEME_KEY) || "system"; } catch (e) {}
+  applyTheme(savedTheme);
+  document.getElementById("themeToggle").addEventListener("click", function () {
+    savedTheme = savedTheme === "light" ? "dark" : savedTheme === "dark" ? "system" : "light";
+    applyTheme(savedTheme);
+  });
+
+  // ---- keyboard shortcut: "/" focuses search ----
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "/" && document.activeElement.tagName !== "INPUT") {
+      e.preventDefault();
+      document.getElementById("search").focus();
+    }
+  });
+
+  updateStats();
+  render();
+})();
+</script>
+</body>
+</html>

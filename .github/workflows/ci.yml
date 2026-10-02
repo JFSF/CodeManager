@@ -1,0 +1,24 @@
+name: CI
+
+# O Delphi nao existe nos runners alojados do GitHub: este fluxo corre num runner
+# self-hosted (Windows) que tenha o RAD Studio 13 instalado. Se o rsvars.bat estiver
+# noutro sitio, define a variavel CM_RSVARS no runner.
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: [self-hosted, windows, delphi]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compilar e testar
+        shell: cmd
+        run: ci.bat
+      - name: Sonar
+        if: ${{ vars.SONAR_HOST_URL != '' }}
+        shell: cmd
+        env:
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ci.bat sonar
