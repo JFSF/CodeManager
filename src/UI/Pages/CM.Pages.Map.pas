@@ -61,7 +61,7 @@ end;
 constructor TMapPage.Create(AOwner: TComponent; AParent: TFmxObject; const AHost: IPageHost);
 var
   Bar: TCMControl;
-  Side: TVertScrollBox;
+  Side: TCMFadeScroll;
   Card: TCMPanel;
   Holder: TCMPanel;
   Row: TCMButtonRow;

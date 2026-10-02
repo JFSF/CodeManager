@@ -6,8 +6,8 @@
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Types, System.Math,
-  FMX.Types, FMX.Controls, FMX.Layouts,
+  System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math,
+  FMX.Types, FMX.Controls, FMX.Graphics, FMX.Layouts,
   CM.Theme, CM.Controls;
 
 type
@@ -24,6 +24,13 @@ type
     property Wrap: Boolean read FWrap write FWrap;
   end;
 
+  // coluna que desliza sem barra de scroll nativa: mostra um esbatido nas bordas com mais conteudo
+  // e um indicador fino da posicao, nas cores do tema
+  TCMFadeScroll = class(TVertScrollBox)
+  protected
+    procedure PaintChildren; override;
+  end;
+
   // dois blocos lado a lado, cada um com metade da largura (menos o intervalo)
   TCMHalves = class(TCMControl)
   protected
@@ -31,15 +38,19 @@ type
   end;
 
   TCMChipFlow = class(TCMControl)
+  private
+    FOnRelayout: TNotifyEvent;
   protected
     procedure Resize; override;
   public
     procedure Relayout;
+    // avisa quando a altura mudou (o cartao que o contem ajusta-se)
+    property OnRelayout: TNotifyEvent read FOnRelayout write FOnRelayout;
   end;
 
 function NewCard(AOwner: TComponent; AParent: TFmxObject; AHeight: Single): TCMPanel;
 function SideCard(AOwner: TComponent; AParent: TFmxObject; AHeight: Single): TCMPanel;
-function SideBox(AOwner: TComponent; AParent: TFmxObject; AWidth: Single): TVertScrollBox;
+function SideBox(AOwner: TComponent; AParent: TFmxObject; AWidth: Single): TCMFadeScroll;
 function AddField(AOwner: TComponent; AParent: TFmxObject; const ACaption, APlaceholder: string;
   ABrowse: Boolean): TCMInput;
 function NewButtonRow(AOwner: TComponent; AParent: TFmxObject): TCMButtonRow;
@@ -135,6 +146,52 @@ begin
     end;
 end;
 
+{ TCMFadeScroll }
+
+procedure TCMFadeScroll.PaintChildren;
+const
+  FadeH = 38;
+  ThumbW = 4;
+var
+  Total, ViewH, Top, ThumbH, ThumbY: Single;
+  R: TRectF;
+
+  function Tint(AAlpha: Byte): TAlphaColor;
+  begin
+    Result := (Pal.Bg and $00FFFFFF) or (TAlphaColor(AAlpha) shl 24);
+  end;
+
+  procedure Fade(const ARect: TRectF; AFromAlpha, AToAlpha: Byte);
+  begin
+    Canvas.Fill.Kind := TBrushKind.Gradient;
+    Canvas.Fill.Gradient.Style := TGradientStyle.Linear;
+    Canvas.Fill.Gradient.StartPosition.Point := PointF(0, 0);
+    Canvas.Fill.Gradient.StopPosition.Point := PointF(0, 1);
+    Canvas.Fill.Gradient.Points[0].Color := Tint(AFromAlpha);
+    Canvas.Fill.Gradient.Points[0].Offset := 0;
+    Canvas.Fill.Gradient.Points[1].Color := Tint(AToAlpha);
+    Canvas.Fill.Gradient.Points[1].Offset := 1;
+    Canvas.FillRect(ARect, 0, 0, [], 1);
+  end;
+
+begin
+  inherited;
+  Total := ContentBounds.Height;
+  ViewH := Height;
+  if Total <= ViewH + 1 then
+    Exit;                                   // cabe tudo: nada a indicar
+  Top := ViewportPosition.Y;
+  if Top + ViewH < Total - 1 then
+    Fade(TRectF.Create(0, ViewH - FadeH, Width, ViewH), 0, 235);
+  if Top > 1 then
+    Fade(TRectF.Create(0, 0, Width, FadeH * 0.6), 235, 0);
+  // indicador de posicao (fino, junto a borda direita)
+  ThumbH := Max(28, ViewH * ViewH / Total);
+  ThumbY := (ViewH - ThumbH) * Top / (Total - ViewH);
+  R := TRectF.Create(Width - ThumbW - 1, ThumbY, Width - 1, ThumbY + ThumbH);
+  FillRound(Canvas, R, ThumbW / 2, Pal.BorderStrong);
+end;
+
 { TCMHalves }
 
 procedure TCMHalves.Resize;
@@ -160,7 +217,7 @@ end;
 procedure TCMChipFlow.Relayout;
 var
   I: Integer;
-  X, Y, RowH: Single;
+  X, Y, RowH, NewH: Single;
   C: TControl;
 begin
   X := 0;
@@ -180,7 +237,13 @@ begin
       X := X + C.Width + 6;
       RowH := Max(RowH, C.Height);
     end;
-  Height := Max(1, Y + RowH);
+  NewH := Max(1, Y + RowH);
+  if not SameValue(NewH, Height) then
+  begin
+    Height := NewH;
+    if Assigned(FOnRelayout) then
+      FOnRelayout(Self);
+  end;
 end;
 
 procedure TCMChipFlow.Resize;
@@ -208,9 +271,9 @@ begin
   Result.Margins.Bottom := 14;
 end;
 
-function SideBox(AOwner: TComponent; AParent: TFmxObject; AWidth: Single): TVertScrollBox;
+function SideBox(AOwner: TComponent; AParent: TFmxObject; AWidth: Single): TCMFadeScroll;
 begin
-  Result := TVertScrollBox.Create(AOwner);
+  Result := TCMFadeScroll.Create(AOwner);
   Result.Parent := AParent;
   Result.Align := TAlignLayout.Right;
   Result.Width := AWidth;

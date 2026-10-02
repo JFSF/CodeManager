@@ -29,16 +29,16 @@ type
 const
   LightPalette: TPalette = (
     Bg: $FFF6F7F4; Surface: $FFFFFFFF; Surface2: $FFEEF0EB; Border: $FFDCDED7; BorderStrong: $FFC4C7BE;
-    Text: $FF1B1E1A; TextDim: $FF63685F; TextFaint: $FF93978C;
+    Text: $FF1B1E1A; TextDim: $FF565B52; TextFaint: $FF676C62;
     Accent: $FF23705F; AccentStrong: $FF17493D; AccentSoft: $FFE3EDE9; OnAccent: $FFFFFFFF;
-    Star: $FFB8860B; Pending: $FF96730F; DoneStrike: $FF8B9088; FlagCompila: $FF2F6FED;
+    Star: $FFB8860B; Pending: $FF8A6500; DoneStrike: $FF6A6F65; FlagCompila: $FF2F6FED;
     FlagSonar: $FF8B5CF6; Danger: $FFB8452F; Hover: $FFEEF0EB);
 
   DarkPalette: TPalette = (
     Bg: $FF14171A; Surface: $FF1B1F22; Surface2: $FF202426; Border: $FF2C3134; BorderStrong: $FF3D4448;
-    Text: $FFE9EBE6; TextDim: $FF9AA09A; TextFaint: $FF666C67;
+    Text: $FFE9EBE6; TextDim: $FF9AA09A; TextFaint: $FF8A908B;
     Accent: $FF4FB89B; AccentStrong: $FF7FD6BC; AccentSoft: $FF1E2F2B; OnAccent: $FF0E1513;
-    Star: $FFE0B23C; Pending: $FFD7A53A; DoneStrike: $FF565B56; FlagCompila: $FF6FA8FF;
+    Star: $FFE0B23C; Pending: $FFD7A53A; DoneStrike: $FF858B86; FlagCompila: $FF6FA8FF;
     FlagSonar: $FFC9A6FF; Danger: $FFE0705A; Hover: $FF202426);
 
 function Pal: TPalette;

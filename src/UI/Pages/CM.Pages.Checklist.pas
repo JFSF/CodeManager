@@ -27,6 +27,8 @@ type
     FNoteUnit: TUnitInfo;
     FLoadingFields: Boolean;
     procedure Hint(const AText: string);
+    procedure FitProgressCard;
+    procedure FitChipsCard(Sender: TObject);
     procedure ListChanged(Sender: TObject);
     procedure SearchChanged(Sender: TObject);
     procedure StarOnlyClick(Sender: TObject);
@@ -68,7 +70,7 @@ end;
 constructor TChecklistPage.Create(AOwner: TComponent; AParent: TFmxObject; const AHost: IPageHost);
 var
   Bar: TCMControl;
-  Side: TVertScrollBox;
+  Side: TCMFadeScroll;
   Card: TCMPanel;
   Holder: TCMPanel;
   Row: TCMButtonRow;
@@ -105,6 +107,7 @@ begin
   FChips.Parent := Card;
   FChips.Align := TAlignLayout.Top;
   FChips.Margins.Top := 12;
+  FChips.OnRelayout := FitChipsCard;
 
   Card := SideCard(Self, Side, 300);
   TCMLabel.Make(Card, 'Ações', 15, True).Align := TAlignLayout.Top;
@@ -201,10 +204,17 @@ begin
   FList.StarOnly := FStarBtn.Active;
 end;
 
+// o cartao acompanha o numero de camadas (cada linha de barras tem 24 px)
+procedure TChecklistPage.FitProgressCard;
+begin
+  TCMPanel(FRing.Parent).Height := 16 + 16 + 26 + 12 + FRing.Height + 14 + Max(FBars.Height, 8);
+end;
+
 procedure TChecklistPage.ClearStats;
 begin
   FRing.SetValues(0, '0%', '0 / 0 ficheiros', 0, '0 / 0 (0%)');
   FBars.SetRows(nil);
+  FitProgressCard;
 end;
 
 procedure TChecklistPage.ShowStats(const St: TStats);
@@ -227,6 +237,7 @@ begin
     Bars[I].Total := St.Layers[I].Total;
   end;
   FBars.SetRows(Bars);
+  FitProgressCard;
 end;
 
 procedure TChecklistPage.RebuildChips;
@@ -234,7 +245,6 @@ var
   St: TStats;
   L: TLayerStat;
   B: TCMButton;
-  Card: TCMPanel;
 begin
   while FChips.ChildrenCount > 0 do
     FChips.Children[0].Free;
@@ -252,8 +262,13 @@ begin
     end;
   end;
   FChips.Relayout;
-  Card := TCMPanel(FChips.Parent);
-  Card.Height := 16 + 16 + 26 + 12 + Max(FChips.Height, 8);
+  FitChipsCard(nil);
+end;
+
+// o cartao dos filtros acompanha as linhas de "chips" (que quebram conforme a largura)
+procedure TChecklistPage.FitChipsCard(Sender: TObject);
+begin
+  TCMPanel(FChips.Parent).Height := 16 + 16 + 26 + 12 + Max(FChips.Height, 8);
 end;
 
 procedure TChecklistPage.ChipClick(Sender: TObject);

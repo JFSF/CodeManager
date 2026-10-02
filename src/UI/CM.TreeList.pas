@@ -972,7 +972,14 @@ var
   IR: TRectF;
 begin
   if APending then
-    FillRound(Canvas, ARect, 5, Pal.Pending)
+  begin
+    // por concluir (ha metodos por rever): caixa com traco, como uma caixa "indeterminada"
+    FillRound(Canvas, ARect, 5, Pal.Surface);
+    StrokeRound(Canvas, ARect, 5, Pal.Pending, 1.5);
+    IR := TRectF.Create(ARect.CenterPoint.X - 4.5, ARect.CenterPoint.Y - 1.25,
+      ARect.CenterPoint.X + 4.5, ARect.CenterPoint.Y + 1.25);
+    FillRound(Canvas, IR, 1.25, Pal.Pending);
+  end
   else if AChecked then
   begin
     FillRound(Canvas, ARect, 5, AColor);

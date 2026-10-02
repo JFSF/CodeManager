@@ -18,7 +18,7 @@ type
   private
     FHost: IPageHost;
     FEmpty: TCMLabel;
-    FScroll: TVertScrollBox;
+    FScroll: TCMFadeScroll;
     FBody: TCMControl;
     FEvoRow: TCMControl;
     FRows: array[0..2] of TCMHalves;
@@ -81,7 +81,7 @@ begin
   FEmpty.Height := 40;
   FEmpty.Margins.Top := 8;
 
-  FScroll := TVertScrollBox.Create(Self);
+  FScroll := TCMFadeScroll.Create(Self);
   FScroll.Parent := Self;
   FScroll.Align := TAlignLayout.Client;
   FScroll.ShowScrollBars := False;

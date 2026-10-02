@@ -94,7 +94,7 @@ end;
 constructor TProjectPage.Create(AOwner: TComponent; AParent: TFmxObject; const AHost: IPageHost);
 var
   Left: TCMPanel;
-  Right: TVertScrollBox;
+  Right: TCMFadeScroll;
   Card: TCMPanel;
   Row: TCMButtonRow;
   Sub: TCMLabel;
@@ -132,7 +132,7 @@ begin
   FProjList.OnSelect := ProjListSelect;
 
   // coluna direita: configuracao, accoes, resumo
-  Right := TVertScrollBox.Create(Self);
+  Right := TCMFadeScroll.Create(Self);
   Right.Parent := Self;
   Right.Align := TAlignLayout.Client;
   Right.ShowScrollBars := False;

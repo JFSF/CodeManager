@@ -976,7 +976,7 @@ begin
 
   TR := TRectF.Create(0, 78, Width, 96);
   DrawTextRect(Canvas, TR, 'Métodos revistos', P.TextDim, 11.5, MonoFont);
-  DrawTextRect(Canvas, TR, FMethodsCaption, P.Star, 11.5, MonoFont, [TFontStyle.fsBold],
+  DrawTextRect(Canvas, TR, FMethodsCaption, P.Pending, 11.5, MonoFont, [TFontStyle.fsBold],
     TTextAlign.Trailing);
   BarR := TRectF.Create(0, 100, Width, 105);
   FillRound(Canvas, BarR, 2.5, P.Surface2);
