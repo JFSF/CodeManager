@@ -20,8 +20,14 @@ type
     Simple: string;     // nome sem qualificacao ('Bar')
   end;
 
+  // estado de uma unit/metodo face ao plano (documento .md): so tem valor numa vista com plano
+  TPlanStatus = (psNone, psImplemented, psPlanned, psExtra);
+
   TUnitInfo = class
   public
+    PlanStatus: TPlanStatus;
+    PlannedPath: string;            // caminho previsto no plano quando a unit esta noutra pasta
+    MethodPlan: TArray<TPlanStatus>; // estado de cada metodo (mesmo indice de Methods); vazio sem plano
     Path: string;       // relativo a raiz, com '/'
     Dir: string;        // pasta relativa ('' na raiz)
     FileName: string;
@@ -29,6 +35,7 @@ type
     Methods: TArray<TMethodInfo>;
     function BaseName: string;
     function Ext: string;
+    function MethodStatus(AIndex: Integer): TPlanStatus;
   end;
 
   TScanProgress = reference to procedure(const Msg: string; Done, Total: Integer);
@@ -77,6 +84,12 @@ procedure ReconcileScan(AScan: TProjectScan; AChanges: TList<TScanChange>);
 // o caminho relativo passa por uma pasta ignorada?
 function IsPathExcluded(AScan: TProjectScan; const ARelPath: string): Boolean;
 function ExtractMethods(const AFilePath: string): TArray<TMethodInfo>;
+// o mesmo a partir de texto Delphi; sem "interface" o texto e tratado como declaracoes da interface
+function ExtractMethodsFromText(const AText: string): TArray<TMethodInfo>;
+// preenche Path/Dir/FileName/Layer de uma unit a partir do caminho relativo ('a/b/x.pas')
+procedure SetUnitPath(U: TUnitInfo; const ARel: string);
+// recalcula Folders/TotalMethods/UnitsWithMethods
+procedure RecountScan(AScan: TProjectScan);
 function SlugOf(const AText: string): string;
 
 implementation
@@ -186,6 +199,14 @@ begin
 end;
 
 { TUnitInfo }
+
+function TUnitInfo.MethodStatus(AIndex: Integer): TPlanStatus;
+begin
+  if (AIndex >= 0) and (AIndex < Length(MethodPlan)) then
+    Result := MethodPlan[AIndex]
+  else
+    Result := psNone;
+end;
 
 function TUnitInfo.Ext: string;
 begin
@@ -650,6 +671,7 @@ begin
         Cand := Name + '#' + IntToStr(N);
         Inc(N);
       end;
+      Info := Default(TMethodInfo);
       Info.Name := Cand;
       Info.Kind := R.Kind;
       Info.Sig := R.Sig;
@@ -684,11 +706,19 @@ begin
 end;
 
 function ExtractMethods(const AFilePath: string): TArray<TMethodInfo>;
+begin
+  Result := ExtractMethodsFromText(ReadSourceText(AFilePath));
+end;
+
+function ExtractMethodsFromText(const AText: string): TArray<TMethodInfo>;
 var
   Clean, Iface, Impl: string;
   Raw: TList<TRawMethod>;
 begin
-  Clean := CleanUnitText(ReadSourceText(AFilePath));
+  Clean := CleanUnitText(AText);
+  if not GReInterface.IsMatch(Clean) then
+    Clean := 'unit Plano;' + sLineBreak + 'interface' + sLineBreak + Clean + sLineBreak +
+      'implementation' + sLineBreak + 'end.';
   SplitSections(Clean, Iface, Impl);
   Raw := TList<TRawMethod>.Create;
   try

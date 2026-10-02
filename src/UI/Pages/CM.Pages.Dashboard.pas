@@ -11,7 +11,7 @@ uses
   System.Generics.Collections, System.Generics.Defaults,
   FMX.Types, FMX.Controls, FMX.Layouts,
   Chart4D.Types, Chart4D.Style, Chart4D.Axis, Chart4D.FMX,
-  CM.Theme, CM.Controls, CM.Layouts, CM.Analyzer, CM.Stats, CM.History, CM.Pages.Host;
+  CM.Theme, CM.Controls, CM.Layouts, CM.Analyzer, CM.Store, CM.Stats, CM.History, CM.Pages.Host;
 
 type
   TDashboardPage = class(TCMControl)
@@ -20,24 +20,30 @@ type
     FEmpty: TCMLabel;
     FScroll: TCMFadeScroll;
     FBody: TCMControl;
+    FKpiRow: TCMCardRow;
+    FKpi: array[0..3] of TCMKpi;
     FEvoRow: TCMControl;
-    FRows: array[0..2] of TCMHalves;
-    FEvolution, FLayers, FDonut, FStatus, FTop, FHist, FLayerMethods: TChart4D;
+    FRows: array[0..2] of TCMCardRow;
+    FEvolution, FLayers, FStatus, FTop, FHist, FLayerMethods, FCompilaSonar: TChart4D;
     FStats: TStats;
     FHasStats: Boolean;
     FDirty: Boolean;
     function AddChartCard(ARow: Integer): TChart4D;
     function MakeChart(AParent: TFmxObject; AFill: Boolean): TChart4D;
     procedure Rebuild;
+    procedure Relayout;
+    procedure FillKpis;
     procedure StyleAll;
     procedure FillEvolution;
     procedure FillLayers;
-    procedure FillDonut;
+    procedure FillCompilaSonar;
     procedure FillStatus;
     procedure FillTop;
     procedure FillHistogram;
     procedure FillLayerMethods;
     procedure Reset(AChart: TChart4D; AKind: TChartKind; const ATitle, ASubtitle: string);
+  protected
+    procedure Resize; override;
   public
     constructor Create(AOwner: TComponent; AParent: TFmxObject; const AHost: IPageHost); reintroduce;
     procedure ApplyTheme;
@@ -51,7 +57,8 @@ implementation
 
 const
   ChartScale = 0.6;
-  CardHeight = 380;
+  KpiHeight = 100;
+  RowGap = 14;
 
 function ThemedStyle: TChartStyle;
 begin
@@ -89,30 +96,70 @@ begin
   FBody := TCMControl.Create(Self);
   FBody.Parent := FScroll;
   FBody.Align := TAlignLayout.Top;
-  FBody.Height := 4 * CardHeight;
+  FBody.Height := 1200;
   FBody.Visible := False;
+  FKpiRow := TCMCardRow.Create(Self);
+  FKpiRow.Parent := FBody;
+  FKpiRow.Align := TAlignLayout.Top;
+  FKpiRow.Height := KpiHeight + RowGap;
+  FKpiRow.Padding.Bottom := RowGap;
+  FKpiRow.Columns := 4;
+  for I := 0 to 3 do
+  begin
+    FKpi[I] := TCMKpi.Create(Self);
+    FKpi[I].Parent := FKpiRow;
+  end;
   FEvoRow := TCMControl.Create(Self);
   FEvoRow.Parent := FBody;
   FEvoRow.Align := TAlignLayout.Top;
-  FEvoRow.Height := CardHeight;
-  FEvoRow.Padding.Bottom := 14;
+  FEvoRow.Height := 380;
+  FEvoRow.Padding.Bottom := RowGap;
   for I := 0 to 2 do
   begin
-    FRows[I] := TCMHalves.Create(Self);
+    FRows[I] := TCMCardRow.Create(Self);
     FRows[I].Parent := FBody;
     FRows[I].Align := TAlignLayout.Top;
-    FRows[I].Height := CardHeight;
-    FRows[I].Padding.Bottom := 14;
+    FRows[I].Height := 380;
+    FRows[I].Padding.Bottom := RowGap;
   end;
 
   FEvolution := MakeChart(FEvoRow, True);
   FLayers := AddChartCard(0);
-  FDonut := AddChartCard(0);
-  FStatus := AddChartCard(1);
+  FStatus := AddChartCard(0);
   FTop := AddChartCard(1);
+  FLayerMethods := AddChartCard(1);
   FHist := AddChartCard(2);
-  FLayerMethods := AddChartCard(2);
+  FCompilaSonar := AddChartCard(2);
   StyleAll;
+  Relayout;
+end;
+
+procedure TDashboardPage.Resize;
+begin
+  inherited;
+  if FBody <> nil then
+    Relayout;
+end;
+
+// alturas conforme o espaco: dois graficos por altura de janela, e em janelas estreitas os
+// cartoes passam para menos colunas (numeros 4 -> 2, graficos 2 -> 1)
+procedure TDashboardPage.Relayout;
+var
+  Narrow: Boolean;
+  Cell: Single;
+  I: Integer;
+begin
+  Narrow := Width < 940;
+  Cell := EnsureRange((Height - KpiHeight - 3 * RowGap) / 2, 300, 460);
+  if Narrow then FKpiRow.Columns := 2 else FKpiRow.Columns := 4;
+  FKpiRow.Height := FKpiRow.HeightFor(KpiHeight);
+  FEvoRow.Height := Cell + RowGap;
+  for I := 0 to High(FRows) do
+  begin
+    if Narrow then FRows[I].Columns := 1 else FRows[I].Columns := 2;
+    FRows[I].Height := FRows[I].HeightFor(Cell);
+  end;
+  FBody.Height := FKpiRow.Height + FEvoRow.Height + FRows[0].Height + FRows[1].Height + FRows[2].Height;
 end;
 
 function TDashboardPage.AddChartCard(ARow: Integer): TChart4D;
@@ -141,7 +188,7 @@ procedure TDashboardPage.StyleAll;
 var
   C: TChart4D;
 begin
-  for C in [FEvolution, FLayers, FDonut, FStatus, FTop, FHist, FLayerMethods] do
+  for C in [FEvolution, FLayers, FStatus, FTop, FHist, FLayerMethods, FCompilaSonar] do
     C.Plot.Style := ThemedStyle;
 end;
 
@@ -196,13 +243,14 @@ begin
   FBody.Visible := not FEmpty.Visible;
   if FEmpty.Visible then
     Exit;
+  FillKpis;
   FillEvolution;
   FillLayers;
-  FillDonut;
   FillStatus;
   FillTop;
   FillHistogram;
   FillLayerMethods;
+  FillCompilaSonar;
 end;
 
 procedure TDashboardPage.FillEvolution;
@@ -276,20 +324,85 @@ begin
   FLayers.Plot.AddSeries('Por concluir', Pending).Color := Pal.BorderStrong;
 end;
 
-procedure TDashboardPage.FillDonut;
+procedure TDashboardPage.FillKpis;
+const
+  MaxSpark = 30;           // ultimos registos na mini-curva
 var
-  Pct: Integer;
+  History: THistory;
+  Files, Methods, Compila, Sonar: TArray<Double>;
+  I, First, N: Integer;
+
+  function Pct(AValue, ATotal: Integer): Integer;
+  begin
+    if ATotal > 0 then Result := Round(100 * AValue / ATotal) else Result := 0;
+  end;
+
 begin
-  Reset(FDonut, TChartKind.Donut, 'Ficheiros concluídos',
-    Format('%d de %d ficheiros', [FStats.DoneFiles, FStats.Files]));
-  FDonut.Plot.LegendPosition := TLegendPosition.Bottom;
-  FDonut.Plot.Categories := ['Concluídos', 'Por concluir'];
-  FDonut.Plot.AddSeries('Ficheiros', [FStats.DoneFiles, FStats.Files - FStats.DoneFiles]);
-  if FStats.Files > 0 then
-    Pct := Round(100 * FStats.DoneFiles / FStats.Files)
-  else
-    Pct := 0;
-  FDonut.Plot.DonutCenterText := Format('%d%%', [Pct]);
+  History := FHost.CurrentHistory;
+  First := Max(0, History.Count - MaxSpark);
+  N := History.Count - First;
+  SetLength(Files, N);
+  SetLength(Methods, N);
+  SetLength(Compila, N);
+  SetLength(Sonar, N);
+  for I := 0 to N - 1 do
+  begin
+    Files[I] := History[First + I].PercentFiles;
+    Methods[I] := History[First + I].PercentMethods;
+    Compila[I] := History[First + I].PercentFilesCompila;
+    Sonar[I] := History[First + I].PercentFilesSonar;
+  end;
+  FKpi[0].SetData('Ficheiros concluídos', Format('%d / %d', [FStats.DoneFiles, FStats.Files]),
+    Format('%d%% do projeto', [Pct(FStats.DoneFiles, FStats.Files)]), Files, Pal.Accent);
+  FKpi[1].SetData('Métodos revistos', Format('%d / %d', [FStats.DoneMethods, FStats.Methods]),
+    Format('%d%% dos métodos', [Pct(FStats.DoneMethods, FStats.Methods)]), Methods, Pal.FlagCompila);
+  FKpi[2].SetData('Compila', Format('%d / %d', [FStats.FilesCompila, FStats.Files]),
+    Format('%d%% dos ficheiros', [Pct(FStats.FilesCompila, FStats.Files)]), Compila, Pal.FlagCompila);
+  FKpi[3].SetData('Sonar', Format('%d / %d', [FStats.FilesSonar, FStats.Files]),
+    Format('%d%% dos ficheiros', [Pct(FStats.FilesSonar, FStats.Files)]), Sonar, Pal.FlagSonar);
+end;
+
+procedure TDashboardPage.FillCompilaSonar;
+var
+  Names: TArray<string>;
+  Compila, Sonar: TArray<Double>;
+  Index: TDictionary<string, Integer>;
+  U: TUnitInfo;
+  S: TUnitState;
+  Idx: Integer;
+begin
+  Index := TDictionary<string, Integer>.Create;
+  try
+    SetLength(Names, 0);
+    SetLength(Compila, 0);
+    SetLength(Sonar, 0);
+    if FHost.CurrentScan <> nil then
+      for U in FHost.CurrentScan.Units do
+      begin
+        if not Index.TryGetValue(U.Layer, Idx) then
+        begin
+          Idx := Length(Names);
+          Index.Add(U.Layer, Idx);
+          SetLength(Names, Idx + 1);
+          SetLength(Compila, Idx + 1);
+          SetLength(Sonar, Idx + 1);
+          Names[Idx] := U.Layer;
+        end;
+        S := FHost.CurrentState.Find(U.Path);
+        if S <> nil then
+        begin
+          if S.Compila then Compila[Idx] := Compila[Idx] + 1;
+          if S.Sonar then Sonar[Idx] := Sonar[Idx] + 1;
+        end;
+      end;
+  finally
+    Index.Free;
+  end;
+  Reset(FCompilaSonar, TChartKind.GroupedBar, 'Compila e Sonar por camada', 'Ficheiros com cada marca');
+  FCompilaSonar.Plot.LegendPosition := TLegendPosition.Top;
+  FCompilaSonar.Plot.Categories := Names;
+  FCompilaSonar.Plot.AddSeries('Compila', Compila).Color := Pal.FlagCompila;
+  FCompilaSonar.Plot.AddSeries('Sonar', Sonar).Color := Pal.FlagSonar;
 end;
 
 procedure TDashboardPage.FillStatus;

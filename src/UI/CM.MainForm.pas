@@ -11,7 +11,7 @@ uses
   System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math, System.IOUtils,
   System.Generics.Collections, System.StrUtils,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Edit, FMX.Printer,
-  CM.Theme, CM.Controls, CM.TreeList, CM.Analyzer, CM.Store, CM.Stats, CM.History, CM.Export, CM.Print,
+  CM.Theme, CM.Controls, CM.TreeList, CM.Analyzer, CM.Store, CM.Stats, CM.History, CM.Plan, CM.Export, CM.Print,
   CM.Pages.Host, CM.Pages.Project, CM.Pages.Map, CM.Pages.Checklist, CM.Pages.Dashboard;
 
 type
@@ -20,6 +20,9 @@ type
     FSettings: TAppSettings;
     FProfile: TProjectProfile;
     FScan: TProjectScan;
+    FPlan: TProjectScan;          // analise do documento do plano (nil sem plano)
+    FPlanView: TProjectScan;      // codigo cruzado com o plano (so existe com os dois)
+    FPlanSummary: TPlanSummary;
     FState: TProgressState;
     FHistory: THistory;
     FPage: TPage;
@@ -73,6 +76,10 @@ type
     function GetCurrentState: TProgressState;
     function GetCurrentHistory: THistory;
     function GetShuttingDown: Boolean;
+    function GetHasPlan: Boolean;
+    function GetPlanSummary: TPlanSummary;
+    function MapScan: TProjectScan;
+    function SwapPlanView: TProjectScan;
     procedure Toast(const AText: string);
     procedure MarkStateDirty;
     procedure MarkSettingsDirty;
@@ -80,7 +87,7 @@ type
     procedure ShowPage(APage: TPage);
     procedure SelectProject(AProfile: TProjectProfile);
     procedure DetachProfile;
-    procedure BindScan(AScan: TProjectScan);
+    procedure BindScan(AScan, APlan: TProjectScan);
     procedure UpdateAll;
     procedure UpdateHeader;
     procedure RefreshAllLists;
@@ -172,6 +179,8 @@ destructor TMainForm.Destroy;
 begin
   FShuttingDown := True;
   FProject.StopWatch;
+  FPlanView.Free;
+  FPlan.Free;
   FScan.Free;
   FHistory.Free;
   FState.Free;
@@ -400,6 +409,36 @@ begin
   Result := FHistory;
 end;
 
+function TMainForm.GetHasPlan: Boolean;
+begin
+  Result := FPlanView <> nil;
+end;
+
+function TMainForm.GetPlanSummary: TPlanSummary;
+begin
+  Result := FPlanSummary;
+end;
+
+// o que o Mapa mostra: a vista cruzada com o plano, ou a analise do codigo
+function TMainForm.MapScan: TProjectScan;
+begin
+  if FPlanView <> nil then
+    Result := FPlanView
+  else
+    Result := FScan;
+end;
+
+// reconstroi a vista cruzada; devolve a anterior para quem chama a libertar depois de as listas
+// deixarem de a usar
+function TMainForm.SwapPlanView: TProjectScan;
+begin
+  Result := FPlanView;
+  FPlanView := nil;
+  FPlanSummary := Default(TPlanSummary);
+  if (FScan <> nil) and (FPlan <> nil) then
+    FPlanView := MergePlan(FScan, FPlan, FPlanSummary);
+end;
+
 function TMainForm.GetShuttingDown: Boolean;
 begin
   Result := FShuttingDown;
@@ -497,12 +536,14 @@ begin
 
   FProject.LoadFields(AProfile);
   FCk.CloseNote(nil);
-  BindScan(nil);
+  BindScan(nil, nil);
   FProject.ResetStatus;
   FProject.RefreshProjectList;
   UpdateHeader;
 
-  if (AProfile.RootPath <> '') and TDirectory.Exists(AProfile.RootPath) then
+  // analisa ao abrir: a pasta de codigo, ou so o documento do plano quando nao ha pasta
+  if ((AProfile.RootPath <> '') and TDirectory.Exists(AProfile.RootPath)) or
+     ((AProfile.RootPath = '') and (AProfile.PlanPath <> '') and TFile.Exists(AProfile.PlanPath)) then
     FProject.StartScan;
 end;
 
@@ -514,18 +555,23 @@ begin
   FHistory.Clear;
 end;
 
-procedure TMainForm.BindScan(AScan: TProjectScan);
+procedure TMainForm.BindScan(AScan, APlan: TProjectScan);
 var
-  Old: TProjectScan;
+  Old, OldPlan, OldView: TProjectScan;
 begin
   FProject.StopWatch;            // o vigia e da analise anterior (a pasta pode ter mudado)
   Old := FScan;
+  OldPlan := FPlan;
   FScan := AScan;
+  FPlan := APlan;
   // progresso guardado antes de os metodos passarem a ter chave qualificada (TFoo.Bar)
   if (FScan <> nil) and MigrateMethodKeys(FScan, FState) then
     MarkStateDirty;
-  FMap.List.LoadData(FScan, FState);
+  OldView := SwapPlanView;
+  FMap.List.LoadData(MapScan, FState);
   FCk.List.LoadData(FScan, FState);
+  OldView.Free;
+  OldPlan.Free;
   Old.Free;
   FCk.RebuildChips;
   UpdateAll;
@@ -542,13 +588,18 @@ end;
 
 // reflecte nas duas vistas o que mudou na analise, sem perder scroll nem pastas abertas
 procedure TMainForm.ScanChangesApplied(const AFlashKeys: TArray<string>);
+var
+  OldView: TProjectScan;
 begin
   if FScan <> nil then
     FCk.CloseNoteIfRemoved(FScan);
+  OldView := SwapPlanView;
+  FMap.List.UseScan(MapScan);
   FMap.List.ReloadKeepView;
   FCk.List.ReloadKeepView;
   FMap.List.MarkChanged(AFlashKeys);
   FCk.List.MarkChanged(AFlashKeys);
+  OldView.Free;
   FCk.RebuildChips;
   UpdateAll;
   UpdateHeader;
@@ -733,6 +784,26 @@ begin
     if (Arg = 'dark') <> (ThemeMode = tmDark) then
       ThemeClick(nil);
   end
+  else if Cmd = 'size' then
+  begin
+    // size:largura,altura - redimensiona a area cliente (testar a disposicao em janelas pequenas)
+    Parts := Arg.Split([',']);
+    ClientWidth := StrToInt(Parts[0]);
+    ClientHeight := StrToInt(Parts[1]);
+  end
+  else if Cmd = 'hint' then
+  begin
+    // hint:x,y - poe o rato em (x,y) e regista no dev.log a dica que o controlo mostraria
+    Parts := Arg.Split([',']);
+    X := StrToFloat(Parts[0], TFormatSettings.Invariant);
+    Y := StrToFloat(Parts[1], TFormatSettings.Invariant);
+    MouseMove([], X, Y);
+    case FPage of
+      pgMap: TFile.AppendAllText('dev.log', 'dica(mapa)=[' + FMap.List.Hint + ']' + sLineBreak);
+      pgChecklist: TFile.AppendAllText('dev.log', 'dica(checklist)=[' + FCk.List.Hint + ']' + sLineBreak);
+      pgProject: TFile.AppendAllText('dev.log', 'dica(projeto)=[' + FProject.ProjectsHint + ']' + sLineBreak);
+    end;
+  end
   else if Cmd = 'toast' then
     Toast(Arg)
   else if Cmd = 'notetext' then
@@ -770,11 +841,13 @@ begin
   end
   else if Cmd = 'setproj' then
   begin
-    // setproj:nome,pasta raiz,pasta de destino - preenche o projecto activo e analisa
+    // setproj:nome,pasta raiz,pasta de destino[,plano.md] - preenche o projecto activo e analisa
     Parts := Arg.Split([',']);
     FProject.NameIn.Text := Parts[0];
     FProject.RootIn.Text := Parts[1];
     FProject.OutIn.Text := Parts[2];
+    if Length(Parts) > 3 then
+      FProject.PlanIn.Text := Parts[3];
     FProject.StartScan;
   end
   else if Cmd = 'watch' then

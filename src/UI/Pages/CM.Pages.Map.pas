@@ -6,10 +6,10 @@
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Types, System.IOUtils,
+  System.SysUtils, System.Classes, System.Types, System.IOUtils, System.Generics.Collections,
   FMX.Types, FMX.Controls, FMX.Layouts, FMX.Dialogs, FMX.Printer,
   CM.Theme, CM.Controls, CM.Layouts, CM.TreeList, CM.Analyzer, CM.Store, CM.Stats, CM.Export,
-  CM.Print, CM.Pages.Host;
+  CM.Print, CM.Plan, CM.Pages.Host;
 
 type
   TMapPage = class(TCMControl)
@@ -21,6 +21,7 @@ type
     FExpMethods, FExpProgress: TCMSwitch;
     procedure Hint(const AText: string);
     procedure ListChanged(Sender: TObject);
+    procedure FitStatsCard;
     procedure SearchChanged(Sender: TObject);
     procedure ExpandAllClick(Sender: TObject);
     procedure CollapseAllClick(Sender: TObject);
@@ -170,22 +171,51 @@ begin
   FList.Query := FSearch.Text;
 end;
 
+// o cartao das estatisticas acompanha o numero de linhas (28 px cada)
+procedure TMapPage.FitStatsCard;
+begin
+  TCMPanel(FStats.Parent).Height := 16 + 16 + 28 + 8 + FStats.Height;
+end;
+
 procedure TMapPage.ClearStats;
 begin
   FStats.SetRows([KV('Pastas', '—'), KV('Ficheiros', '—'), KV('Métodos', '—'),
     KV('Units com métodos', '—'), KV('Ficheiros · Compila', '—'), KV('Ficheiros · Sonar', '—'),
     KV('Métodos · Compila', '—'), KV('Métodos · Sonar', '—')]);
+  FitStatsCard;
 end;
 
 procedure TMapPage.ShowStats(const St: TStats);
+var
+  Rows: TList<TKeyValue>;
+  S: TPlanSummary;
 begin
-  FStats.SetRows([
-    KV('Pastas', St.Folders.ToString), KV('Ficheiros', St.Files.ToString),
-    KV('Métodos', St.Methods.ToString), KV('Units com métodos', St.UnitsWithMethods.ToString),
-    KV('Ficheiros · Compila', Format('%d / %d', [St.FilesCompila, St.Files])),
-    KV('Ficheiros · Sonar', Format('%d / %d', [St.FilesSonar, St.Files])),
-    KV('Métodos · Compila', Format('%d / %d', [St.MethodsCompila, St.Methods])),
-    KV('Métodos · Sonar', Format('%d / %d', [St.MethodsSonar, St.Methods]))]);
+  Rows := TList<TKeyValue>.Create;
+  try
+    Rows.Add(KV('Pastas', St.Folders.ToString));
+    Rows.Add(KV('Ficheiros', St.Files.ToString));
+    Rows.Add(KV('Métodos', St.Methods.ToString));
+    Rows.Add(KV('Units com métodos', St.UnitsWithMethods.ToString));
+    Rows.Add(KV('Ficheiros · Compila', Format('%d / %d', [St.FilesCompila, St.Files])));
+    Rows.Add(KV('Ficheiros · Sonar', Format('%d / %d', [St.FilesSonar, St.Files])));
+    Rows.Add(KV('Métodos · Compila', Format('%d / %d', [St.MethodsCompila, St.Methods])));
+    Rows.Add(KV('Métodos · Sonar', Format('%d / %d', [St.MethodsSonar, St.Methods])));
+    if FHost.HasPlan then
+    begin
+      // plano x codigo: o que ja existe do que estava previsto, o que falta e o que sobra
+      S := FHost.PlanSummary;
+      Rows.Add(KV('Plano · ficheiros', Format('%d / %d (%.0f%%)', [S.ImplementedFiles, S.PlannedFiles,
+        S.FilesCoverage]), True));
+      Rows.Add(KV('Plano · métodos', Format('%d / %d (%.0f%%)', [S.ImplementedMethods, S.PlannedMethods,
+        S.MethodsCoverage]), True));
+      Rows.Add(KV('Por implementar', Format('%d fich. · %d mét.', [S.MissingFiles, S.MissingMethods])));
+      Rows.Add(KV('Extra no código', Format('%d fich. · %d mét.', [S.ExtraFiles, S.ExtraMethods])));
+    end;
+    FStats.SetRows(Rows.ToArray);
+  finally
+    Rows.Free;
+  end;
+  FitStatsCard;
 end;
 
 procedure TMapPage.ExpandAllClick(Sender: TObject);

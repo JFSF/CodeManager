@@ -23,6 +23,8 @@ type
     // percentagem (0..100) de ficheiros concluidos / metodos revistos; 0 quando nao ha total
     function PercentFiles: Double;
     function PercentMethods: Double;
+    function PercentFilesCompila: Double;
+    function PercentFilesSonar: Double;
     // o dia como TDateTime (False se a data for invalida)
     function TryDay(out ADay: TDateTime): Boolean;
   end;
@@ -98,6 +100,16 @@ end;
 function TSnapshot.PercentMethods: Double;
 begin
   if Methods > 0 then Result := 100 * DoneMethods / Methods else Result := 0;
+end;
+
+function TSnapshot.PercentFilesCompila: Double;
+begin
+  if Files > 0 then Result := 100 * FilesCompila / Files else Result := 0;
+end;
+
+function TSnapshot.PercentFilesSonar: Double;
+begin
+  if Files > 0 then Result := 100 * FilesSonar / Files else Result := 0;
 end;
 
 function TSnapshot.TryDay(out ADay: TDateTime): Boolean;

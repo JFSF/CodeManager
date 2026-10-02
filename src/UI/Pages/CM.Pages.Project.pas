@@ -11,7 +11,7 @@ uses
   FMX.Types, FMX.Controls, FMX.Layouts, FMX.Dialogs, FMX.DialogService.Sync,
   Winapi.Windows, Winapi.ShellAPI,
   CM.Theme, CM.Controls, CM.Layouts, CM.TreeList, CM.Analyzer, CM.Store, CM.Stats, CM.Html,
-  CM.Watcher, CM.Pages.Host;
+  CM.Watcher, CM.Plan, CM.Pages.Host;
 
 type
   TProjectPage = class(TCMControl)
@@ -24,7 +24,8 @@ type
     FWatchTimer: TTimer;
 
     FProjList: TCMList;
-    FNameIn, FRootIn, FOutIn, FExcludeIn: TCMInput;
+    FStepsBox: TCMControl;
+    FNameIn, FRootIn, FOutIn, FPlanIn, FExcludeIn: TCMInput;
     FOpenSwitch: TCMSwitch;
     FWatchSwitch: TCMSwitch;
     FBtnScan, FBtnExportMap, FBtnExportCk, FBtnFinalize, FBtnRemove: TCMButton;
@@ -36,13 +37,15 @@ type
     procedure FieldChanged(Sender: TObject);
     procedure BrowseRoot(Sender: TObject);
     procedure BrowseOut(Sender: TObject);
+    procedure BrowsePlan(Sender: TObject);
     procedure OpenSwitchChanged(Sender: TObject);
     procedure NewProjectClick(Sender: TObject);
     procedure RemoveProjectClick(Sender: TObject);
     procedure ScanClick(Sender: TObject);
     procedure SetBusy(ABusy: Boolean);
     procedure ScanProgress(AToken: Integer; const AMsg: string; ADone, ATotal: Integer);
-    procedure ScanDone(AToken: Integer; AScan: TProjectScan; const AError: string);
+    procedure ScanDone(AToken: Integer; AScan, APlan: TProjectScan; const AWarnings: TArray<string>;
+      const AError: string);
     procedure WatcherSignal(Sender: TObject);
     procedure WatchTimerTick(Sender: TObject);
     procedure ApplyWatchChanges;
@@ -76,9 +79,12 @@ type
     procedure UpdateFinalizeButton;
     function ExportMap(AQuiet: Boolean): Boolean;
     procedure ExportChecklist;
+    // dica actual da lista de projectos (usada pelo modo de desenvolvimento)
+    function ProjectsHint: string;
     property NameIn: TCMInput read FNameIn;
     property RootIn: TCMInput read FRootIn;
     property OutIn: TCMInput read FOutIn;
+    property PlanIn: TCMInput read FPlanIn;
     property WatchSwitch: TCMSwitch read FWatchSwitch;
   end;
 
@@ -122,6 +128,19 @@ begin
   Sub := TCMLabel.Make(Left, 'Cada projeto guarda o seu progresso.', 12, False, lcFaint);
   Sub.Align := TAlignLayout.Top;
   Sub.Margins.Bottom := 12;
+  // orientacao enquanto o projecto ainda nao foi analisado (some quando ha analise)
+  FStepsBox := TCMControl.Create(Self);
+  FStepsBox.Parent := Left;
+  FStepsBox.Align := TAlignLayout.Bottom;
+  FStepsBox.Height := 92;
+  Sub := TCMLabel.Make(FStepsBox, 'Primeiros passos', 13, True);
+  Sub.Align := TAlignLayout.Top;
+  Sub.Height := 26;
+  Sub := TCMLabel.Make(FStepsBox, '1. Escolha a pasta do projeto e/ou o plano (.md)' + sLineBreak +
+    '2. Clique em «Analisar projeto»' + sLineBreak + '3. Reveja no Mapa, na Checklist e no Painel',
+    12.5, False, lcDim);
+  Sub.Align := TAlignLayout.Top;
+  Sub.Height := 62;
   NewBtn := TCMButton.Make(Left, 'Novo projeto', icPlus, bkSecondary, NewProjectClick);
   NewBtn.Align := TAlignLayout.Bottom;
   NewBtn.Height := 38;
@@ -137,11 +156,13 @@ begin
   Right.Align := TAlignLayout.Client;
   Right.ShowScrollBars := False;
 
-  Card := NewCard(Self, Right, 492);
+  Card := NewCard(Self, Right, 574);
   TCMLabel.Make(Card, 'Configuração', 15, True).Align := TAlignLayout.Top;
   FNameIn := AddField(Self, Card, 'Nome do projeto', 'ex.: AssisTEC', False);
   FRootIn := AddField(Self, Card, 'Localização do projeto (pasta raiz a analisar)', 'C:\Projetos\MeuProjeto', True);
   FOutIn := AddField(Self, Card, 'Pasta onde guardar as páginas HTML', 'C:\Projetos\MeuProjeto\docs', True);
+  FPlanIn := AddField(Self, Card, 'Documento do plano (.md) — opcional: estrutura e código previstos',
+    'C:\Projetos\MeuProjeto\docs\plano.md', True);
   FExcludeIn := AddField(Self, Card, 'Pastas a ignorar (separadas por vírgulas)', ExcludedDirsText, False);
   FOpenSwitch := TCMSwitch.Create(Self);
   FOpenSwitch.Parent := Card;
@@ -155,16 +176,18 @@ begin
   FWatchSwitch.Margins.Top := 6;
   FWatchSwitch.Text := 'Acompanhar alterações na pasta do projeto';
   FWatchSwitch.OnChange := WatchSwitchChanged;
-  Sub := TCMLabel.Make(Card, 'Em branco = predefinidas. Analisa .pas, .dpr e .dpk. Depois de alterar, volte a analisar.',
+  Sub := TCMLabel.Make(Card, 'Em branco = predefinidas. Analisa .pas, .dpr e .dpk. Com pasta e plano, o Mapa mostra o que falta e o que sobra.',
     11.5, False, lcFaint, True);
   Sub.Align := TAlignLayout.Top;
   Sub.Margins.Top := 10;
   FNameIn.OnChangeText := FieldChanged;
   FRootIn.OnChangeText := FieldChanged;
   FOutIn.OnChangeText := FieldChanged;
+  FPlanIn.OnChangeText := FieldChanged;
   FExcludeIn.OnChangeText := FieldChanged;
   FRootIn.OnTrailingClick := BrowseRoot;
   FOutIn.OnTrailingClick := BrowseOut;
+  FPlanIn.OnTrailingClick := BrowsePlan;
 
   Card := NewCard(Self, Right, 192);
   TCMLabel.Make(Card, 'Ações', 15, True).Align := TAlignLayout.Top;
@@ -198,11 +221,17 @@ begin
   inherited;
 end;
 
+function TProjectPage.ProjectsHint: string;
+begin
+  Result := FProjList.Hint;
+end;
+
 procedure TProjectPage.ApplyTheme;
 begin
   FNameIn.ApplyTheme;
   FRootIn.ApplyTheme;
   FOutIn.ApplyTheme;
+  FPlanIn.ApplyTheme;
   FExcludeIn.ApplyTheme;
 end;
 
@@ -256,6 +285,7 @@ begin
     FNameIn.Text := AProfile.Name;
     FRootIn.Text := AProfile.RootPath;
     FOutIn.Text := AProfile.OutputFolder;
+    FPlanIn.Text := AProfile.PlanPath;
     FExcludeIn.Text := AProfile.ExcludeDirs;
     FOpenSwitch.Checked := FHost.AppSettings.OpenAfterExport;
     FWatchSwitch.Checked := AProfile.Watch;
@@ -292,6 +322,7 @@ begin
   Profile.Name := Trim(FNameIn.Text);
   Profile.RootPath := Trim(FRootIn.Text);
   Profile.OutputFolder := Trim(FOutIn.Text);
+  Profile.PlanPath := Trim(FPlanIn.Text);
   Profile.ExcludeDirs := Trim(FExcludeIn.Text);
   FHost.MarkSettingsDirty;
   RefreshProjectList;
@@ -325,6 +356,28 @@ begin
     Dir := FRootIn.Text;
   if SelectDirectory('Escolha a pasta onde guardar as páginas HTML', '', Dir) then
     FOutIn.Text := Dir;
+end;
+
+procedure TProjectPage.BrowsePlan(Sender: TObject);
+var
+  D: TOpenDialog;
+begin
+  D := TOpenDialog.Create(nil);
+  try
+    D.Title := 'Escolha o documento do plano (Markdown)';
+    D.Filter := 'Markdown (*.md;*.markdown)|*.md;*.markdown|Todos os ficheiros (*.*)|*.*';
+    if TFile.Exists(FPlanIn.Text) then
+      D.FileName := FPlanIn.Text
+    else if TDirectory.Exists(FRootIn.Text) then
+      D.InitialDir := FRootIn.Text;
+    if D.Execute then
+    begin
+      FPlanIn.Text := D.FileName;
+      StartScan;
+    end;
+  finally
+    D.Free;
+  end;
 end;
 
 procedure TProjectPage.OpenSwitchChanged(Sender: TObject);
@@ -596,23 +649,31 @@ end;
 procedure TProjectPage.StartScan;
 var
   Token: Integer;
-  Root: string;
+  Root, PlanFile: string;
   ExcludeList: TArray<string>;
 begin
   if FHost.CurrentProfile = nil then
     Exit;
   Root := Trim(FRootIn.Text);
+  PlanFile := Trim(FPlanIn.Text);
   ExcludeList := ParseExcludeDirs(Trim(FExcludeIn.Text));
   if Trim(FNameIn.Text) = '' then
   begin
     FHost.Toast('Indique o nome do projeto.');
     Exit;
   end;
-  if (Root = '') or not TDirectory.Exists(Root) then
+  if (Root <> '') and not TDirectory.Exists(Root) then
   begin
     FStatus.ColorRole := lcDanger;
     FStatus.Text := 'Indique uma pasta de projeto válida.';
     FHost.Toast('Indique uma pasta de projeto válida.');
+    Exit;
+  end;
+  if (Root = '') and not TFile.Exists(PlanFile) then
+  begin
+    FStatus.ColorRole := lcDanger;
+    FStatus.Text := 'Indique uma pasta de projeto ou um documento de plano válido.';
+    FHost.Toast('Indique uma pasta de projeto ou um documento de plano válido.');
     Exit;
   end;
   Inc(FScanToken);
@@ -625,34 +686,48 @@ begin
   TTask.Run(
     procedure
     var
-      Res: TProjectScan;
+      Res, PlanRes: TProjectScan;
       Err: string;
+      Warnings: TArray<string>;
     begin
       Res := nil;
+      PlanRes := nil;
       Err := '';
       try
-        Res := ScanProject(Root, ExcludeList,
-          procedure(const AMsg: string; ADone, ATotal: Integer)
-          var
-            M: string;
-          begin
-            if (ADone mod 8 <> 0) and (ADone <> ATotal) then
-              Exit;
-            M := AMsg;
-            System.Classes.TThread.Queue(nil,
-              procedure
-              begin
-                ScanProgress(Token, M, ADone, ATotal);
-              end);
-          end);
+        if Root <> '' then
+          Res := ScanProject(Root, ExcludeList,
+            procedure(const AMsg: string; ADone, ATotal: Integer)
+            var
+              M: string;
+            begin
+              if (ADone mod 8 <> 0) and (ADone <> ATotal) then
+                Exit;
+              M := AMsg;
+              System.Classes.TThread.Queue(nil,
+                procedure
+                begin
+                  ScanProgress(Token, M, ADone, ATotal);
+                end);
+            end);
       except
         on E: Exception do
           Err := E.Message;
       end;
+      // o plano e opcional: se falhar, a analise do codigo segue sem ele (com um aviso)
+      if (Err = '') and (PlanFile <> '') then
+        try
+          if TFile.Exists(PlanFile) then
+            PlanRes := LoadPlanFile(PlanFile, Warnings)
+          else
+            Warnings := ['Documento do plano não encontrado: ' + PlanFile];
+        except
+          on E: Exception do
+            Warnings := ['Falhou a leitura do plano: ' + E.Message];
+        end;
       System.Classes.TThread.Queue(nil,
         procedure
         begin
-          ScanDone(Token, Res, Err);
+          ScanDone(Token, Res, PlanRes, Warnings, Err);
         end);
     end);
 end;
@@ -666,16 +741,22 @@ begin
   FStatus.Text := AMsg;
 end;
 
-procedure TProjectPage.ScanDone(AToken: Integer; AScan: TProjectScan; const AError: string);
+procedure TProjectPage.ScanDone(AToken: Integer; AScan, APlan: TProjectScan;
+  const AWarnings: TArray<string>; const AError: string);
+var
+  Msg: string;
+  S: TPlanSummary;
 begin
   if FHost.ShuttingDown or (AToken <> FScanToken) then
   begin
     AScan.Free;
+    APlan.Free;
     Exit;
   end;
   SetBusy(False);
   if AError <> '' then
   begin
+    APlan.Free;
     FStatus.ColorRole := lcDanger;
     FStatus.Text := 'ERRO: ' + AError;
     FHost.Toast('Falhou a análise do projeto.');
@@ -683,21 +764,47 @@ begin
   end;
   FStatus.ColorRole := lcDim;
   FProgress.Value := 1;
-  FHost.BindScan(AScan);
-  FStatus.Text := Format('Análise concluída: %d ficheiros · %d métodos em %d units.',
-    [AScan.Units.Count, AScan.TotalMethods, AScan.UnitsWithMethods]);
+  if AScan <> nil then
+  begin
+    FHost.BindScan(AScan, APlan);
+    Msg := Format('Análise concluída: %d ficheiros · %d métodos em %d units.',
+      [AScan.Units.Count, AScan.TotalMethods, AScan.UnitsWithMethods]);
+    if FHost.HasPlan then
+    begin
+      S := FHost.PlanSummary;
+      Msg := Msg + Format(' Plano: %.0f%% dos ficheiros e %.0f%% dos métodos já existem.',
+        [S.FilesCoverage, S.MethodsCoverage]);
+    end;
+  end
+  else if APlan <> nil then
+  begin
+    // so o documento: a analise e a do plano (sem codigo para cruzar)
+    FHost.BindScan(APlan, nil);
+    Msg := Format('Plano analisado: %d ficheiros · %d métodos em %d units (sem pasta de código).',
+      [APlan.Units.Count, APlan.TotalMethods, APlan.UnitsWithMethods]);
+  end
+  else
+    Msg := 'Nada para analisar.';
+  if Length(AWarnings) > 0 then
+  begin
+    Msg := Msg + Format(' %d aviso(s) do plano.', [Length(AWarnings)]);
+    FHost.Toast(AWarnings[0]);
+  end;
+  FStatus.Text := Msg;
 end;
 
 { ---------------------------------------------------------------- estatisticas }
 
 procedure TProjectPage.ClearStats;
 begin
+  FStepsBox.Visible := True;
   FSummary.SetRows([KV('Pastas', '—'), KV('Ficheiros', '—'), KV('Métodos', '—'),
     KV('Units com métodos', '—'), KV('Ficheiros concluídos', '—'), KV('Métodos revistos', '—')]);
 end;
 
 procedure TProjectPage.ShowStats(const St: TStats);
 begin
+  FStepsBox.Visible := False;
   FSummary.SetRows([
     KV('Pastas', St.Folders.ToString), KV('Ficheiros', St.Files.ToString),
     KV('Métodos', St.Methods.ToString), KV('Units com métodos', St.UnitsWithMethods.ToString),

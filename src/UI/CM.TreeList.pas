@@ -99,6 +99,8 @@ type
     procedure DrawDirRow(const ARow: TRow; const L: TRowLayout; ATop, AWidth: Single);
     procedure DrawFileRow(const ARow: TRow; const L: TRowLayout);
     procedure DrawMethodRow(const ARow: TRow; const L: TRowLayout);
+    function OverflowHint(const ARow: TRow; X, Y: Single): string;
+    function DrawPlanTag(ARight, ACenterY: Single; AStatus: TPlanStatus; AMoved: Boolean): Single;
     procedure DrawFlag(const ARect: TRectF; const ALabel: string; AChecked: Boolean; AColor: TAlphaColor);
     procedure DrawCheckbox(const ARect: TRectF; AChecked, APending: Boolean; AColor: TAlphaColor);
     procedure DrawScrollbar;
@@ -123,6 +125,8 @@ type
     // volta a construir a estrutura depois de a analise ter sido alterada no proprio objecto,
     // mantendo pastas fechadas, metodos abertos, filtros e posicao de scroll
     procedure ReloadKeepView;
+    // passa a mostrar outra analise (ex.: a vista cruzada com o plano) mantendo pastas abertas e scroll
+    procedure UseScan(AScan: TProjectScan);
     // realca durante uns segundos (esmorece) ficheiros e metodos: chaves de FlashKeyFile/FlashKeyMethod
     procedure MarkChanged(const AKeys: TArray<string>);
     class function FlashKeyFile(const APath: string): string; static;
@@ -236,6 +240,11 @@ end;
 procedure TCMTreeList.Refresh;
 begin
   Rebuild;
+end;
+
+procedure TCMTreeList.UseScan(AScan: TProjectScan);
+begin
+  FScan := AScan;
 end;
 
 procedure TCMTreeList.ReloadKeepView;
@@ -750,6 +759,89 @@ begin
   end;
 end;
 
+function PlanTagText(AStatus: TPlanStatus; AMoved: Boolean): string;
+begin
+  case AStatus of
+    psPlanned: Result := 'PLANEADO';
+    psExtra: Result := 'EXTRA';
+    psImplemented: if AMoved then Result := 'MOVIDO' else Result := '';
+  else
+    Result := '';
+  end;
+end;
+
+function PlanStatusText(AStatus: TPlanStatus; const APlannedPath: string; AIsMethod: Boolean): string;
+begin
+  Result := '';
+  case AStatus of
+    psPlanned:
+      if AIsMethod then Result := 'Planeado: ainda não está implementado'
+      else Result := 'Planeado: ainda não existe no código';
+    psExtra: Result := 'Extra: existe no código mas não está no plano';
+    psImplemented: if APlannedPath <> '' then Result := 'Planeado em ' + APlannedPath;
+  end;
+end;
+
+// etiqueta (contorno) encostada a direita em ARight; devolve a largura ocupada (0 = sem etiqueta)
+function TCMTreeList.DrawPlanTag(ARight, ACenterY: Single; AStatus: TPlanStatus; AMoved: Boolean): Single;
+var
+  Txt: string;
+  C: TAlphaColor;
+  R: TRectF;
+begin
+  Txt := PlanTagText(AStatus, AMoved);
+  if Txt = '' then
+    Exit(0);
+  case AStatus of
+    psPlanned: C := Pal.Pending;
+    psExtra: C := Pal.FlagCompila;
+  else
+    C := Pal.TextDim;
+  end;
+  Result := MeasureText(Txt, 9.5, MonoFont, [TFontStyle.fsBold]) + 14;
+  R := TRectF.Create(ARight - Result, ACenterY - 9, ARight, ACenterY + 9);
+  StrokeRound(Canvas, R, 9, C, 1);
+  DrawTextRect(Canvas, R, Txt, C, 9.5, MonoFont, [TFontStyle.fsBold], TTextAlign.Center);
+end;
+
+// texto completo de um nome/assinatura que foi cortado com "..." (so se o rato estiver sobre ele)
+function TCMTreeList.OverflowHint(const ARow: TRow; X, Y: Single): string;
+var
+  L: TRowLayout;
+  Text, Shown, Status: string;
+  Size: Single;
+begin
+  Result := '';
+  case ARow.Kind of
+    rkFile:
+      begin
+        Shown := ARow.U.FileName;
+        Text := ARow.U.Path;
+        Size := 13;
+        Status := PlanStatusText(ARow.U.PlanStatus, ARow.U.PlannedPath, False);
+      end;
+    rkMethod:
+      begin
+        Shown := ARow.U.Methods[ARow.M].Sig;
+        Text := Shown;
+        Size := 12;
+        Status := PlanStatusText(ARow.U.MethodStatus(ARow.M), '', True);
+      end;
+  else
+    Exit;
+  end;
+  L := LayoutRow(ARow, ARow.Top - FScrollY);
+  if not L.NameR.Contains(PointF(X, Y)) then
+    Exit;
+  Result := Status;
+  if MeasureText(Shown, Size, MonoFont) > L.NameR.Width then
+  begin
+    if Result <> '' then
+      Result := Result + sLineBreak;
+    Result := Result + Text;
+  end;
+end;
+
 procedure TCMTreeList.Changed;
 begin
   Rebuild;
@@ -900,6 +992,8 @@ begin
     else
       Cursor := crHandPoint;
     Hint := HintFor(FRows[Idx], E);
+    if (Hint = '') and (E = eRow) then
+      Hint := OverflowHint(FRows[Idx], X, Y);
     ShowHint := Hint <> '';
   end
   else
@@ -1074,8 +1168,8 @@ var
   U: TUnitInfo;
   Done, Complete: Boolean;
   Full, Part1, Part2, Base: string;
-  R, TR: TRectF;
-  W1, W2: Single;
+  R, TR, NR: TRectF;
+  W1, W2, TagW: Single;
   NameColor, ExtColor, PillFg: TAlphaColor;
   Y: Single;
 begin
@@ -1085,6 +1179,11 @@ begin
   Done := UnitDone(U, FState);
   NameColor := Pick(Done and (FMode = lmChecklist), P.DoneStrike, P.Text);
   ExtColor := Pick(Done and (FMode = lmChecklist), P.DoneStrike, P.Accent);
+  if U.PlanStatus = psPlanned then
+  begin
+    NameColor := P.TextFaint;       // so no plano: ainda nao existe
+    ExtColor := P.TextFaint;
+  end;
 
   if FMode = lmChecklist then
   begin
@@ -1099,8 +1198,12 @@ begin
   end;
 
   // nome + extensao (extensao a cor de destaque)
+  NR := L.NameR;
+  TagW := DrawPlanTag(NR.Right, NR.CenterPoint.Y, U.PlanStatus, U.PlannedPath <> '');
+  if TagW > 0 then
+    NR.Right := NR.Right - TagW - 10;
   SetFont(13, MonoFont);
-  Full := FitText(Canvas, U.FileName, L.NameR.Width);
+  Full := FitText(Canvas, U.FileName, NR.Width);
   Base := U.BaseName;
   if Length(Full) > Length(Base) then
   begin
@@ -1114,8 +1217,8 @@ begin
   end;
   W1 := Canvas.TextWidth(Part1);
   W2 := Canvas.TextWidth(Part2);
-  DrawTextRect(Canvas, L.NameR, Part1, NameColor, 13, MonoFont);
-  TR := L.NameR;
+  DrawTextRect(Canvas, NR, Part1, NameColor, 13, MonoFont);
+  TR := NR;
   TR.Left := TR.Left + W1;
   DrawTextRect(Canvas, TR, Part2, ExtColor, 13, MonoFont);
   if Done and (FMode = lmChecklist) then
@@ -1168,22 +1271,44 @@ var
   M: TMethodInfo;
   Done: Boolean;
   Sig: string;
-  Y: Single;
-  TR: TRectF;
+  Y, TagW: Single;
+  TR, NR: TRectF;
+  St: TPlanStatus;
+  KindColor, SigColor: TAlphaColor;
+  SigStyle: TFontStyles;
 begin
   P := Pal;
   M := ARow.U.Methods[ARow.M];
+  St := ARow.U.MethodStatus(ARow.M);
   S := FState.Find(ARow.U.Path);
   Done := (S <> nil) and S.MDone.Contains(M.Name);
   if FMode = lmChecklist then
     DrawCheckbox(L.Check, Done, False, P.Star);
   DrawFlag(L.Compila, 'C', (S <> nil) and S.MCompila.Contains(M.Name), P.FlagCompila);
   DrawFlag(L.Sonar, 'S', (S <> nil) and S.MSonar.Contains(M.Name), P.FlagSonar);
-  DrawTextRect(Canvas, L.KindR, M.Kind, Pick(Done and (FMode = lmChecklist), P.DoneStrike, P.TextFaint),
-    10.5, MonoFont);
-  SetFont(12, MonoFont);
-  Sig := FitText(Canvas, M.Sig, L.NameR.Width);
-  DrawTextRect(Canvas, L.NameR, Sig, Pick(Done and (FMode = lmChecklist), P.DoneStrike, P.Text), 12, MonoFont);
+  KindColor := Pick(Done and (FMode = lmChecklist), P.DoneStrike, P.TextFaint);
+  SigColor := Pick(Done and (FMode = lmChecklist), P.DoneStrike, P.Text);
+  SigStyle := [];
+  if St = psPlanned then
+  begin
+    KindColor := P.Pending;         // so no plano: texto esbatido e em italico
+    SigColor := P.TextFaint;
+    SigStyle := [TFontStyle.fsItalic];
+  end
+  else if St = psExtra then
+    KindColor := P.FlagCompila;
+  DrawTextRect(Canvas, L.KindR, M.Kind, KindColor, 10.5, MonoFont);
+  NR := L.NameR;
+  // so os metodos por implementar levam etiqueta; os extra ficam com a cor do tipo (a dica explica)
+  if St = psPlanned then
+  begin
+    TagW := DrawPlanTag(NR.Right, NR.CenterPoint.Y, St, False);
+    if TagW > 0 then
+      NR.Right := NR.Right - TagW - 10;
+  end;
+  SetFont(12, MonoFont, SigStyle);
+  Sig := FitText(Canvas, M.Sig, NR.Width);
+  DrawTextRect(Canvas, NR, Sig, SigColor, 12, MonoFont, SigStyle);
   if Done and (FMode = lmChecklist) then
   begin
     Y := L.NameR.CenterPoint.Y;

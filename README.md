@@ -27,6 +27,30 @@ Aplicação Delphi/FMX para **Windows** (Win32/Win64; usa APIs do Windows como `
   já com o progresso da aplicação embutido como estado inicial.
 - Tema claro/escuro (botão na barra lateral; segue o Windows na primeira execução; barra de título incluída).
 
+## Plano (documento .md)
+Cada projeto pode ter, além da pasta de código, um **documento Markdown com a estrutura e o código previstos**
+(página Projeto › «Documento do plano»). A aplicação lê-o de forma tolerante, por qualquer ordem e misturando estilos:
+
+- **título com o caminho** do ficheiro (`## src/Core/CM.X.pas`) seguido de um bloco `` ```pascal `` com a unit ou só as declarações;
+- bloco de código com o caminho na linha de abertura, num comentário inicial (`// src/Core/CM.X.pas`) ou só o `unit X;`
+  (fica na pasta do último título de pasta, ex.: `### src/Core/`);
+- **árvores de pastas** em blocos de texto (`├──`, `└──`, `│` ou só indentação);
+- **listas Markdown** aninhadas com pastas, ficheiros e assinaturas de métodos — inclui o formato que a própria
+  aplicação exporta (Mapa › Markdown), por isso o resultado de uma análise pode servir de plano.
+
+Há três modos, conforme o que o projeto tem:
+
+| Pasta de código | Documento | O que a aplicação faz |
+|---|---|---|
+| sim | não | análise do código, como sempre |
+| sim | sim | **cruza** plano e código: o Mapa marca `PLANEADO` (só no plano), `EXTRA` (só no código) e `MOVIDO` (noutra pasta) e mostra a cobertura do plano; as dicas ao pairar explicam cada estado |
+| não | sim | analisa o documento como se fosse o código (Mapa, Checklist, Painel), útil para rever o desenho antes de haver código |
+
+Regras do cruzamento: os ficheiros emparelham pelo caminho (ou, se mudaram de pasta, pelo nome quando é único dos dois lados);
+os métodos pelo nome qualificado (`TFoo.Bar`) ou, na falta, pelo nome simples quando é único. Se o plano lista um ficheiro
+sem métodos (ex.: só numa árvore), os métodos do código não são julgados. Um exemplo está em `docs/plano-exemplo.md`.
+Nesta primeira fase a comparação aparece no **Mapa**; Checklist, Painel e exportações usam a análise do código.
+
 ## Compilar
 Requer o **Chart4D** (GetIt › Chart4D, MIT). O `.dproj` procura-o em `%USERPROFILE%\Documents\Embarcadero\Studio\37.0\CatalogRepository\Chart4D-13\1.2.0`; se estiver noutro sítio, define a variável de ambiente `Chart4DDir` com essa pasta.
 
@@ -45,6 +69,8 @@ O código em `src` está separado por camadas; cada camada só depende das anter
 | `Core` | `CM.Analyzer` | varrimento de pastas + extração de métodos (porta do motor dos scripts) |
 | `Core` | `CM.Store` | definições, projetos e progresso (JSON) |
 | `Core` | `CM.Stats` | regras de conclusão e estatísticas |
+| `Core` | `CM.History` | histórico diário do progresso (`history-<id>.json`) |
+| `Core` | `CM.Plan` | leitura tolerante do documento do plano (`.md`) e cruzamento plano × código |
 | `Services` | `CM.Export` | lista plana da estrutura + exportação para Markdown, TXT, CSV e JSON |
 | `Infrastructure` | `CM.Watcher` | vigia de pastas numa thread (só regista caminhos; a análise corre na thread principal) |
 | `Services` | `CM.Print` | paginação e impressão (`FMX.Printer`); `TStructureDoc` desenha em qualquer canvas |
@@ -57,7 +83,7 @@ O código em `src` está separado por camadas; cada camada só depende das anter
 | `UI\Pages` | `CM.Pages.Project` | página Projeto: lista de projetos, configuração, análise, «acompanhar», exportar HTML |
 | `UI\Pages` | `CM.Pages.Map` | página Mapa: árvore, estatísticas, exportar/imprimir estrutura |
 | `UI\Pages` | `CM.Pages.Checklist` | página Checklist: progresso, filtros por camada, notas, exportar/importar progresso |
-| `UI\Pages` | `CM.Pages.Dashboard` | página Painel: gráficos [Chart4D](https://github.com/GDKsoftware/Chart4D) (progresso por camada, donut, estado, maiores units, distribuição) |
+| `UI\Pages` | `CM.Pages.Dashboard` | página Painel: cartões de números com mini-curva e gráficos [Chart4D](https://github.com/GDKsoftware/Chart4D) (evolução, progresso por camada, estado, maiores units, distribuição, Compila/Sonar por camada); adapta-se à largura da janela |
 | — | `tests\` | testes DUnitX (`Tests.Analyzer.*`, `Tests.Stats`, `Tests.Store`, `Tests.Export.*`, `Tests.Helpers`) |
 
 ## Testes

@@ -7,7 +7,7 @@
 interface
 
 uses
-  CM.Analyzer, CM.Store, CM.History;
+  CM.Analyzer, CM.Store, CM.History, CM.Plan;
 
 type
   TPage = (pgProject, pgMap, pgChecklist, pgDashboard);
@@ -20,6 +20,8 @@ type
     function GetCurrentState: TProgressState;
     function GetCurrentHistory: THistory;
     function GetShuttingDown: Boolean;
+    function GetHasPlan: Boolean;
+    function GetPlanSummary: TPlanSummary;
 
     procedure Toast(const AText: string);
     procedure MarkStateDirty;
@@ -29,8 +31,9 @@ type
     procedure SelectProject(AProfile: TProjectProfile);
     // o projecto activo foi removido da lista: larga-o sem guardar o progresso
     procedure DetachProfile;
-    // passa a ter uma nova analise (ou nenhuma) e recarrega as vistas
-    procedure BindScan(AScan: TProjectScan);
+    // passa a ter uma nova analise (ou nenhuma) e recarrega as vistas. APlan e a analise do documento
+    // do plano (nil sem plano); a janela fica dona de ambas
+    procedure BindScan(AScan, APlan: TProjectScan);
     // recalcula as estatisticas mostradas em todas as paginas
     procedure UpdateAll;
     procedure UpdateHeader;
@@ -47,6 +50,9 @@ type
     property CurrentState: TProgressState read GetCurrentState;
     property CurrentHistory: THistory read GetCurrentHistory;
     property ShuttingDown: Boolean read GetShuttingDown;
+    // ha um plano cruzado com o codigo (vista do Mapa com estados) e o resumo da comparacao
+    property HasPlan: Boolean read GetHasPlan;
+    property PlanSummary: TPlanSummary read GetPlanSummary;
   end;
 
 implementation

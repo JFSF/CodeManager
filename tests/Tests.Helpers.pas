@@ -181,6 +181,7 @@ function Meth(const AName, AOwner: string; ASimple: string): TMethodInfo;
 begin
   if ASimple = '' then
     ASimple := AName;
+  Result := Default(TMethodInfo);
   Result.Name := AName;
   Result.Owner := AOwner;
   Result.Simple := ASimple;

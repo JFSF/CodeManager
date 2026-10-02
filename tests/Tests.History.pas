@@ -16,6 +16,7 @@ type
     [Test] procedure FromStatsCopiesEveryField;
     [Test] procedure PercentagesUseDoneOverTotal;
     [Test] procedure PercentagesAreZeroWithoutTotals;
+    [Test] procedure CompilaAndSonarPercentagesUseTheFileTotal;
     [Test] procedure TryDayAcceptsOnlyRealDates;
     [Test] procedure DayTextIsIsoFormat;
   end;
@@ -117,6 +118,20 @@ begin
   S := Snap('2026-10-02', 0, 0);
   Assert.AreEqual(0.0, S.PercentFiles, 0.0001);
   Assert.AreEqual(0.0, S.PercentMethods, 0.0001);
+end;
+
+procedure TSnapshotTests.CompilaAndSonarPercentagesUseTheFileTotal;
+var
+  S: TSnapshot;
+begin
+  S := Snap('2026-10-02', 8, 0);
+  S.FilesCompila := 6;
+  S.FilesSonar := 2;
+  Assert.AreEqual(75.0, S.PercentFilesCompila, 0.0001);
+  Assert.AreEqual(25.0, S.PercentFilesSonar, 0.0001);
+  S.Files := 0;
+  Assert.AreEqual(0.0, S.PercentFilesCompila, 0.0001, 'sem ficheiros');
+  Assert.AreEqual(0.0, S.PercentFilesSonar, 0.0001, 'sem ficheiros');
 end;
 
 procedure TSnapshotTests.TryDayAcceptsOnlyRealDates;

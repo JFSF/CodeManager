@@ -18,6 +18,7 @@ type
     RootPath: string;
     OutputFolder: string;
     ExcludeDirs: string;      // pastas a ignorar, separadas por virgulas; vazio = as predefinidas
+    PlanPath: string;         // documento .md com o plano (estrutura e codigo previstos); vazio = sem plano
     Watch: Boolean;           // acompanhar alteracoes na pasta do projecto
     Finalized: Boolean;
     FinalizedAt: string;
@@ -207,6 +208,7 @@ begin
         P.RootPath := PObj.GetValue<string>('root', '');
         P.OutputFolder := PObj.GetValue<string>('output', '');
         P.ExcludeDirs := PObj.GetValue<string>('exclude', '');
+        P.PlanPath := PObj.GetValue<string>('plan', '');
         P.Watch := JsonBool(PObj, 'watch', False);
         P.Finalized := JsonBool(PObj, 'finalized', False);
         P.FinalizedAt := PObj.GetValue<string>('finalizedAt', '');
@@ -237,6 +239,7 @@ begin
       PObj.AddPair('root', P.RootPath);
       PObj.AddPair('output', P.OutputFolder);
       PObj.AddPair('exclude', P.ExcludeDirs);
+      PObj.AddPair('plan', P.PlanPath);
       PObj.AddPair('watch', TJSONBool.Create(P.Watch));
       PObj.AddPair('finalized', TJSONBool.Create(P.Finalized));
       PObj.AddPair('finalizedAt', P.FinalizedAt);

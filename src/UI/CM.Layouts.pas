@@ -29,12 +29,23 @@ type
   TCMFadeScroll = class(TVertScrollBox)
   protected
     procedure PaintChildren; override;
+  public
+    constructor Create(AOwner: TComponent); override;
   end;
 
-  // dois blocos lado a lado, cada um com metade da largura (menos o intervalo)
-  TCMHalves = class(TCMControl)
+  // grelha de cartoes: os filhos ocupam N colunas iguais, linha a linha, com intervalos de 14 px
+  // (o Padding.Bottom da linha fica livre para o espaco ate a linha seguinte)
+  TCMCardRow = class(TCMControl)
+  private
+    FColumns: Integer;
+    procedure SetColumns(const Value: Integer);
   protected
     procedure Resize; override;
+  public
+    constructor Create(AOwner: TComponent); override;
+    // altura da linha para celulas com ACellHeight (conforme as colunas e o numero de filhos)
+    function HeightFor(ACellHeight: Single): Single;
+    property Columns: Integer read FColumns write SetColumns;
   end;
 
   TCMChipFlow = class(TCMControl)
@@ -148,6 +159,12 @@ end;
 
 { TCMFadeScroll }
 
+constructor TCMFadeScroll.Create(AOwner: TComponent);
+begin
+  inherited;
+  Padding.Right := 10;           // faixa livre para o indicador de posicao
+end;
+
 procedure TCMFadeScroll.PaintChildren;
 const
   FadeH = 38;
@@ -188,26 +205,64 @@ begin
   // indicador de posicao (fino, junto a borda direita)
   ThumbH := Max(28, ViewH * ViewH / Total);
   ThumbY := (ViewH - ThumbH) * Top / (Total - ViewH);
-  R := TRectF.Create(Width - ThumbW - 1, ThumbY, Width - 1, ThumbY + ThumbH);
+  R := TRectF.Create(Width - ThumbW - 2, ThumbY, Width - 2, ThumbY + ThumbH);
   FillRound(Canvas, R, ThumbW / 2, Pal.BorderStrong);
 end;
 
-{ TCMHalves }
+{ TCMCardRow }
 
-procedure TCMHalves.Resize;
 const
-  Gap = 14;
-var
-  I, N: Integer;
-  W: Single;
+  CardGap = 14;
+
+constructor TCMCardRow.Create(AOwner: TComponent);
 begin
   inherited;
-  W := (Width - Gap) / 2;
+  FColumns := 2;
+end;
+
+procedure TCMCardRow.SetColumns(const Value: Integer);
+begin
+  if (Value >= 1) and (Value <> FColumns) then
+  begin
+    FColumns := Value;
+    Resize;
+  end;
+end;
+
+function TCMCardRow.HeightFor(ACellHeight: Single): Single;
+var
+  I, N, Rows: Integer;
+begin
   N := 0;
   for I := 0 to ChildrenCount - 1 do
-    if (Children[I] is TControl) and (N < 2) then
+    if Children[I] is TControl then
+      Inc(N);
+  Rows := Max(1, (N + FColumns - 1) div FColumns);
+  Result := Rows * ACellHeight + (Rows - 1) * CardGap + Padding.Bottom;
+end;
+
+procedure TCMCardRow.Resize;
+var
+  I, N, Rows, Col, Row: Integer;
+  CellW, CellH: Single;
+begin
+  inherited;
+  N := 0;
+  for I := 0 to ChildrenCount - 1 do
+    if Children[I] is TControl then
+      Inc(N);
+  if N = 0 then
+    Exit;
+  Rows := (N + FColumns - 1) div FColumns;
+  CellW := (Width - (FColumns - 1) * CardGap) / FColumns;
+  CellH := (Height - Padding.Bottom - (Rows - 1) * CardGap) / Rows;
+  N := 0;
+  for I := 0 to ChildrenCount - 1 do
+    if Children[I] is TControl then
     begin
-      TControl(Children[I]).SetBounds(N * (W + Gap), 0, W, Height);
+      Col := N mod FColumns;
+      Row := N div FColumns;
+      TControl(Children[I]).SetBounds(Col * (CellW + CardGap), Row * (CellH + CardGap), CellW, CellH);
       Inc(N);
     end;
 end;

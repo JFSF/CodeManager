@@ -190,6 +190,20 @@ type
     Highlight: Boolean;
   end;
 
+  // cartao de numero: titulo, valor grande, linha de apoio e uma mini-curva opcional (0..100)
+  TCMKpi = class(TCMPanel)
+  private
+    FCaption, FValue, FSub: string;
+    FSpark: TArray<Double>;
+    FSparkColor: TAlphaColor;
+  protected
+    procedure Paint; override;
+  public
+    constructor Create(AOwner: TComponent); override;
+    procedure SetData(const ACaption, AValue, ASub: string; const ASpark: TArray<Double>;
+      ASparkColor: TAlphaColor);
+  end;
+
   TCMKeyValue = class(TCMControl)
   private
     FRows: TArray<TKeyValue>;
@@ -373,6 +387,77 @@ begin
   FBordered := Value;
   Repaint;
 end;
+
+{ TCMKpi }
+
+constructor TCMKpi.Create(AOwner: TComponent);
+begin
+  inherited;
+  Role := prSurface;
+  Radius := 14;
+  Bordered := True;
+end;
+
+procedure TCMKpi.SetData(const ACaption, AValue, ASub: string; const ASpark: TArray<Double>;
+  ASparkColor: TAlphaColor);
+begin
+  FCaption := ACaption;
+  FValue := AValue;
+  FSub := ASub;
+  FSpark := ASpark;
+  FSparkColor := ASparkColor;
+  Repaint;
+end;
+
+procedure TCMKpi.Paint;
+const
+  Pad = 18;
+var
+  P: TPalette;
+  I: Integer;
+  Hi, X0, X1, Y0, Y1: Single;
+  A, B: TPointF;
+
+  function Pt(AIndex: Integer): TPointF;
+  begin
+    Result := PointF(X0 + (X1 - X0) * AIndex / (Length(FSpark) - 1),
+      Y1 - (Y1 - Y0) * Min(FSpark[AIndex], Hi) / Hi);
+  end;
+
+begin
+  inherited;
+  P := Pal;
+  DrawTextRect(Canvas, TRectF.Create(Pad, 12, Width - Pad, 32), FCaption, P.TextDim, 12.5, UiFont);
+  DrawTextRect(Canvas, TRectF.Create(Pad, 32, Width * 0.62, 68), FValue, P.Text, 26, MonoFont,
+    [TFontStyle.fsBold]);
+  DrawTextRect(Canvas, TRectF.Create(Pad, 68, Width - Pad, 90), FSub, P.TextDim, 12, UiFont);
+  if Length(FSpark) < 2 then
+    Exit;
+  // mini-curva: escala de 0 ao maximo (no minimo 10) para nao exagerar variacoes pequenas
+  Hi := 10;
+  for I := 0 to High(FSpark) do
+    Hi := Max(Hi, FSpark[I]);
+  X0 := Width * 0.62 + 8;
+  X1 := Width - Pad;
+  Y0 := 40;
+  Y1 := 76;
+  Canvas.Stroke.Kind := TBrushKind.Solid;
+  Canvas.Stroke.Thickness := 2;
+  Canvas.Stroke.Cap := TStrokeCap.Round;
+  Canvas.Stroke.Color := FSparkColor;
+  for I := 1 to High(FSpark) do
+  begin
+    A := Pt(I - 1);
+    B := Pt(I);
+    Canvas.DrawLine(A, B, 1);
+  end;
+  Canvas.Fill.Kind := TBrushKind.Solid;
+  Canvas.Fill.Color := FSparkColor;
+  B := Pt(High(FSpark));
+  Canvas.FillEllipse(TRectF.Create(B.X - 3, B.Y - 3, B.X + 3, B.Y + 3), 1);
+end;
+
+{ TCMPanel }
 
 procedure TCMPanel.Paint;
 var
@@ -1072,6 +1157,13 @@ begin
     FHoverIdx := I;
     Repaint;
   end;
+  // dica com o titulo e a pasta completos quando algum esta cortado
+  Hint := '';
+  if (I >= 0) and (I <= High(FItems)) then
+    if (MeasureText(FItems[I].Sub, 11, MonoFont) > Width - 28) or
+       (MeasureText(FItems[I].Title, 13.5, UiFont, [TFontStyle.fsBold]) > Width - 28) then
+      Hint := FItems[I].Title + sLineBreak + FItems[I].Sub;
+  ShowHint := Hint <> '';
 end;
 
 procedure TCMList.DoMouseLeave;

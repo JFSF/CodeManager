@@ -272,6 +272,7 @@ begin
     P.RootPath := 'C:\Proj';
     P.OutputFolder := 'C:\Proj\out';
     P.ExcludeDirs := 'bin, obj';
+    P.PlanPath := 'C:\Proj\docs\plano.md';
     P.Watch := True;
     P.Finalized := True;
     P.FinalizedAt := '2026-01-02T03:04:05';
@@ -292,6 +293,7 @@ begin
     Assert.AreEqual('C:\Proj', Loaded.Projects[0].RootPath);
     Assert.AreEqual('C:\Proj\out', Loaded.Projects[0].OutputFolder);
     Assert.AreEqual('bin, obj', Loaded.Projects[0].ExcludeDirs);
+    Assert.AreEqual('C:\Proj\docs\plano.md', Loaded.Projects[0].PlanPath);
     Assert.IsTrue(Loaded.Projects[0].Watch);
     Assert.IsTrue(Loaded.Projects[0].Finalized);
     Assert.AreEqual('2026-01-02T03:04:05', Loaded.Projects[0].FinalizedAt);
@@ -341,6 +343,7 @@ begin
     S.Load;
     Assert.IsTrue(S.OpenAfterExport, 'omitido no ficheiro: mantem-se True');
     Assert.IsFalse(S.Projects[0].Watch);
+    Assert.AreEqual('', S.Projects[0].PlanPath, 'projectos antigos nao tem plano');
     Assert.IsFalse(S.Projects[0].Finalized);
   finally
     S.Free;
