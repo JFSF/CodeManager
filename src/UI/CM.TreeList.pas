@@ -861,6 +861,8 @@ end;
 function MethodHintText(const AMethod: TMethodInfo; const APlanText: string): string;
 begin
   Result := MetricsText(AMethod.Lines, AMethod.Complexity);
+  if Result <> '' then
+    Result := Result + sLineBreak + ShapeText(AMethod.Lines, AMethod.ParamCount, AMethod.Nesting);
   if (Result <> '') and (APlanText <> '') then
     Result := Result + sLineBreak;
   Result := Result + APlanText;

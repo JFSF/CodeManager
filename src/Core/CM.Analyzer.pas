@@ -20,6 +20,8 @@ type
     Simple: string;     // nome sem qualificacao ('Bar')
     Lines: Integer;     // linhas de codigo do corpo (0 = sem corpo nesta unit)
     Complexity: Integer; // complexidade ciclomatica do corpo (0 = sem corpo)
+    ParamCount: Integer; // parametros declarados (so tem sentido com corpo: Lines > 0)
+    Nesting: Integer;    // blocos aninhados no corpo (begin/try/case/repeat; 0 = nenhum alem do corpo)
   end;
 
   // estado de uma unit/metodo face ao plano (documento .md): so tem valor numa vista com plano
@@ -111,6 +113,7 @@ type
     Sig: string;
     Params: string;     // so os tipos dos parametros ('Integer, string'); '' = sem parametros
     Lines, Complexity: Integer;   // medidas do corpo (0 = ainda sem medida)
+    ParamCount, Nesting: Integer;
   end;
 
 var
@@ -714,6 +717,8 @@ begin
       Info.Simple := R.Simple;
       Info.Lines := R.Lines;
       Info.Complexity := R.Complexity;
+      Info.ParamCount := R.ParamCount;
+      Info.Nesting := R.Nesting;
       Items.Add(Info);
     end;
     Result := Items.ToArray;
@@ -749,6 +754,8 @@ begin
         begin
           Target.Lines := Metric.Lines;
           Target.Complexity := Metric.Complexity;
+          Target.ParamCount := Metric.Params;
+          Target.Nesting := Metric.Nesting;
           ARaw[Idx] := Target;
         end;
       end;
@@ -993,7 +1000,8 @@ begin
     Exit(False);
   for I := 0 to High(A) do
     if (A[I].Name <> B[I].Name) or (A[I].Sig <> B[I].Sig) or (A[I].Lines <> B[I].Lines) or
-       (A[I].Complexity <> B[I].Complexity) then
+       (A[I].Complexity <> B[I].Complexity) or (A[I].ParamCount <> B[I].ParamCount) or
+       (A[I].Nesting <> B[I].Nesting) then
       Exit(False);
   Result := True;
 end;

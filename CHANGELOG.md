@@ -11,6 +11,8 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
 - **Grafo de dependências:** nova página com o mapa visual de quem usa quem (cláusulas `uses` da *interface* e da
   *implementation*), acoplamento, instabilidade, **ciclos**, filtro, simplificação e relatório em HTML (mapa em SVG)
   ou Markdown.
+- **Mais métricas por método:** número de **parâmetros** e **aninhamento** de blocos (`begin`, `try`, `case`,
+  `repeat`), na dica do método e nas colunas/campos do CSV e do JSON.
 - **Idiomas:** português, inglês, francês e alemão, escolhidos na página Projeto; os relatórios exportados seguem o
   idioma. Na primeira execução usa o idioma do Windows.
 - **Repositórios do GitHub:** analisar um repositório em vez de uma pasta; clona-se só a última versão para uma cache

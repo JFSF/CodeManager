@@ -1,6 +1,7 @@
 ﻿unit CM.Metrics;
 
-{ Medidas dos corpos das rotinas de uma unit: linhas de codigo e complexidade ciclomatica.
+{ Medidas dos corpos das rotinas de uma unit: linhas de codigo, complexidade ciclomatica, numero de
+  parametros e profundidade de aninhamento.
 
   Trabalha sobre o texto ja "limpo" pelo analisador (comentarios retirados, textos entre apostrofos
   reduzidos a '', mas com as mudancas de linha preservadas) e so olha para a secao implementation.
@@ -10,7 +11,12 @@
   aninhadas e a zona de declaracoes locais; nao conta linhas em branco nem de comentarios).
 
   Complexidade: 1 + decisoes do proprio corpo (sem as rotinas aninhadas): if, while, for, repeat,
-  case, "on" dos handlers de excepcao, and e or. Os metodos anonimos contam para quem os contem. }
+  case, "on" dos handlers de excepcao, and e or. Os metodos anonimos contam para quem os contem.
+
+  Parametros: os nomes declarados no cabecalho ('A, B: Integer; var C: string' sao 3).
+
+  Aninhamento: o maximo de blocos abertos dentro do corpo (begin, try, case, repeat, asm), sem contar o
+  proprio corpo: um corpo sem blocos interiores tem 0, um 'if ... then begin' dentro dele tem 1. }
 
 interface
 
@@ -22,6 +28,8 @@ type
     Header: string;        // do inicio do cabecalho ('procedure TFoo.Bar(A: Integer)') ate ao ';'
     Lines: Integer;
     Complexity: Integer;
+    Params: Integer;
+    Nesting: Integer;
   end;
 
   // 1..10 simples, 11..20 moderada, acima disso alta (os limites habituais de McCabe)
@@ -30,6 +38,8 @@ type
 function ComplexityLevel(AComplexity: Integer): TComplexityLevel;
 // 'N linhas · complexidade M' (vazio sem corpo medido)
 function MetricsText(ALines, AComplexity: Integer): string;
+// 'N parametros · aninhamento M' (vazio sem corpo medido: ALines <= 0)
+function ShapeText(ALines, AParams, ANesting: Integer): string;
 // mede as rotinas com corpo de ACleanImpl (texto limpo da secao implementation)
 procedure MeasureRoutines(const ACleanImpl: string; AResult: TList<TRoutineMetric>);
 
@@ -54,6 +64,8 @@ type
     InBody: Boolean;
     Depth: Integer;
     Complexity: Integer;
+    Repeats: Integer;        // 'repeat' abertos (fecham em 'until', que nao termina o corpo)
+    MaxNest: Integer;        // maior numero de blocos abertos alem do proprio corpo
     constructor Create;
   end;
 
@@ -83,6 +95,21 @@ constructor TRoutine.Create;
 begin
   inherited;
   Complexity := 1;
+end;
+
+function ShapeText(ALines, AParams, ANesting: Integer): string;
+var
+  P: string;
+begin
+  if ALines <= 0 then
+    Exit('');
+  if AParams = 0 then
+    P := Tr('sem parâmetros')
+  else if AParams = 1 then
+    P := Tr('1 parâmetro')
+  else
+    P := Format(Tr('%d parâmetros'), [AParams]);
+  Result := P + ' · ' + Format(Tr('aninhamento %d'), [ANesting]);
 end;
 
 function IsWordStart(C: Char): Boolean;
@@ -205,6 +232,49 @@ begin
   end;
 end;
 
+// numero de parametros declarados no cabecalho: so os nomes antes de ':' (a profundidade 1 de parenteses)
+function CountParams(const AHeader: string): Integer;
+var
+  Tokens: TList<TToken>;
+  I, Depth: Integer;
+  InNames: Boolean;
+begin
+  Result := 0;
+  Tokens := TList<TToken>.Create;
+  try
+    Tokenize(AHeader, Tokens);
+    Depth := 0;
+    InNames := True;
+    for I := 0 to Tokens.Count - 1 do
+    begin
+      if Tokens[I].Text = '(' then
+      begin
+        Inc(Depth);
+        if Depth = 1 then
+          InNames := True;
+      end
+      else if Tokens[I].Text = ')' then
+      begin
+        Dec(Depth);
+        if Depth = 0 then
+          Break;
+      end
+      else if Depth = 1 then
+      begin
+        if Tokens[I].Text = ';' then
+          InNames := True
+        else if Tokens[I].Text = ':' then
+          InNames := False
+        else if InNames and Tokens[I].IsWord and
+                not ((Tokens[I].Text = 'var') or (Tokens[I].Text = 'const') or (Tokens[I].Text = 'out')) then
+          Inc(Result);
+      end;
+    end;
+  finally
+    Tokens.Free;
+  end;
+end;
+
 procedure MeasureRoutines(const ACleanImpl: string; AResult: TList<TRoutineMetric>);
 var
   Tokens: TList<TToken>;
@@ -285,7 +355,13 @@ begin
       begin
         // dentro de um corpo: so conta decisoes e acompanha begin/end
         if (T.Text = 'begin') or (T.Text = 'try') or (T.Text = 'case') or (T.Text = 'asm') then
-          Inc(R.Depth);
+          Inc(R.Depth)
+        else if T.Text = 'repeat' then
+          Inc(R.Repeats)
+        else if (T.Text = 'until') and (R.Repeats > 0) then
+          Dec(R.Repeats);
+        if R.Depth + R.Repeats - 1 > R.MaxNest then
+          R.MaxNest := R.Depth + R.Repeats - 1;
         if (T.Text = 'if') or (T.Text = 'while') or (T.Text = 'for') or (T.Text = 'repeat') or
            (T.Text = 'case') or (T.Text = 'and') or (T.Text = 'or') then
           Inc(R.Complexity)
@@ -299,6 +375,8 @@ begin
             Metric.Header := R.Header;
             Metric.Lines := CodeLines(ACleanImpl, R.StartPos, T.Pos + 2);
             Metric.Complexity := R.Complexity;
+            Metric.Params := CountParams(R.Header);
+            Metric.Nesting := R.MaxNest;
             AResult.Add(Metric);
             Stack.Delete(Stack.Count - 1);
           end;

@@ -118,6 +118,17 @@ Cada método com corpo mostra duas medidas, calculadas só a partir do código (
 A cor da complexidade avisa: **até 10** é simples (cinzento), **11 a 20** é moderada (âmbar) e **mais de 20** é alta
 (vermelho). Métodos só declarados na interface, `forward` ou `external` não têm medida.
 
+A dica de cada método mostra ainda duas medidas de forma:
+
+- **Parâmetros:** quantos nomes o cabeçalho declara (`A, B: Integer; var C: string` são 3). Muitos parâmetros
+  costumam pedir um registo ou um objeto.
+- **Aninhamento:** o máximo de blocos abertos dentro do corpo (`begin`, `try`, `case`, `repeat`, `asm`), sem contar o
+  próprio corpo. Um corpo sem blocos interiores tem 0; um `if … then begin` tem 1; um `try` com um `case` lá dentro
+  e tudo dentro desse `if`, 3. Não conta um `if` sem `begin`.
+
+O CSV e o JSON exportados levam estas duas medidas (colunas **Parâmetros** e **Aninhamento**; `parameters` e
+`nesting` no JSON).
+
 ## Checklist
 
 A página de revisão: ficheiros agrupados por pasta, com o progresso à vista.

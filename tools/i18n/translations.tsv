@@ -424,6 +424,12 @@ Simplificar	Simplify	Simplifier	Vereinfachen
 Esconde as ligações para as units usadas por muitas outras (voltam a aparecer ao selecionar uma unit).	Hides the links to units used by many others (they reappear when you select a unit).	Masque les liens vers les unités utilisées par beaucoup d'autres (ils réapparaissent à la sélection d'une unité).	Blendet die Verknüpfungen zu Units aus, die von vielen anderen verwendet werden (sie erscheinen wieder, wenn Sie eine Unit auswählen).
 Afastar	Zoom out	Dézoomer	Verkleinern
 Aproximar	Zoom in	Zoomer	Vergrößern
+Parâmetros	Parameters	Paramètres	Parameter
+Aninhamento	Nesting	Imbrication	Verschachtelung
+sem parâmetros	no parameters	sans paramètres	keine Parameter
+1 parâmetro	1 parameter	1 paramètre	1 Parameter
+%d parâmetros	%d parameters	%d paramètres	%d Parameter
+aninhamento %d	nesting %d	imbrication %d	Verschachtelung %d
 #!html
 # Textos dos modelos HTML (res\templates): cada chave e um troco exacto do modelo; so se aplicam ao modelo, antes de
 # se preencherem os marcadores __XXX__. Nas traducoes nao se usam aspas ASCII duplas (estao em strings JS e atributos).

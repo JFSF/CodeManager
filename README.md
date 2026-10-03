@@ -18,7 +18,7 @@ O CodeManager lê as units de um projeto Delphi e dá-te uma forma simples de **
 foi visto** e **acompanhar o progresso ao longo do tempo** — sem alterar uma linha do teu código. Se tiveres um
 documento com o que o projeto *devia* ter, compara os dois.
 
-- 🗺️ **Mapa** — a árvore pastas → ficheiros → métodos, com pesquisa, estatísticas e as **linhas e a complexidade** de cada método.
+- 🗺️ **Mapa** — a árvore pastas → ficheiros → métodos, com pesquisa, estatísticas e as **linhas, a complexidade, os parâmetros e o aninhamento** de cada método.
 - ✅ **Checklist** — marca o que reviste, o que está em revisão ou precisa de alteração, o que compila, o que passou no Sonar, o que é prioritário; com notas.
 - 📊 **Painel** — números e gráficos do progresso e da distribuição do código, incluindo a evolução dia a dia.
 - 📝 **Plano em Markdown** — escreve a estrutura prevista num `.md` e vê o que está implementado, o que falta e o que sobra.

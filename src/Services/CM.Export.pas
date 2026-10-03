@@ -560,6 +560,17 @@ begin
   if AValue > 0 then Result := IntToStr(AValue) else Result := '';
 end;
 
+// parametros / aninhamento: 0 e um valor valido, por isso so fica vazio quando nao ha corpo medido
+function ParamsField(const AMethod: TMethodInfo): string;
+begin
+  if AMethod.Lines > 0 then Result := IntToStr(AMethod.ParamCount) else Result := '';
+end;
+
+function NestingField(const AMethod: TMethodInfo): string;
+begin
+  if AMethod.Lines > 0 then Result := IntToStr(AMethod.Nesting) else Result := '';
+end;
+
 function BuildCsv(AScan: TProjectScan; AState: TProgressState; const AOptions: TExportOptions): string;
 var
   SB: TStringBuilder;
@@ -572,7 +583,7 @@ begin
   Fields := TList<string>.Create;
   try
     Fields.AddRange([Tr('Nível'), Tr('Pasta'), Tr('Ficheiro'), Tr('Camada'), Tr('Classe'), Tr('Método'), Tr('Tipo'), Tr('Assinatura'), Tr('Linhas'),
-      Tr('Complexidade')]);
+      Tr('Complexidade'), Tr('Parâmetros'), Tr('Aninhamento')]);
     if AOptions.IncludeProgress then
       Fields.AddRange([Tr('Concluído'), Tr('Compila'), Tr('Sonar'), Tr('Prioritário'), Tr('Nota'), Tr('Revisão')]);
     SB.Append(CsvLine(Fields.ToArray));
@@ -583,12 +594,12 @@ begin
       P := RowProgress(R, AState);
       Fields.Clear;
       if R.Kind = xkFile then
-        Fields.AddRange([Tr('Ficheiro'), R.U.Dir, R.U.FileName, R.U.Layer, '', '', '', '', '', ''])
+        Fields.AddRange([Tr('Ficheiro'), R.U.Dir, R.U.FileName, R.U.Layer, '', '', '', '', '', '', '', ''])
       else
       begin
         M := R.U.Methods[R.MIndex];
         Fields.AddRange([Tr('Método'), R.U.Dir, R.U.FileName, R.U.Layer, M.Owner, M.Name, M.Kind, M.Sig,
-          MeasureField(M.Lines), MeasureField(M.Complexity)]);
+          MeasureField(M.Lines), MeasureField(M.Complexity), ParamsField(M), NestingField(M)]);
       end;
       if AOptions.IncludeProgress then
       begin
@@ -720,6 +731,8 @@ begin
             begin
               Obj.AddPair('lines', TJSONNumber.Create(M.Lines));
               Obj.AddPair('complexity', TJSONNumber.Create(M.Complexity));
+              Obj.AddPair('parameters', TJSONNumber.Create(M.ParamCount));
+              Obj.AddPair('nesting', TJSONNumber.Create(M.Nesting));
             end;
             if AOptions.IncludeProgress then
               AddProgressJson(Obj, RowProgress(R, AState), False);

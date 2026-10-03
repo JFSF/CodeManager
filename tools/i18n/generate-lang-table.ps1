@@ -1,4 +1,4 @@
-# Gera src\Core\CM.Lang.Table.pas a partir de tools\i18n\translations.tsv
+﻿# Gera src\Core\CM.Lang.Table.pas a partir de tools\i18n\translations.tsv
 #   powershell -File tools\i18n\generate-lang-table.ps1
 # Colunas (separadas por TAB): pt | en | fr | de. Linhas com # sao comentarios.
 $ErrorActionPreference = 'Stop'
@@ -6,7 +6,20 @@ $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $tsv = Join-Path $here 'translations.tsv'
 $out = Join-Path $here '..\..\src\Core\CM.Lang.Table.pas'
 
-function Quote([string]$s) { "'" + $s.Replace("'", "''") + "'" }
+# o Delphi nao aceita linhas com mais de 1023 caracteres: os textos longos partem-se em pedacos concatenados
+function Quote([string]$s) {
+  $max = 160
+  if ($s.Length -le $max) { return "'" + $s.Replace("'", "''") + "'" }
+  $parts = New-Object System.Collections.Generic.List[string]
+  $i = 0
+  while ($i -lt $s.Length) {
+    $n = [Math]::Min($max, $s.Length - $i)
+    if (($i + $n -lt $s.Length) -and [char]::IsHighSurrogate($s[$i + $n - 1])) { $n-- }
+    $parts.Add("'" + $s.Substring($i, $n).Replace("'", "''") + "'")
+    $i += $n
+  }
+  return "`n      " + ($parts -join "`n    + ")
+}
 
 $rows = New-Object System.Collections.Generic.List[string]
 $htmlRows = New-Object System.Collections.Generic.List[string]
@@ -20,7 +33,8 @@ foreach ($line in [System.IO.File]::ReadAllLines($tsv, [System.Text.Encoding]::U
   if ($line.Length -eq 0 -or $line.StartsWith('#')) { continue }
   $f = $line.Split("`t")
   if ($f.Count -ne 4) { throw "translations.tsv, linha ${n}: esperadas 4 colunas, ha $($f.Count)" }
-  $target = if ($inHtml) { $seenHtml } else { $seen }
+  # atribuicao directa: um 'if' como expressao desdobraria o conjunto (e um conjunto vazio daria $null)
+  if ($inHtml) { $target = $seenHtml } else { $target = $seen }
   if (-not $target.Add($f[0])) { throw "translations.tsv, linha ${n}: chave repetida '$($f[0])'" }
   # os espacos do inicio e do fim da chave (ex.: 'Gerado em: ') valem para as traducoes: os editores
   # costumam cortar os espacos do fim da linha, que na ultima coluna se perderiam
@@ -44,7 +58,7 @@ $sb = New-Object System.Text.StringBuilder
 [void]$sb.Append(($rows -join (",`n")) + "`n")
 [void]$sb.Append('  );' + "`n")
 [void]$sb.Append('' + "`n")
-[void]$sb.Append('  // trocos dos modelos HTML (res	emplates), por ordem de leitura' + "`n")
+[void]$sb.Append('  // trocos dos modelos HTML (res/templates), por ordem de leitura' + "`n")
 [void]$sb.Append("  HtmlRows: array[0..$($htmlRows.Count - 1)] of array[0..3] of string = (" + "`n")
 [void]$sb.Append(($htmlRows -join (",`n")) + "`n")
 [void]$sb.Append('  );' + "`n")

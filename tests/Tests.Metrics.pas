@@ -38,6 +38,10 @@ type
     [Test] procedure ComplexityLevelsUseTheUsualLimits;
     [Test] procedure MetricsTextIsEmptyWithoutABody;
     [Test] procedure MetricsTextPluralises;
+    [Test] procedure ParametersAreCountedByName;
+    [Test] procedure NestingCountsInnerBlocksOnly;
+    [Test] procedure RepeatCountsAsABlock;
+    [Test] procedure ShapeTextDescribesParametersAndNesting;
   end;
 
   [TestFixture]
@@ -438,6 +442,80 @@ procedure TMetricsTests.MetricsTextPluralises;
 begin
   Assert.AreEqual('1 linha · complexidade 1', MetricsText(1, 1));
   Assert.AreEqual('42 linhas · complexidade 7', MetricsText(42, 7));
+end;
+
+procedure TMetricsTests.ParametersAreCountedByName;
+var
+  M: TArray<TMethodInfo>;
+begin
+  M := Impl(
+    'type' + sLineBreak +
+    '  TFoo = class' + sLineBreak +
+    '    procedure A;' + sLineBreak +
+    '    procedure B(X: Integer);' + sLineBreak +
+    '    procedure C(X, Y: Integer; var Z: string; const W: array of Integer; P: TProc<Integer, string> = nil);' + sLineBreak +
+    '  end;',
+    'procedure TFoo.A; begin end;' + sLineBreak +
+    'procedure TFoo.B(X: Integer); begin end;' + sLineBreak +
+    'procedure TFoo.C(X, Y: Integer; var Z: string; const W: array of Integer; P: TProc<Integer, string> = nil);' + sLineBreak +
+    'begin' + sLineBreak +
+    'end;');
+  Assert.AreEqual(0, Find(M, 'TFoo.A').ParamCount);
+  Assert.AreEqual(1, Find(M, 'TFoo.B').ParamCount);
+  Assert.AreEqual(5, Find(M, 'TFoo.C').ParamCount);
+end;
+
+procedure TMetricsTests.NestingCountsInnerBlocksOnly;
+var
+  M: TArray<TMethodInfo>;
+begin
+  M := Impl(ClassIntf,
+    'procedure TFoo.Bar(A: Integer);' + sLineBreak +
+    'begin' + sLineBreak +
+    '  Writeln(A);' + sLineBreak +
+    'end;' + sLineBreak +
+    'function TFoo.Baz: Integer;' + sLineBreak +
+    'begin' + sLineBreak +
+    '  if Result > 0 then' + sLineBreak +
+    '  begin' + sLineBreak +
+    '    try' + sLineBreak +
+    '      case Result of' + sLineBreak +
+    '        1: Inc(Result);' + sLineBreak +
+    '      end;' + sLineBreak +
+    '    finally' + sLineBreak +
+    '      Dec(Result);' + sLineBreak +
+    '    end;' + sLineBreak +
+    '  end;' + sLineBreak +
+    'end;');
+  Assert.AreEqual(0, Find(M, 'TFoo.Bar').Nesting);
+  Assert.AreEqual(3, Find(M, 'TFoo.Baz').Nesting);
+end;
+
+procedure TMetricsTests.RepeatCountsAsABlock;
+var
+  M: TArray<TMethodInfo>;
+begin
+  M := Impl(ClassIntf,
+    'procedure TFoo.Bar(A: Integer);' + sLineBreak +
+    'begin' + sLineBreak +
+    '  repeat' + sLineBreak +
+    '    Inc(A);' + sLineBreak +
+    '  until A > 3;' + sLineBreak +
+    '  Writeln(A);' + sLineBreak +
+    'end;' + sLineBreak +
+    'function TFoo.Baz: Integer;' + sLineBreak +
+    'begin' + sLineBreak +
+    'end;');
+  Assert.AreEqual(1, Find(M, 'TFoo.Bar').Nesting);
+  Assert.AreEqual(7, Find(M, 'TFoo.Bar').Lines, 'o until nao termina o corpo');
+end;
+
+procedure TMetricsTests.ShapeTextDescribesParametersAndNesting;
+begin
+  Assert.AreEqual('', ShapeText(0, 2, 1));
+  Assert.AreEqual('sem parâmetros · aninhamento 0', ShapeText(5, 0, 0));
+  Assert.AreEqual('1 parâmetro · aninhamento 2', ShapeText(5, 1, 2));
+  Assert.AreEqual('3 parâmetros · aninhamento 1', ShapeText(5, 3, 1));
 end;
 
 { TMetricsRescanTests }
