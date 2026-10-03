@@ -36,7 +36,8 @@ uses
   Tests.History in 'Tests.History.pas',
   Tests.Plan in 'Tests.Plan.pas',
   Tests.SafeFile in 'Tests.SafeFile.pas',
-  Tests.Metrics in 'Tests.Metrics.pas';
+  Tests.Metrics in 'Tests.Metrics.pas',
+  Tests.Review in 'Tests.Review.pas';
 
 var
   Runner: ITestRunner;

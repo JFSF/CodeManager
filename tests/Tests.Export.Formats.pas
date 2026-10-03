@@ -16,6 +16,7 @@ type
     [Test] procedure TitleUsesTheProjectName;
     [Test] procedure FolderLinesShowFileCountInPortuguese;
     [Test] procedure FileLinesShowMethodCountOnlyWhenMethodsAreOmitted;
+    [Test] procedure ReviewStatesAreTaggedNextToTheCheckbox;
     [Test] procedure MethodLinesShowTheSignature;
     [Test] procedure IndentationIsTwoSpacesPerLevel;
     [Test] procedure ProgressMarksAppearInOrderWhenRequested;
@@ -56,7 +57,8 @@ type
   TBuildCsvTests = class
   public
     [Test] procedure HeaderHasTenColumnsWithoutProgress;
-    [Test] procedure HeaderHasFifteenColumnsWithProgress;
+    [Test] procedure HeaderHasSixteenColumnsWithProgress;
+    [Test] procedure ReviewColumnShowsTheReviewState;
     [Test] procedure MethodRowsCarryLinesAndComplexity;
     [Test] procedure FolderRowsAreSkipped;
     [Test] procedure FileRowFieldsWithoutProgress;
@@ -79,6 +81,7 @@ type
     [Test] procedure FileNodesNestTheirMethodsWhenRequested;
     [Test] procedure MethodNodesHaveNoStarOrNote;
     [Test] procedure MethodNodesCarryMeasuresOnlyWhenMeasured;
+    [Test] procedure ReviewKeyIsStableAndLanguageIndependent;
     [Test] procedure FileNodesHaveStarAndNoteWhenProgressIsRequested;
     [Test] procedure RootLevelFilesAppearDirectlyUnderTheTree;
   end;
@@ -139,6 +142,34 @@ begin
     Assert.IsTrue(ContainsLine(Md, '- **`Core/`** _(3 ficheiros)_'));
     Assert.IsTrue(ContainsLine(Md, '  - **`Sub/`** _(1 ficheiro)_'));
     Assert.IsTrue(ContainsLine(Md, '- **`UI/`** _(1 ficheiro)_'));
+  finally
+    P.Free;
+    St.Free;
+    Scan.Free;
+  end;
+end;
+
+procedure TBuildMarkdownTests.ReviewStatesAreTaggedNextToTheCheckbox;
+var
+  Scan: TProjectScan;
+  St: TProgressState;
+  P: TProjectProfile;
+  Opt: TExportOptions;
+  Md: string;
+begin
+  Scan := BuildSampleScan;
+  St := TProgressState.Create;
+  P := NewProfile('X');
+  try
+    St.Rec('Core/a.pas').MWip.Add('TA.Two');
+    St.Rec('Core/a.pas').MFix.Add('TA.One');
+    Opt := Default(TExportOptions);
+    Opt.IncludeMethods := True;
+    Opt.IncludeProgress := True;
+    Md := BuildMarkdown(P, Scan, St, Opt);
+    Assert.IsTrue(ContainsLine(Md, '    - [ ] `procedure TA.One;` [Precisa de alteração]'));
+    Assert.IsTrue(ContainsLine(Md, '    - [ ] `procedure TA.Two;` [Em revisão]'));
+    Assert.IsTrue(ContainsLine(Md, '      - [ ] `procedure TC.Run;`'), 'sem estado, sem marca');
   finally
     P.Free;
     St.Free;
@@ -484,7 +515,7 @@ begin
   end;
 end;
 
-procedure TBuildCsvTests.HeaderHasFifteenColumnsWithProgress;
+procedure TBuildCsvTests.HeaderHasSixteenColumnsWithProgress;
 var
   Scan: TProjectScan;
   St: TProgressState;
@@ -497,8 +528,31 @@ begin
     Opt := Default(TExportOptions);
     Opt.IncludeProgress := True;
     Rows := CsvRows(BuildCsv(Scan, St, Opt));
-    Assert.AreEqual<NativeInt>(15, Length(Rows[0]));
-    Assert.AreEqual('Concluído;Compila;Sonar;Prioritário;Nota', string.Join(';', Copy(Rows[0], 10, 5)));
+    Assert.AreEqual<NativeInt>(16, Length(Rows[0]));
+    Assert.AreEqual('Concluído;Compila;Sonar;Prioritário;Nota;Revisão', string.Join(';', Copy(Rows[0], 10, 6)));
+  finally
+    St.Free;
+    Scan.Free;
+  end;
+end;
+
+procedure TBuildCsvTests.ReviewColumnShowsTheReviewState;
+var
+  Scan: TProjectScan;
+  St: TProgressState;
+  Opt: TExportOptions;
+  Rows: TArray<TArray<string>>;
+begin
+  Scan := BuildSampleScan;
+  St := TProgressState.Create;
+  try
+    St.Rec('Core/a.pas').MWip.Add('TA.Two');
+    St.Rec('Core/a.pas').MFix.Add('TA.One');
+    Opt := Default(TExportOptions);
+    Opt.IncludeMethods := True;
+    Opt.IncludeProgress := True;
+    Rows := CsvRows(BuildCsv(Scan, St, Opt));
+    Assert.AreEqual('Em revisão', FindCsvRow(Rows, 'TA.Two')[High(FindCsvRow(Rows, 'TA.Two'))], 'metodo em revisao');
   finally
     St.Free;
     Scan.Free;
@@ -619,7 +673,7 @@ begin
     Opt := Default(TExportOptions);
     Opt.IncludeProgress := True;
     Row := FindCsvRow(CsvRows(BuildCsv(Scan, St, Opt)), 'root.pas');
-    Assert.AreEqual('Ficheiro;;root.pas;Raiz;;;;;;;Sim;Não;Não;Sim;nota', string.Join(';', Row));
+    Assert.AreEqual('Ficheiro;;root.pas;Raiz;;;;;;;Sim;Não;Não;Sim;nota;Concluído', string.Join(';', Row));
   finally
     St.Free;
     Scan.Free;
@@ -643,7 +697,7 @@ begin
     Row := FindCsvRow(CsvRows(BuildCsv(Scan, St, Opt)), 'TA.One');
     Assert.AreEqual(
       CsvLine(['Método', 'Core', 'a.pas', 'Core', 'TA', 'TA.One', 'procedure', 'procedure TA.One;', '', '',
-        'Sim', 'Não', 'Não', '', '']).TrimRight([#13, #10]),
+        'Sim', 'Não', 'Não', '', '', 'Concluído']).TrimRight([#13, #10]),
       RawLineOf(Row));
   finally
     St.Free;
@@ -942,6 +996,42 @@ begin
       Assert.AreEqual('TA', TJSONObject(Methods.Items[0]).GetValue<string>('owner'));
       Assert.AreEqual('procedure', TJSONObject(Methods.Items[0]).GetValue<string>('kind'));
       Assert.AreEqual('procedure TA.One;', TJSONObject(Methods.Items[0]).GetValue<string>('signature'));
+    finally
+      Root.Free;
+    end;
+  finally
+    P.Free;
+    St.Free;
+    Scan.Free;
+  end;
+end;
+
+procedure TBuildJsonTests.ReviewKeyIsStableAndLanguageIndependent;
+var
+  Scan: TProjectScan;
+  St: TProgressState;
+  P: TProjectProfile;
+  Opt: TExportOptions;
+  Root, Core, AFile: TJSONObject;
+  Methods: TJSONArray;
+begin
+  Scan := BuildSampleScan;
+  St := TProgressState.Create;
+  P := NewProfile('X');
+  try
+    St.Rec('Core/a.pas').MWip.Add('TA.Two');
+    St.Rec('Core/a.pas').MFix.Add('TA.One');
+    Opt := Default(TExportOptions);
+    Opt.IncludeMethods := True;
+    Opt.IncludeProgress := True;
+    Root := ParseObj(BuildJson(P, Scan, St, Opt));
+    try
+      Core := FindChildNode(Root.GetValue<TJSONArray>('tree'), 'Core');
+      AFile := FindChildNode(Core.GetValue<TJSONArray>('children'), 'a.pas');
+      Methods := AFile.GetValue<TJSONArray>('methods');
+      Assert.AreEqual('needsChange', TJSONObject(Methods.Items[0]).GetValue<string>('review'));
+      Assert.AreEqual('inReview', TJSONObject(Methods.Items[1]).GetValue<string>('review'));
+      Assert.AreEqual('needsChange', AFile.GetValue<string>('review'), 'o ficheiro tem um metodo a alterar');
     finally
       Root.Free;
     end;

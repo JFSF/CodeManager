@@ -10,6 +10,11 @@ uses
   System.SysUtils, System.Generics.Collections, System.Generics.Defaults, CM.Analyzer, CM.Store;
 
 type
+  // estado de revisao de um ficheiro ou metodo (exclusivos). "Feito" e a marca de sempre; os outros
+  // dois guardam-se em campos proprios e as paginas HTML ignoram-nos
+  TReviewState = (rsPending, rsInReview, rsNeedsChange, rsDone);
+  TReviewCounts = array[TReviewState] of Integer;
+
   TLayerStat = record
     Name: string;
     Done: Integer;
@@ -21,10 +26,24 @@ type
     Methods, DoneMethods, UnitsWithMethods: Integer;
     FilesCompila, FilesSonar: Integer;
     MethodsCompila, MethodsSonar: Integer;
+    FilesByReview, MethodsByReview: TReviewCounts;
     Layers: TArray<TLayerStat>;
   end;
 
 function UnitDone(AUnit: TUnitInfo; AState: TProgressState): Boolean;
+// estado de revisao de um metodo (AState pode ser nil) e de um ficheiro: com metodos, "feito" quando todos o
+// estao, "precisa de alteracao" se algum precisa, "em revisao" se algum esta ou ja ha parte feita
+function ReviewOfMethod(AState: TUnitState; const AName: string): TReviewState;
+function ReviewOfUnit(AUnit: TUnitInfo; AState: TProgressState): TReviewState;
+// pendente -> em revisao -> precisa de alteracao -> pendente; um "feito" reabre-se como "precisa de alteracao"
+function NextReview(AValue: TReviewState): TReviewState;
+function ReviewText(AValue: TReviewState): string;
+// ' [Em revisão]' / ' [Precisa de alteração]' para os estados que a caixa [ ] / [x] nao distingue; vazio nos outros
+function ReviewTag(AValue: TReviewState): string;
+// poe o metodo no estado dado (limpa os outros) e recalcula o "feito" do ficheiro
+procedure SetMethodReview(AUnit: TUnitInfo; AState: TUnitState; const AName: string; AValue: TReviewState);
+// o mesmo para um ficheiro sem metodos
+procedure SetFileReview(AState: TUnitState; AValue: TReviewState);
 function MethodsDoneCount(AUnit: TUnitInfo; AState: TProgressState): Integer;
 function ComputeStats(AScan: TProjectScan; AState: TProgressState): TStats;
 // O progresso antigo identificava os metodos so pelo nome ('Resize'); agora a chave e qualificada
@@ -57,6 +76,114 @@ begin
   Result := (S <> nil) and S.Done;
 end;
 
+function ReviewOfMethod(AState: TUnitState; const AName: string): TReviewState;
+begin
+  Result := rsPending;
+  if AState = nil then
+    Exit;
+  if AState.MDone.Contains(AName) then
+    Result := rsDone
+  else if AState.MFix.Contains(AName) then
+    Result := rsNeedsChange
+  else if AState.MWip.Contains(AName) then
+    Result := rsInReview;
+end;
+
+function ReviewOfUnit(AUnit: TUnitInfo; AState: TProgressState): TReviewState;
+var
+  S: TUnitState;
+  M: TMethodInfo;
+  Done, Fix, Wip: Integer;
+begin
+  S := AState.Find(AUnit.Path);
+  if Length(AUnit.Methods) = 0 then
+  begin
+    if S = nil then Exit(rsPending);
+    if S.Done then Exit(rsDone);
+    if S.Fix then Exit(rsNeedsChange);
+    if S.Wip then Exit(rsInReview);
+    Exit(rsPending);
+  end;
+  Done := 0;
+  Fix := 0;
+  Wip := 0;
+  for M in AUnit.Methods do
+    case ReviewOfMethod(S, M.Name) of
+      rsDone: Inc(Done);
+      rsNeedsChange: Inc(Fix);
+      rsInReview: Inc(Wip);
+    end;
+  if Done = Length(AUnit.Methods) then
+    Result := rsDone
+  else if Fix > 0 then
+    Result := rsNeedsChange
+  else if (Wip > 0) or (Done > 0) then
+    Result := rsInReview
+  else
+    Result := rsPending;
+end;
+
+function NextReview(AValue: TReviewState): TReviewState;
+begin
+  case AValue of
+    rsPending: Result := rsInReview;
+    rsInReview: Result := rsNeedsChange;
+    rsNeedsChange: Result := rsPending;
+  else
+    Result := rsNeedsChange;     // reabre um "feito"
+  end;
+end;
+
+function ReviewText(AValue: TReviewState): string;
+begin
+  case AValue of
+    rsInReview: Result := 'Em revisão';
+    rsNeedsChange: Result := 'Precisa de alteração';
+    rsDone: Result := 'Concluído';
+  else
+    Result := 'Por rever';
+  end;
+end;
+
+function ReviewTag(AValue: TReviewState): string;
+begin
+  if AValue in [rsInReview, rsNeedsChange] then
+    Result := ' [' + ReviewText(AValue) + ']'
+  else
+    Result := '';
+end;
+
+procedure SetMethodReview(AUnit: TUnitInfo; AState: TUnitState; const AName: string; AValue: TReviewState);
+var
+  M: TMethodInfo;
+  WasDone, AllDone: Boolean;
+begin
+  WasDone := AState.MDone.Contains(AName);
+  AState.MDone.Remove(AName);
+  AState.MWip.Remove(AName);
+  AState.MFix.Remove(AName);
+  case AValue of
+    rsDone: AState.MDone.Add(AName);
+    rsInReview: AState.MWip.Add(AName);
+    rsNeedsChange: AState.MFix.Add(AName);
+  end;
+  AllDone := Length(AUnit.Methods) > 0;
+  for M in AUnit.Methods do
+    if not AState.MDone.Contains(M.Name) then
+      AllDone := False;
+  AState.Done := AllDone;
+  if (AValue = rsDone) or WasDone then
+    AState.Ts := NowMillis;
+end;
+
+procedure SetFileReview(AState: TUnitState; AValue: TReviewState);
+begin
+  AState.Done := AValue = rsDone;
+  AState.Wip := AValue = rsInReview;
+  AState.Fix := AValue = rsNeedsChange;
+  AState.Ts := NowMillis;
+end;
+
 function ComputeStats(AScan: TProjectScan; AState: TProgressState): TStats;
 var
   U: TUnitInfo;
@@ -86,6 +213,7 @@ begin
       end;
       L := Layers[Idx];
       Inc(L.Total);
+      Inc(Result.FilesByReview[ReviewOfUnit(U, AState)]);
       if UnitDone(U, AState) then
       begin
         Inc(Result.DoneFiles);
@@ -101,6 +229,8 @@ begin
       if Length(U.Methods) > 0 then
         Inc(Result.UnitsWithMethods);
       Inc(Result.Methods, Length(U.Methods));
+      for M in U.Methods do
+        Inc(Result.MethodsByReview[ReviewOfMethod(S, M.Name)]);
       if S <> nil then
         for M in U.Methods do
         begin

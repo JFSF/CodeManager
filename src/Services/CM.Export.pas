@@ -33,6 +33,7 @@ type
 
   TRowProgress = record
     Done, Star, Compila, Sonar: Boolean;
+    Review: TReviewState;     // inclui "feito"; Done continua a ser o que sempre foi
     Note: string;
   end;
 
@@ -278,6 +279,7 @@ begin
     xkFile:
       begin
         Result.Done := UnitDone(ARow.U, AState);
+        Result.Review := ReviewOfUnit(ARow.U, AState);
         if S <> nil then
         begin
           Result.Star := S.Star;
@@ -291,6 +293,7 @@ begin
       begin
         Name := ARow.U.Methods[ARow.MIndex].Name;
         Result.Done := S.MDone.Contains(Name);
+        Result.Review := ReviewOfMethod(S, Name);
         Result.Compila := S.MCompila.Contains(Name);
         Result.Sonar := S.MSonar.Contains(Name);
       end;
@@ -392,6 +395,7 @@ begin
       begin
         if P.Compila then Line := Line + ' [Compila]';
         if P.Sonar then Line := Line + ' [Sonar]';
+        Line := Line + ReviewTag(P.Review);
         if P.Star then Line := Line + ' ★';
         Line2 := OneLine(P.Note);
         if Line2 <> '' then
@@ -475,6 +479,7 @@ begin
     begin
       if P.Compila then Line := Line + ' [Compila]';
       if P.Sonar then Line := Line + ' [Sonar]';
+      Line := Line + ReviewTag(P.Review);
       if P.Star then Line := Line + ' (prioritário)';
       Note := OneLine(P.Note);
       if Note <> '' then
@@ -566,7 +571,7 @@ begin
     Fields.AddRange(['Nível', 'Pasta', 'Ficheiro', 'Camada', 'Classe', 'Método', 'Tipo', 'Assinatura', 'Linhas',
       'Complexidade']);
     if AOptions.IncludeProgress then
-      Fields.AddRange(['Concluído', 'Compila', 'Sonar', 'Prioritário', 'Nota']);
+      Fields.AddRange(['Concluído', 'Compila', 'Sonar', 'Prioritário', 'Nota', 'Revisão']);
     SB.Append(CsvLine(Fields.ToArray));
     for R in FlattenStructure(AScan, AOptions.IncludeMethods) do
     begin
@@ -586,9 +591,9 @@ begin
       begin
         Fields.AddRange([YesNo(P.Done), YesNo(P.Compila), YesNo(P.Sonar)]);
         if R.Kind = xkFile then
-          Fields.AddRange([YesNo(P.Star), OneLine(P.Note)])
+          Fields.AddRange([YesNo(P.Star), OneLine(P.Note), ReviewText(P.Review)])
         else
-          Fields.AddRange(['', '']);
+          Fields.AddRange(['', '', ReviewText(P.Review)]);
       end;
       SB.Append(CsvLine(Fields.ToArray));
     end;
@@ -601,11 +606,24 @@ end;
 
 { ---------------------------------------------------------------- JSON }
 
+// chave estavel do estado de revisao no JSON (nao depende do idioma)
+function ReviewKey(AValue: TReviewState): string;
+begin
+  case AValue of
+    rsInReview: Result := 'inReview';
+    rsNeedsChange: Result := 'needsChange';
+    rsDone: Result := 'done';
+  else
+    Result := 'pending';
+  end;
+end;
+
 procedure AddProgressJson(AObj: TJSONObject; const AProgress: TRowProgress; AIsFile: Boolean);
 begin
   AObj.AddPair('done', TJSONBool.Create(AProgress.Done));
   AObj.AddPair('compila', TJSONBool.Create(AProgress.Compila));
   AObj.AddPair('sonar', TJSONBool.Create(AProgress.Sonar));
+  AObj.AddPair('review', ReviewKey(AProgress.Review));
   if AIsFile then
   begin
     AObj.AddPair('star', TJSONBool.Create(AProgress.Star));

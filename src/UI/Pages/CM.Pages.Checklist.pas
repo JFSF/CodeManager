@@ -21,6 +21,7 @@ type
     FBars: TCMBars;
     FPlanStats: TCMKeyValue;       // cobertura do plano; o cartao so aparece quando ha plano
     FChips: TCMChipFlow;
+    FStateChips: TCMChipFlow;      // filtros por estado de revisao, com a contagem de ficheiros
     FStarBtn: TCMButton;
     FNotePanel: TCMPanel;
     FNoteLabel: TCMLabel;
@@ -31,6 +32,9 @@ type
     procedure FitProgressCard;
     procedure ShowPlanCard;
     procedure FitChipsCard(Sender: TObject);
+    procedure FitStateCard(Sender: TObject);
+    procedure RebuildStateChips(const St: TStats);
+    procedure StateChipClick(Sender: TObject);
     procedure ListChanged(Sender: TObject);
     procedure SearchChanged(Sender: TObject);
     procedure StarOnlyClick(Sender: TObject);
@@ -102,6 +106,14 @@ begin
   FBars.Parent := Card;
   FBars.Align := TAlignLayout.Top;
   FBars.Margins.Top := 14;
+
+  Card := SideCard(Self, Side, 120);
+  TCMLabel.Make(Card, 'Estado da revisão', 15, True).Align := TAlignLayout.Top;
+  FStateChips := TCMChipFlow.Create(Self);
+  FStateChips.Parent := Card;
+  FStateChips.Align := TAlignLayout.Top;
+  FStateChips.Margins.Top := 12;
+  FStateChips.OnRelayout := FitStateCard;
 
   Card := SideCard(Self, Side, 200);
   Card.Visible := False;
@@ -225,6 +237,7 @@ begin
   FRing.SetValues(0, '0%', '0 / 0 ficheiros', 0, '0 / 0 (0%)');
   FBars.SetRows(nil);
   FitProgressCard;
+  RebuildStateChips(Default(TStats));
   ShowPlanCard;
 end;
 
@@ -249,6 +262,7 @@ begin
   end;
   FBars.SetRows(Bars);
   FitProgressCard;
+  RebuildStateChips(St);
   ShowPlanCard;
 end;
 
@@ -300,6 +314,42 @@ end;
 procedure TChecklistPage.FitChipsCard(Sender: TObject);
 begin
   TCMPanel(FChips.Parent).Height := 16 + 16 + 26 + 12 + Max(FChips.Height, 8);
+end;
+
+// os quatro estados como filtros; a etiqueta leva quantos ficheiros estao em cada um
+procedure TChecklistPage.RebuildStateChips(const St: TStats);
+var
+  S: TReviewState;
+  B: TCMButton;
+begin
+  while FStateChips.ChildrenCount > 0 do
+    FStateChips.Children[0].Free;
+  for S := Low(TReviewState) to High(TReviewState) do
+  begin
+    B := TCMButton.Create(FStateChips);
+    B.Parent := FStateChips;
+    B.Height := 28;
+    B.Text := Format('%s · %d', [ReviewText(S), St.FilesByReview[S]]);
+    B.Tag := Ord(S);
+    B.Active := FList.ReviewStateActive(S);
+    B.OnClick := StateChipClick;
+  end;
+  FStateChips.Relayout;
+  FitStateCard(nil);
+end;
+
+procedure TChecklistPage.FitStateCard(Sender: TObject);
+begin
+  TCMPanel(FStateChips.Parent).Height := 16 + 16 + 26 + 12 + Max(FStateChips.Height, 8);
+end;
+
+procedure TChecklistPage.StateChipClick(Sender: TObject);
+var
+  B: TCMButton;
+begin
+  B := TCMButton(Sender);
+  FList.ToggleReviewState(TReviewState(B.Tag));
+  B.Active := FList.ReviewStateActive(TReviewState(B.Tag));
 end;
 
 procedure TChecklistPage.ChipClick(Sender: TObject);

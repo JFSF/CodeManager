@@ -165,6 +165,11 @@ Pontos a reter:
   O progresso **não** vive nele. Vive em `TProgressState`, indexado pelo caminho da unit (`src/Core/CM.Store.pas`) e
   pelo nome qualificado do método (`TFoo.Bar`, ou `TFoo.Bar(Integer)` num overload). Assim, voltar a analisar não
   perde marcas.
+- **Os estados de revisão** (`TReviewState`: por rever, em revisão, precisa de alteração, concluído) vivem em
+  `CM.Stats`, que decide o estado efetivo de um método (`ReviewOfMethod`), de um ficheiro (`ReviewOfUnit`, derivado
+  dos métodos) e a transição (`NextReview`, `SetMethodReview`). No progresso, «concluído» é a marca de sempre
+  (`done`, `m`); os outros dois ficam em campos opcionais (`wip`/`fix` e `mw`/`mf`), por isso o formato partilhado
+  com as páginas HTML não muda para quem não os usa.
 - **O estado face ao plano** (`PlanStatus`, `MethodStatus`) só existe na *vista cruzada* que o Mapa mostra, nunca na
   análise do código. A vista é uma cópia das units; a análise original não é alterada.
 - **As medidas dos métodos** (`Lines`, `Complexity`) vêm de `CM.Metrics`, que percorre os corpos da secção
@@ -380,7 +385,7 @@ Os testes são [DUnitX](https://github.com/VSoftTechnologies/DUnitX) (já vêm c
 | Área | Ficheiros | Cobre |
 |---|---|---|
 | Análise | `Tests.Analyzer.*`, `Tests.Metrics` | Extração de métodos (comentários, strings, genéricos, overloads, tipos aninhados, codificações), `ScanProject`, `RescanFile`, `ReconcileScan`; linhas e complexidade dos corpos. |
-| Estatísticas e dados | `Tests.Stats`, `Tests.Store`, `Tests.History` | Regras de conclusão, JSON de definições e progresso (incluindo o formato das páginas HTML), histórico diário. |
+| Estatísticas e dados | `Tests.Stats`, `Tests.Store`, `Tests.History`, `Tests.Review` | Regras de conclusão, JSON de definições e progresso (incluindo o formato das páginas HTML), histórico diário. |
 | Saídas | `Tests.Export.*`, `Tests.Print.*`, `Tests.Html` | Cada formato de exportação, paginação da impressão, páginas HTML. |
 | Sistema | `Tests.Watcher` | O vigia numa pasta temporária. |
 | Plano | `Tests.Plan` | Leitura do documento (todos os estilos, casos limite) e cruzamento. |
@@ -395,6 +400,8 @@ A interface não tem testes automáticos; é verificada com o modo de desenvolvi
   título incluída) sem folhas de estilo.
 - **Estado do plano num array paralelo (`MethodPlan`)** em vez de um campo novo no record `TMethodInfo`: os
   `TMethodInfo` são criados campo a campo em vários sítios e um campo novo herdaria lixo.
+- **«Concluído» não passou a ser um valor do estado de revisão guardado.** Continua a ser `done`/`m`, que as páginas
+  HTML e as estatísticas já usam; o estado de revisão completo calcula-se por cima (`ReviewOfMethod`).
 - **Histórico num ficheiro próprio.** O formato do progresso é partilhado com as páginas HTML offline; misturar
   histórico nele quebraria a compatibilidade.
 - **Leitor de planos tolerante, cruzamento conservador.** O leitor aceita vários estilos (quem escreve planos não

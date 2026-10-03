@@ -48,12 +48,18 @@ type
   TUnitState = class
   public
     Done: Boolean;
+    // estados de revisao alem de "feito" (exclusivos entre si e com Done). Para um ficheiro com
+    // metodos o estado vem dos metodos; estas duas marcas so contam para ficheiros sem metodos
+    Wip: Boolean;              // em revisao
+    Fix: Boolean;              // precisa de alteracao
     Star: Boolean;
     Compila: Boolean;
     Sonar: Boolean;
     Note: string;
     Ts: Int64;
     MDone: THashSet<string>;   // metodos revistos
+    MWip: THashSet<string>;    // metodos em revisao
+    MFix: THashSet<string>;    // metodos que precisam de alteracao
     MCompila: THashSet<string>;
     MSonar: THashSet<string>;
     constructor Create;
@@ -262,6 +268,8 @@ constructor TUnitState.Create;
 begin
   inherited;
   MDone := THashSet<string>.Create;
+  MWip := THashSet<string>.Create;
+  MFix := THashSet<string>.Create;
   MCompila := THashSet<string>.Create;
   MSonar := THashSet<string>.Create;
 end;
@@ -269,6 +277,8 @@ end;
 destructor TUnitState.Destroy;
 begin
   MDone.Free;
+  MWip.Free;
+  MFix.Free;
   MCompila.Free;
   MSonar.Free;
   inherited;
@@ -276,8 +286,9 @@ end;
 
 function TUnitState.IsEmpty: Boolean;
 begin
-  Result := not (Done or Star or Compila or Sonar) and (Note = '') and
-    (MDone.Count = 0) and (MCompila.Count = 0) and (MSonar.Count = 0);
+  Result := not (Done or Wip or Fix or Star or Compila or Sonar) and (Note = '') and
+    (MDone.Count = 0) and (MWip.Count = 0) and (MFix.Count = 0) and (MCompila.Count = 0) and
+    (MSonar.Count = 0);
 end;
 
 { TProgressState }
@@ -354,12 +365,16 @@ begin
         Continue;
       U := TJSONObject.Create;
       if S.Done then U.AddPair('done', TJSONBool.Create(True));
+      if S.Wip then U.AddPair('wip', TJSONBool.Create(True));
+      if S.Fix then U.AddPair('fix', TJSONBool.Create(True));
       if S.Star then U.AddPair('star', TJSONBool.Create(True));
       if S.Compila then U.AddPair('compila', TJSONBool.Create(True));
       if S.Sonar then U.AddPair('sonar', TJSONBool.Create(True));
       if S.Note <> '' then U.AddPair('note', S.Note);
       if S.Ts <> 0 then U.AddPair('ts', TJSONNumber.Create(S.Ts));
       SetToJson(U, 'm', S.MDone);
+      SetToJson(U, 'mw', S.MWip);
+      SetToJson(U, 'mf', S.MFix);
       SetToJson(U, 'mc', S.MCompila);
       SetToJson(U, 'mq', S.MSonar);
       Root.AddPair(Pair.Key, U);
@@ -397,6 +412,8 @@ begin
       U := TJSONObject(Pair.JsonValue);
       S := TUnitState.Create;
       S.Done := JsonBool(U, 'done', False);
+      S.Wip := JsonBool(U, 'wip', False);
+      S.Fix := JsonBool(U, 'fix', False);
       S.Star := JsonBool(U, 'star', False);
       S.Compila := JsonBool(U, 'compila', False);
       S.Sonar := JsonBool(U, 'sonar', False);
@@ -404,6 +421,8 @@ begin
       if U.TryGetValue<TJSONNumber>('ts', Num) then
         S.Ts := Trunc(Num.AsDouble);
       JsonToSet(U, 'm', S.MDone);
+      JsonToSet(U, 'mw', S.MWip);
+      JsonToSet(U, 'mf', S.MFix);
       JsonToSet(U, 'mc', S.MCompila);
       JsonToSet(U, 'mq', S.MSonar);
       FUnits.AddOrSetValue(Pair.JsonString.Value, S);

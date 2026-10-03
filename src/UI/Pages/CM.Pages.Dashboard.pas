@@ -533,9 +533,10 @@ var
 begin
   Reset(FStatus, TChartKind.Bar, 'Estado dos ficheiros',
     Format('Em %d ficheiros', [FStats.Files]));
-  FStatus.Plot.Categories := ['Concluídos', 'Compila', 'Sonar'];
+  FStatus.Plot.Categories := ['Concluídos', 'Em revisão', 'A alterar', 'Compila', 'Sonar'];
   FStatus.Plot.AddSeries('Ficheiros',
-    [FStats.DoneFiles, FStats.FilesCompila, FStats.FilesSonar]).Color := Pal.Accent;
+    [FStats.FilesByReview[rsDone], FStats.FilesByReview[rsInReview], FStats.FilesByReview[rsNeedsChange],
+     FStats.FilesCompila, FStats.FilesSonar]).Color := Pal.Accent;
   // a escala vai de 0 ao total de ficheiros, mesmo quando ainda nada esta marcado
   Axis := FStatus.Plot.YAxis;
   Axis.MinValue := 0;

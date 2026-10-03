@@ -15,7 +15,8 @@ uses
 type
   TListMode = (lmMap, lmChecklist);
   TRowKind = (rkDir, rkFile, rkMethod);
-  TElem = (eNone, eCheck, eStar, eCompila, eSonar, ePill, eNote, eRow);
+  TElem = (eNone, eCheck, eState, eStar, eCompila, eSonar, ePill, eNote, eRow);
+  TReviewFilter = set of TReviewState;
 
   TRow = record
     Kind: TRowKind;
@@ -31,7 +32,7 @@ type
   end;
 
   TRowLayout = record
-    Check, Star, Compila, Sonar, Pill, Note, Tag, NameR, KindR, Caret: TRectF;
+    Check, State, Star, Compila, Sonar, Pill, Note, Tag, NameR, KindR, Caret: TRectF;
   end;
 
   TCMHintEvent = procedure(const AText: string) of object;
@@ -62,6 +63,7 @@ type
     FLayers: THashSet<string>;
     FQuery: string;
     FStarOnly: Boolean;
+    FReviewFilter: TReviewFilter;     // vazio = todos os estados
     FScrollY: Single;
     FContentH: Single;
     FHoverRow: Integer;
@@ -105,6 +107,10 @@ type
     function DrawMetrics(ARight, ACenterY: Single; const AMethod: TMethodInfo): Single;
     procedure DrawFlag(const ARect: TRectF; const ALabel: string; AChecked: Boolean; AColor: TAlphaColor);
     procedure DrawCheckbox(const ARect: TRectF; AChecked, APending: Boolean; AColor: TAlphaColor);
+    // pontinho do estado de revisao: anel (por rever/feito), anel com miolo (em revisao) ou cheio com ! (alterar)
+    procedure DrawReviewDot(const ARect: TRectF; AState: TReviewState);
+    function ReviewMatches(U: TUnitInfo; AMethod: Integer): Boolean;
+    function RowReview(const ARow: TRow): TReviewState;
     procedure DrawScrollbar;
     function ThumbRect: TRectF;
     procedure SetFont(ASize: Single; const AFamily: string; AStyle: TFontStyles = []);
@@ -140,6 +146,9 @@ type
     procedure ResetFilters;
     procedure ToggleLayer(const ALayer: string);
     function LayerActive(const ALayer: string): Boolean;
+    // filtra a checklist pelo estado de revisao (varios estados somam-se; nenhum = todos)
+    procedure ToggleReviewState(AState: TReviewState);
+    function ReviewStateActive(AState: TReviewState): Boolean;
     function BuildMarkdown(const AProjectName: string): string;
     property Mode: TListMode read FMode write FMode;
     property Query: string read FQuery write SetQuery;
@@ -474,7 +483,8 @@ var
 begin
   if FOpen.Contains(U.Path) then
     for I := 0 to High(U.Methods) do
-      AddRow(rkMethod, ALevel, U.Methods[I].Sig, U.Path, U, I, 0, 0);
+      if (FReviewFilter = []) or (FMode <> lmChecklist) or ReviewMatches(U, I) then
+        AddRow(rkMethod, ALevel, U.Methods[I].Sig, U.Path, U, I, 0, 0);
 end;
 
 procedure TCMTreeList.EmitMapNode(ANode: TDirNode; ALevel: Integer);
@@ -518,7 +528,34 @@ begin
   end;
   if (FLayers.Count > 0) and not FLayers.Contains(U.Layer) then
     Exit(False);
+  if (FReviewFilter <> []) and (FMode = lmChecklist) and not ReviewMatches(U, -1) then
+    Exit(False);
   Result := True;
+end;
+
+// AMethod >= 0: esse metodo tem um estado do filtro; -1: o ficheiro ou algum dos seus metodos tem
+function TCMTreeList.ReviewMatches(U: TUnitInfo; AMethod: Integer): Boolean;
+var
+  S: TUnitState;
+  I: Integer;
+begin
+  if AMethod >= 0 then
+    Exit(ReviewOfMethod(FState.Find(U.Path), U.Methods[AMethod].Name) in FReviewFilter);
+  if ReviewOfUnit(U, FState) in FReviewFilter then
+    Exit(True);
+  S := FState.Find(U.Path);
+  for I := 0 to High(U.Methods) do
+    if ReviewOfMethod(S, U.Methods[I].Name) in FReviewFilter then
+      Exit(True);
+  Result := False;
+end;
+
+function TCMTreeList.RowReview(const ARow: TRow): TReviewState;
+begin
+  if ARow.Kind = rkMethod then
+    Result := ReviewOfMethod(FState.Find(ARow.U.Path), ARow.U.Methods[ARow.M].Name)
+  else
+    Result := ReviewOfUnit(ARow.U, FState);
 end;
 
 procedure TCMTreeList.BuildChecklistRows;
@@ -676,6 +713,8 @@ begin
         X := X - 34;
         if FMode = lmChecklist then
         begin
+          Result.State := Box(X - 26, 22, 22);
+          X := X - 26;
           Result.Star := Box(X - 28, 28, 28);
           X := X - 28;
         end;
@@ -696,6 +735,8 @@ begin
         if FMode = lmChecklist then
         begin
           Result.Check := Box(X, 16, 16);
+          X := X + 26;
+          Result.State := Box(X - 2, 20, 20);
           X := X + 26;
         end;
         Result.Compila := Box(X, 34, 22);
@@ -727,6 +768,7 @@ begin
     rkFile:
       begin
         if (FMode = lmChecklist) and L.Check.Contains(Pt) then AElem := eCheck
+        else if (FMode = lmChecklist) and L.State.Contains(Pt) then AElem := eState
         else if (FMode = lmChecklist) and L.Star.Contains(Pt) then AElem := eStar
         else if L.Compila.Contains(Pt) then AElem := eCompila
         else if L.Sonar.Contains(Pt) then AElem := eSonar
@@ -736,6 +778,7 @@ begin
     rkMethod:
       begin
         if (FMode = lmChecklist) and L.Check.Contains(Pt) then AElem := eCheck
+        else if (FMode = lmChecklist) and L.State.Contains(Pt) then AElem := eState
         else if L.Compila.Contains(Pt) then AElem := eCompila
         else if L.Sonar.Contains(Pt) then AElem := eSonar;
       end;
@@ -753,6 +796,11 @@ begin
         Result := 'Método revisto'
       else
         Result := 'Marcar como concluída';
+    eState:
+      if (ARow.Kind = rkFile) and (Length(ARow.U.Methods) > 0) then
+        Result := 'Estado: ' + ReviewText(RowReview(ARow)) + ' (vem dos métodos)'
+      else
+        Result := 'Estado: ' + ReviewText(RowReview(ARow)) + ' — clica para mudar';
     eStar: Result := 'Marcar prioridade';
     eCompila: if ARow.Kind = rkMethod then Result := 'Método compila sem erros' else Result := 'Compila sem erros';
     eSonar: if ARow.Kind = rkMethod then Result := 'Método aprovado no SonarQube' else Result := 'SonarQube aprovado';
@@ -894,8 +942,6 @@ procedure TCMTreeList.ApplyClick(const ARow: TRow; AElem: TElem);
 var
   S: TUnitState;
   Name: string;
-  I: Integer;
-  AllDone: Boolean;
 
   procedure Flip(ASet: THashSet<string>; const AName: string);
   begin
@@ -931,15 +977,20 @@ begin
     Exit;
   end;
 
+  if (ARow.Kind = rkFile) and (AElem = eState) and (Length(ARow.U.Methods) > 0) then
+  begin
+    if Assigned(FOnHint) then
+      FOnHint(HintFor(ARow, eState));
+    Exit;
+  end;
+
   S := FState.Rec(ARow.U.Path);
   if ARow.Kind = rkFile then
   begin
     case AElem of
       eCheck:
-        begin
-          S.Done := not S.Done;
-          S.Ts := NowMillis;
-        end;
+        if ReviewOfUnit(ARow.U, FState) = rsDone then SetFileReview(S, rsPending) else SetFileReview(S, rsDone);
+      eState: SetFileReview(S, NextReview(ReviewOfUnit(ARow.U, FState)));
       eStar: S.Star := not S.Star;
       eCompila: S.Compila := not S.Compila;
       eSonar: S.Sonar := not S.Sonar;
@@ -952,15 +1003,11 @@ begin
       eCompila: Flip(S.MCompila, Name);
       eSonar: Flip(S.MSonar, Name);
       eCheck:
-        begin
-          Flip(S.MDone, Name);
-          AllDone := True;
-          for I := 0 to High(ARow.U.Methods) do
-            if not S.MDone.Contains(ARow.U.Methods[I].Name) then
-              AllDone := False;
-          S.Done := AllDone;
-          S.Ts := NowMillis;
-        end;
+        if S.MDone.Contains(Name) then
+          SetMethodReview(ARow.U, S, Name, rsPending)
+        else
+          SetMethodReview(ARow.U, S, Name, rsDone);
+      eState: SetMethodReview(ARow.U, S, Name, NextReview(ReviewOfMethod(S, Name)));
     end;
   end;
   Changed;
@@ -1102,6 +1149,30 @@ begin
     Pick(AChecked, Pal.TextDim, Pal.TextFaint), 10.5, MonoFont);
 end;
 
+procedure TCMTreeList.DrawReviewDot(const ARect: TRectF; AState: TReviewState);
+var
+  D, Inner: TRectF;
+begin
+  D := TRectF.Create(ARect.CenterPoint.X - 6, ARect.CenterPoint.Y - 6, ARect.CenterPoint.X + 6,
+    ARect.CenterPoint.Y + 6);
+  case AState of
+    rsInReview:
+      begin
+        StrokeRound(Canvas, D, 6, Pal.Pending, 1.5);
+        Inner := D;
+        Inner.Inflate(-3.5, -3.5);
+        FillRound(Canvas, Inner, 2.5, Pal.Pending);
+      end;
+    rsNeedsChange:
+      begin
+        FillRound(Canvas, D, 6, Pal.Danger);
+        DrawTextRect(Canvas, D, '!', Pal.OnAccent, 9.5, MonoFont, [TFontStyle.fsBold], TTextAlign.Center);
+      end;
+  else
+    StrokeRound(Canvas, D, 6, Pal.Border, 1.5);      // por rever (ou feito): so um anel discreto
+  end;
+end;
+
 procedure TCMTreeList.DrawCheckbox(const ARect: TRectF; AChecked, APending: Boolean; AColor: TAlphaColor);
 var
   IR: TRectF;
@@ -1229,6 +1300,7 @@ begin
   if FMode = lmChecklist then
   begin
     DrawCheckbox(L.Check, Done, (Length(U.Methods) > 0) and not Done, P.Accent);
+    DrawReviewDot(L.State, RowReview(ARow));
     FillRound(Canvas, L.Tag, 9, P.AccentSoft);
     DrawTextRect(Canvas, L.Tag, U.Layer, P.AccentStrong, 10, MonoFont, [], TTextAlign.Center);
   end
@@ -1324,7 +1396,10 @@ begin
   S := FState.Find(ARow.U.Path);
   Done := (S <> nil) and S.MDone.Contains(M.Name);
   if FMode = lmChecklist then
+  begin
     DrawCheckbox(L.Check, Done, False, P.Star);
+    DrawReviewDot(L.State, RowReview(ARow));
+  end;
   DrawFlag(L.Compila, 'C', (S <> nil) and S.MCompila.Contains(M.Name), P.FlagCompila);
   DrawFlag(L.Sonar, 'S', (S <> nil) and S.MSonar.Contains(M.Name), P.FlagSonar);
   KindColor := Pick(Done and (FMode = lmChecklist), P.DoneStrike, P.TextFaint);
@@ -1489,6 +1564,7 @@ procedure TCMTreeList.ResetFilters;
 begin
   FQuery := '';
   FStarOnly := False;
+  FReviewFilter := [];
   FLayers.Clear;
   Rebuild;
 end;
@@ -1498,6 +1574,18 @@ begin
   if FLayers.Contains(ALayer) then FLayers.Remove(ALayer) else FLayers.Add(ALayer);
   FScrollY := 0;
   Rebuild;
+end;
+
+procedure TCMTreeList.ToggleReviewState(AState: TReviewState);
+begin
+  if AState in FReviewFilter then Exclude(FReviewFilter, AState) else Include(FReviewFilter, AState);
+  FScrollY := 0;
+  Rebuild;
+end;
+
+function TCMTreeList.ReviewStateActive(AState: TReviewState): Boolean;
+begin
+  Result := AState in FReviewFilter;
 end;
 
 function TCMTreeList.LayerActive(const ALayer: string): Boolean;
@@ -1527,6 +1615,7 @@ begin
         Line := '- [' + Mark + '] ' + U.Path;
         if (S <> nil) and S.Compila then Line := Line + ' [Compila]';
         if (S <> nil) and S.Sonar then Line := Line + ' [Sonar]';
+        Line := Line + ReviewTag(ReviewOfUnit(U, FState));
         if (S <> nil) and S.Star then Line := Line + ' ★';
         if (S <> nil) and (S.Note <> '') then
           Line := Line + '  <!-- ' + S.Note.Replace(#13#10, ' ').Replace(#10, ' ') + ' -->';
@@ -1537,6 +1626,7 @@ begin
           Line := '  - [' + Mark + '] `' + M.Sig + '`';
           if (S <> nil) and S.MCompila.Contains(M.Name) then Line := Line + ' [Compila]';
           if (S <> nil) and S.MSonar.Contains(M.Name) then Line := Line + ' [Sonar]';
+          Line := Line + ReviewTag(ReviewOfMethod(S, M.Name));
           SB.AppendLine(Line);
         end;
       end;

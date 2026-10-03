@@ -112,6 +112,11 @@ foreach ($f in $files) {
     $part = @($names | Select-Object -First ([math]::Ceiling($names.Count * 0.6)))
     $unit.m = ToSet $part; $unit.mc = ToSet $part; $unit.compila = $true; $compilaFiles++
     $doneMethods += $part.Count
+    # estados de revisao de demonstracao: o primeiro metodo por rever fica "em revisao" e, em dois
+    # ficheiros, o segundo "precisa de alteracao"
+    $rest = @($names | Select-Object -Skip $part.Count)
+    if ($rest.Count -gt 0) { $unit.mw = ToSet @($rest[0]) }
+    if ($rest.Count -gt 1 -and $p -match 'CM\.(Pages\.Dashboard|MainForm)\.pas$') { $unit.mf = ToSet @($rest[1]) }
   }
   if ($p -match 'CM\.(Analyzer|Plan|MainForm)\.pas$') { $unit.star = $true }
   if ($p -match 'CM\.TreeList\.pas$') { $unit.note = 'Rever o desenho das linhas do Mapa' }
@@ -148,6 +153,7 @@ $steps = @(
   'search:CM.P;wait:1;shot:{IMG}\03-mapa-plano.png'
   'search:CM.Metrics;wait:1;click:1080,686;wait:1;shot:{IMG}\10-mapa-metricas.png;click:1230,686;wait:1'
   'search:;page:2;wait:1;shot:{IMG}\04-checklist.png'
+  'search:CM.Pages.Dashboard;wait:1;click:860,223;wait:1;shot:{IMG}\11-checklist-estados.png;click:860,223;wait:1;search:;wait:1'
   'page:3;wait:2;shot:{IMG}\05-painel.png'
   'size:1344,3200;wait:2;shot:{IMG}\06-painel-completo.png'
   'size:1344,821;wait:1'

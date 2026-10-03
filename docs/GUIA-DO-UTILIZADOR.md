@@ -111,6 +111,7 @@ A página de revisão: ficheiros agrupados por pasta, com o progresso à vista.
 | Elemento | O que faz |
 |---|---|
 | Caixa à esquerda do ficheiro | **Concluído.** Num ficheiro com métodos é *automática*: fica concluído quando **todos** os métodos estiverem marcados (a caixa com um traço significa «por concluir»). Num ficheiro sem métodos, marcas tu. |
+| Pontinho de estado | O **estado da revisão** (ver abaixo). Clica para mudar de estado. |
 | Etiqueta | A **camada** (a pasta imediata). |
 | ★ | **Prioridade.** O botão **Só prioritários** filtra por elas. |
 | **C** / **S** | Compila / Sonar. |
@@ -120,12 +121,37 @@ A página de revisão: ficheiros agrupados por pasta, com o progresso à vista.
 À direita:
 
 - **Progresso:** o anel dos ficheiros concluídos, a barra dos métodos revistos e uma barra por camada.
+- **Estado da revisão:** os quatro estados, cada um com o número de ficheiros; clica para filtrar (podes juntar vários).
 - **Filtrar por camada:** clica nas camadas para ver só essas.
 - **Ações:** expandir/colapsar, **Markdown** (copia a checklist para a área de transferência), **Exportar HTML**,
   **Exportar/Importar** o progresso (`.json`) e **Reiniciar progresso**.
 
 O ficheiro de progresso exportado tem o mesmo formato das páginas HTML, por isso podes levar o progresso de uma
 para a outra.
+
+### Estados de revisão
+
+![Estados de revisão na Checklist](images/11-checklist-estados.png)
+
+Além de «concluído», cada método (e cada ficheiro sem métodos) pode estar noutros estados. Clica no **pontinho** à
+esquerda para passar ao seguinte; a caixa continua a marcar «concluído».
+
+| Pontinho | Estado | Quando usar |
+|---|---|---|
+| Anel cinzento | **Por rever** | Ainda não foi visto. |
+| Anel com miolo âmbar | **Em revisão** | Estás a ver, ou ficou a meio. |
+| Círculo vermelho com `!` | **Precisa de alteração** | Revisto, mas há algo a corrigir. |
+| (a caixa marcada) | **Concluído** | Revisto e aceite. |
+
+- Os estados são exclusivos: marcar «concluído» limpa os outros, e clicar no pontinho de um método concluído
+  **reabre-o** como «precisa de alteração».
+- O estado de um **ficheiro com métodos** vem deles: *concluído* se todos o estão, *precisa de alteração* se algum
+  precisa, *em revisão* se algum está ou já há parte feita, e *por rever* caso contrário.
+- Com um filtro de estado ativo, a lista mostra só os ficheiros e métodos nesses estados.
+- O **Markdown** copiado e as exportações com estado marcam `[Em revisão]` e `[Precisa de alteração]` a seguir à
+  caixa; o CSV tem a coluna **Revisão** e o JSON o campo `review` (`pending`, `inReview`, `needsChange`, `done`).
+- As **páginas HTML offline** continuam a conhecer só o «concluído»: mostram o resto como por concluir, mas não o
+  perdem ao exportar o progresso.
 
 ## Painel
 
@@ -138,7 +164,7 @@ Uma vista de conjunto, com gráficos que seguem o tema.
 - **Evolução do progresso:** a percentagem de ficheiros concluídos e de métodos revistos ao longo dos dias. A
   aplicação regista **um ponto por dia** de cada vez que as estatísticas mudam; a curva aparece a partir do segundo
   dia.
-- **Progresso por camada**, **Estado dos ficheiros**, **Maiores units** (as 10 com mais métodos), **Métodos por
+- **Progresso por camada**, **Estado dos ficheiros** (concluídos, em revisão, a alterar, Compila e Sonar), **Maiores units** (as 10 com mais métodos), **Métodos por
   camada**, **Métodos por ficheiro** (histograma) e **Compila e Sonar por camada**.
 - **Métodos mais complexos** (os 10 com maior complexidade ciclomática) e **Complexidade dos métodos** (quantos há
   em cada nível).
