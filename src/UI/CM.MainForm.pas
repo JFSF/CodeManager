@@ -641,6 +641,7 @@ begin
   OldPlan.Free;
   Old.Free;
   FCk.RebuildChips;
+  FCk.RequestGitRefresh;
   UpdateAll;
   UpdateHeader;
   if FScan <> nil then
@@ -668,6 +669,7 @@ begin
   FCk.List.MarkChanged(AFlashKeys);
   OldView.Free;
   FCk.RebuildChips;
+  FCk.RequestGitRefresh;
   UpdateAll;
   UpdateHeader;
 end;

@@ -13,6 +13,8 @@ uses
   CM.History in '..\src\Core\CM.History.pas',
   CM.SafeFile in '..\src\Core\CM.SafeFile.pas',
   CM.Metrics in '..\src\Core\CM.Metrics.pas',
+  CM.Git in '..\src\Infrastructure\CM.Git.pas',
+  CM.GitReview in '..\src\Services\CM.GitReview.pas',
   CM.Plan in '..\src\Core\CM.Plan.pas',
   CM.Export in '..\src\Services\CM.Export.pas',
   CM.Print in '..\src\Services\CM.Print.pas',
@@ -37,7 +39,8 @@ uses
   Tests.Plan in 'Tests.Plan.pas',
   Tests.SafeFile in 'Tests.SafeFile.pas',
   Tests.Metrics in 'Tests.Metrics.pas',
-  Tests.Review in 'Tests.Review.pas';
+  Tests.Review in 'Tests.Review.pas',
+  Tests.Git in 'Tests.Git.pas';
 
 var
   Runner: ITestRunner;

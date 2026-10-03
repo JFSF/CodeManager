@@ -15,7 +15,8 @@ Primeira versão pública.
 - **Mapa:** árvore pastas → ficheiros → métodos, pesquisa, estatísticas, caixas Compila/Sonar, dicas com o texto completo;
   **linhas de código e complexidade ciclomática** de cada método (`cx`, a âmbar acima de 10 e a vermelho acima de 20).
 - **Checklist:** conclusão automática por ficheiro quando todos os métodos estão revistos, **estados de revisão**
-  (por rever, em revisão, precisa de alteração, concluído) com filtros e contagens, prioridade, notas, filtros por
+  (por rever, em revisão, precisa de alteração, concluído) com filtros e contagens, **ficheiros alterados desde a
+  revisão** (Git, só leitura) com a etiqueta «ALTERADO» e «Voltar a por rever», prioridade, notas, filtros por
   camada, importar/exportar progresso (formato compatível com as páginas HTML), cópia em Markdown.
 - **Painel:** cartões de números e gráficos (Chart4D) — evolução do progresso, progresso por camada, estado dos
   ficheiros, maiores units, métodos por camada, distribuição de métodos, Compila e Sonar por camada. Segue o tema e

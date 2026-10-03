@@ -10,7 +10,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math,
   System.Generics.Collections, System.Generics.Defaults, System.StrUtils, FMX.Types, FMX.Controls, FMX.Graphics,
-  CM.Analyzer, CM.Metrics, CM.Store, CM.Stats, CM.Theme, CM.Controls;
+  CM.Analyzer, CM.Metrics, CM.Store, CM.Stats, CM.GitReview, CM.Theme, CM.Controls;
 
 type
   TListMode = (lmMap, lmChecklist);
@@ -64,6 +64,10 @@ type
     FQuery: string;
     FStarOnly: Boolean;
     FReviewFilter: TReviewFilter;     // vazio = todos os estados
+    FStale: THashSet<string>;         // ficheiros revistos que mudaram desde a revisao (Git)
+    FStaleHints: TDictionary<string, string>;   // dicas ja calculadas (cada uma custa uma chamada ao git)
+    FStaleOnly: Boolean;
+    FGitRoot, FGitHead: string;
     FScrollY: Single;
     FContentH: Single;
     FHoverRow: Integer;
@@ -103,6 +107,9 @@ type
     procedure DrawMethodRow(const ARow: TRow; const L: TRowLayout);
     function OverflowHint(const ARow: TRow; X, Y: Single): string;
     function DrawPlanTag(ARight, ACenterY: Single; AStatus: TPlanStatus; AMoved: Boolean): Single;
+    // etiqueta de contorno encostada a direita; devolve a largura ocupada
+    function DrawTag(ARight, ACenterY: Single; const AText: string; AColor: TAlphaColor): Single;
+    function StaleHintFor(const ARow: TRow): string;
     // linhas e complexidade do metodo, encostadas a direita em ARight; devolve a largura ocupada
     function DrawMetrics(ARight, ACenterY: Single; const AMethod: TMethodInfo): Single;
     procedure DrawFlag(const ARect: TRectF; const ALabel: string; AChecked: Boolean; AColor: TAlphaColor);
@@ -147,6 +154,12 @@ type
     procedure ToggleLayer(const ALayer: string);
     function LayerActive(const ALayer: string): Boolean;
     // filtra a checklist pelo estado de revisao (varios estados somam-se; nenhum = todos)
+    // revisoes desactualizadas segundo o Git: AStale = caminhos dos ficheiros revistos que mudaram; AHead = commit
+    // actual (fica registado em cada revisao nova); AHead = '' sem Git
+    procedure SetGit(const ARoot, AHead: string; AStale: THashSet<string>);
+    procedure SetStaleOnly(AValue: Boolean);
+    property StaleOnly: Boolean read FStaleOnly;
+    property GitHead: string read FGitHead;
     procedure ToggleReviewState(AState: TReviewState);
     function ReviewStateActive(AState: TReviewState): Boolean;
     function BuildMarkdown(const AProjectName: string): string;
@@ -197,6 +210,8 @@ begin
   FCollapsed := THashSet<string>.Create;
   FOpen := THashSet<string>.Create;
   FLayers := THashSet<string>.Create;
+  FStale := THashSet<string>.Create;
+  FStaleHints := TDictionary<string, string>.Create;
   FGroups := TObjectDictionary<string, TList<TUnitInfo>>.Create([doOwnsValues]);
   FGroupKeys := TList<string>.Create;
   FHoverRow := -1;
@@ -219,6 +234,8 @@ begin
   FCollapsed.Free;
   FOpen.Free;
   FLayers.Free;
+  FStale.Free;
+  FStaleHints.Free;
   inherited;
 end;
 
@@ -529,6 +546,8 @@ begin
   if (FLayers.Count > 0) and not FLayers.Contains(U.Layer) then
     Exit(False);
   if (FReviewFilter <> []) and (FMode = lmChecklist) and not ReviewMatches(U, -1) then
+    Exit(False);
+  if FStaleOnly and (FMode = lmChecklist) and not FStale.Contains(U.Path) then
     Exit(False);
   Result := True;
 end;
@@ -875,7 +894,6 @@ function TCMTreeList.DrawPlanTag(ARight, ACenterY: Single; AStatus: TPlanStatus;
 var
   Txt: string;
   C: TAlphaColor;
-  R: TRectF;
 begin
   Txt := PlanTagText(AStatus, AMoved);
   if Txt = '' then
@@ -886,10 +904,33 @@ begin
   else
     C := Pal.TextDim;
   end;
-  Result := MeasureText(Txt, 9.5, MonoFont, [TFontStyle.fsBold]) + 14;
+  Result := DrawTag(ARight, ACenterY, Txt, C);
+end;
+
+function TCMTreeList.DrawTag(ARight, ACenterY: Single; const AText: string; AColor: TAlphaColor): Single;
+var
+  R: TRectF;
+begin
+  Result := MeasureText(AText, 9.5, MonoFont, [TFontStyle.fsBold]) + 14;
   R := TRectF.Create(ARight - Result, ACenterY - 9, ARight, ACenterY + 9);
-  StrokeRound(Canvas, R, 9, C, 1);
-  DrawTextRect(Canvas, R, Txt, C, 9.5, MonoFont, [TFontStyle.fsBold], TTextAlign.Center);
+  StrokeRound(Canvas, R, 9, AColor, 1);
+  DrawTextRect(Canvas, R, AText, AColor, 9.5, MonoFont, [TFontStyle.fsBold], TTextAlign.Center);
+end;
+
+// dica de um ficheiro que mudou desde a revisao (calculada uma vez e guardada)
+function TCMTreeList.StaleHintFor(const ARow: TRow): string;
+var
+  S: TUnitState;
+begin
+  if not FStaleHints.TryGetValue(ARow.U.Path, Result) then
+  begin
+    S := FState.Find(ARow.U.Path);
+    if S = nil then
+      Result := ''
+    else
+      Result := StaleHint(FGitRoot, S.Rev, ARow.U.Path);
+    FStaleHints.Add(ARow.U.Path, Result);
+  end;
 end;
 
 // texto completo de um nome/assinatura que foi cortado com "..." (so se o rato estiver sobre ele)
@@ -907,6 +948,8 @@ begin
         Text := ARow.U.Path;
         Size := 13;
         Status := PlanStatusText(ARow.U.PlanStatus, ARow.U.PlannedPath, False);
+        if (FMode = lmChecklist) and FStale.Contains(ARow.U.Path) then
+          Status := StaleHintFor(ARow);
       end;
     rkMethod:
       begin
@@ -985,6 +1028,11 @@ begin
   end;
 
   S := FState.Rec(ARow.U.Path);
+  if (AElem in [eCheck, eState]) and (FGitHead <> '') then
+  begin
+    S.Rev := FGitHead;                   // a revisao passa a ser deste commit
+    FStale.Remove(ARow.U.Path);
+  end;
   if ARow.Kind = rkFile then
   begin
     case AElem of
@@ -1315,6 +1363,11 @@ begin
   TagW := DrawPlanTag(NR.Right, NR.CenterPoint.Y, U.PlanStatus, U.PlannedPath <> '');
   if TagW > 0 then
     NR.Right := NR.Right - TagW - 10;
+  if (FMode = lmChecklist) and FStale.Contains(U.Path) then
+  begin
+    TagW := DrawTag(NR.Right, NR.CenterPoint.Y, 'ALTERADO', P.Pending);
+    NR.Right := NR.Right - TagW - 10;
+  end;
   SetFont(13, MonoFont);
   Full := FitText(Canvas, U.FileName, NR.Width);
   Base := U.BaseName;
@@ -1565,6 +1618,7 @@ begin
   FQuery := '';
   FStarOnly := False;
   FReviewFilter := [];
+  FStaleOnly := False;
   FLayers.Clear;
   Rebuild;
 end;
@@ -1579,6 +1633,30 @@ end;
 procedure TCMTreeList.ToggleReviewState(AState: TReviewState);
 begin
   if AState in FReviewFilter then Exclude(FReviewFilter, AState) else Include(FReviewFilter, AState);
+  FScrollY := 0;
+  Rebuild;
+end;
+
+procedure TCMTreeList.SetGit(const ARoot, AHead: string; AStale: THashSet<string>);
+var
+  P: string;
+begin
+  FGitRoot := ARoot;
+  FGitHead := AHead;
+  FStale.Clear;
+  FStaleHints.Clear;
+  if AStale <> nil then
+    for P in AStale do
+      FStale.Add(P);
+  if FStaleOnly then
+    Rebuild
+  else
+    Repaint;
+end;
+
+procedure TCMTreeList.SetStaleOnly(AValue: Boolean);
+begin
+  FStaleOnly := AValue;
   FScrollY := 0;
   Rebuild;
 end;

@@ -15,6 +15,12 @@ type
   TReviewState = (rsPending, rsInReview, rsNeedsChange, rsDone);
   TReviewCounts = array[TReviewState] of Integer;
 
+  // um commit e a sua hora (segundos Unix); o historico do Git, do mais recente para o mais antigo
+  TCommitTime = record
+    Hash: string;
+    Time: Int64;
+  end;
+
   TLayerStat = record
     Name: string;
     Done: Integer;
@@ -40,6 +46,14 @@ function NextReview(AValue: TReviewState): TReviewState;
 function ReviewText(AValue: TReviewState): string;
 // ' [Em revisão]' / ' [Precisa de alteração]' para os estados que a caixa [ ] / [x] nao distingue; vazio nos outros
 function ReviewTag(AValue: TReviewState): string;
+// o commit mais recente feito ate ATime (segundos Unix); '' se nenhum. ATimeline: do mais recente para o mais antigo
+function CommitAt(const ATimeline: TArray<TCommitTime>; ATime: Int64): string;
+// ficheiros revistos (qualquer estado menos "por rever") que estao em AChanged (caminhos relativos)
+function StaleReviews(AScan: TProjectScan; AState: TProgressState; AChanged: THashSet<string>): TArray<TUnitInfo>;
+// volta o ficheiro e os seus metodos a "por rever" (mantem Compila, Sonar, prioridade e nota)
+procedure ResetReview(AState: TUnitState);
+// para os ficheiros revistos sem commit registado, deduz-o da hora da conclusao (Ts, em ms); devolve quantos
+function BackfillRevisions(AScan: TProjectScan; AState: TProgressState; const ATimeline: TArray<TCommitTime>): Integer;
 // poe o metodo no estado dado (limpa os outros) e recalcula o "feito" do ficheiro
 procedure SetMethodReview(AUnit: TUnitInfo; AState: TUnitState; const AName: string; AValue: TReviewState);
 // o mesmo para um ficheiro sem metodos
@@ -142,6 +156,65 @@ begin
     rsDone: Result := 'Concluído';
   else
     Result := 'Por rever';
+  end;
+end;
+
+function CommitAt(const ATimeline: TArray<TCommitTime>; ATime: Int64): string;
+var
+  C: TCommitTime;
+begin
+  for C in ATimeline do
+    if C.Time <= ATime then
+      Exit(C.Hash);
+  Result := '';
+end;
+
+function StaleReviews(AScan: TProjectScan; AState: TProgressState; AChanged: THashSet<string>): TArray<TUnitInfo>;
+var
+  U: TUnitInfo;
+  List: TList<TUnitInfo>;
+begin
+  List := TList<TUnitInfo>.Create;
+  try
+    for U in AScan.Units do
+      if AChanged.Contains(U.Path) and (ReviewOfUnit(U, AState) <> rsPending) then
+        List.Add(U);
+    Result := List.ToArray;
+  finally
+    List.Free;
+  end;
+end;
+
+procedure ResetReview(AState: TUnitState);
+begin
+  AState.Done := False;
+  AState.Wip := False;
+  AState.Fix := False;
+  AState.MDone.Clear;
+  AState.MWip.Clear;
+  AState.MFix.Clear;
+  AState.Ts := 0;
+  AState.Rev := '';
+end;
+
+function BackfillRevisions(AScan: TProjectScan; AState: TProgressState; const ATimeline: TArray<TCommitTime>): Integer;
+var
+  U: TUnitInfo;
+  S: TUnitState;
+  Hash: string;
+begin
+  Result := 0;
+  for U in AScan.Units do
+  begin
+    S := AState.Find(U.Path);
+    if (S = nil) or (S.Rev <> '') or (S.Ts <= 0) or (ReviewOfUnit(U, AState) = rsPending) then
+      Continue;
+    Hash := CommitAt(ATimeline, S.Ts div 1000);
+    if Hash <> '' then
+    begin
+      S.Rev := Hash;
+      Inc(Result);
+    end;
   end;
 end;
 

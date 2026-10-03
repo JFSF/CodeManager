@@ -7,7 +7,7 @@
 interface
 
 uses
-  System.SysUtils, DUnitX.TestFramework, CM.Analyzer, CM.Store, CM.Stats, Tests.Helpers;
+  System.SysUtils, System.Generics.Collections, DUnitX.TestFramework, CM.Analyzer, CM.Store, CM.Stats, Tests.Helpers;
 
 type
   [TestFixture]
@@ -39,6 +39,13 @@ type
     [Test] procedure ProgressJsonRoundTripsTheStates;
     [Test] procedure StatesAreOmittedFromJsonWhenAbsent;
     [Test] procedure UnitWithOnlyAReviewMarkIsNotEmpty;
+    [Test] procedure CommitAtPicksTheLatestCommitNotAfterTheTime;
+    [Test] procedure CommitAtIsEmptyBeforeTheFirstCommit;
+    [Test] procedure StaleReviewsOnlyListsReviewedChangedFiles;
+    [Test] procedure ResetReviewClearsEveryReviewMarkButKeepsTheRest;
+    [Test] procedure BackfillGivesTheCommitOfTheCompletionTime;
+    [Test] procedure BackfillSkipsFilesWithoutTimeOrAlreadyKnown;
+    [Test] procedure RevisionRoundTripsThroughJson;
   end;
 
 implementation
@@ -320,6 +327,148 @@ begin
   Assert.IsTrue(S.IsEmpty);
   S.MFix.Add('One');
   Assert.IsFalse(S.IsEmpty, 'senao seria descartado ao gravar');
+end;
+
+procedure TReviewRulesTests.CommitAtPicksTheLatestCommitNotAfterTheTime;
+var
+  T: TArray<TCommitTime>;
+begin
+  SetLength(T, 3);
+  T[0].Hash := 'c3'; T[0].Time := 300;
+  T[1].Hash := 'c2'; T[1].Time := 200;
+  T[2].Hash := 'c1'; T[2].Time := 100;
+  Assert.AreEqual('c3', CommitAt(T, 999));
+  Assert.AreEqual('c2', CommitAt(T, 250));
+  Assert.AreEqual('c2', CommitAt(T, 200), 'o proprio instante conta');
+  Assert.AreEqual('c1', CommitAt(T, 199));
+end;
+
+procedure TReviewRulesTests.CommitAtIsEmptyBeforeTheFirstCommit;
+var
+  T: TArray<TCommitTime>;
+begin
+  Assert.AreEqual('', CommitAt(nil, 100));
+  SetLength(T, 1);
+  T[0].Hash := 'c1';
+  T[0].Time := 100;
+  Assert.AreEqual('', CommitAt(T, 99));
+end;
+
+procedure TReviewRulesTests.StaleReviewsOnlyListsReviewedChangedFiles;
+var
+  Scan: TProjectScan;
+  A, B, C: TUnitInfo;
+  Changed: THashSet<string>;
+  Stale: TArray<TUnitInfo>;
+begin
+  A := MakeUnitInfo('a.pas', 'Raiz', [Meth('One')]);
+  B := MakeUnitInfo('b.pas', 'Raiz', [Meth('Two')]);
+  C := MakeUnitInfo('c.pas', 'Raiz', [Meth('Three')]);
+  Scan := NewScan(1, [A, B, C]);
+  Changed := THashSet<string>.Create;
+  try
+    SetMethodReview(A, FState.Rec('a.pas'), 'One', rsDone);        // revisto e mudou
+    SetMethodReview(C, FState.Rec('c.pas'), 'Three', rsInReview);  // revisto, nao mudou
+    Changed.Add('a.pas');
+    Changed.Add('b.pas');                                          // mudou mas esta por rever
+    Stale := StaleReviews(Scan, FState, Changed);
+    Assert.AreEqual<NativeInt>(1, Length(Stale));
+    Assert.AreEqual('a.pas', Stale[0].Path);
+  finally
+    Changed.Free;
+    Scan.Free;
+  end;
+end;
+
+procedure TReviewRulesTests.ResetReviewClearsEveryReviewMarkButKeepsTheRest;
+var
+  S: TUnitState;
+begin
+  S := FState.Rec('a.pas');
+  SetMethodReview(Unit3, S, 'One', rsDone);
+  SetMethodReview(Unit3, S, 'Two', rsInReview);
+  SetMethodReview(Unit3, S, 'Three', rsNeedsChange);
+  S.Wip := True;
+  S.Rev := 'abc';
+  S.Compila := True;
+  S.Star := True;
+  S.Note := 'rever';
+  S.MCompila.Add('One');
+  ResetReview(S);
+  Assert.AreEqual(Ord(rsPending), Ord(ReviewOfUnit(Unit3, FState)));
+  Assert.IsFalse(S.Done or S.Wip or S.Fix);
+  Assert.AreEqual<NativeInt>(0, S.MDone.Count + S.MWip.Count + S.MFix.Count);
+  Assert.AreEqual('', S.Rev);
+  Assert.AreEqual<Int64>(0, S.Ts);
+  Assert.IsTrue(S.Compila and S.Star and (S.Note = 'rever') and S.MCompila.Contains('One'),
+    'o resto do progresso fica');
+end;
+
+procedure TReviewRulesTests.BackfillGivesTheCommitOfTheCompletionTime;
+var
+  Scan: TProjectScan;
+  A: TUnitInfo;
+  T: TArray<TCommitTime>;
+begin
+  A := MakeUnitInfo('a.pas', 'Raiz', [Meth('One')]);
+  Scan := NewScan(1, [A]);
+  try
+    SetLength(T, 2);
+    T[0].Hash := 'new'; T[0].Time := 2000;
+    T[1].Hash := 'old'; T[1].Time := 1000;
+    SetMethodReview(A, FState.Rec('a.pas'), 'One', rsDone);
+    FState.Rec('a.pas').Ts := 1500 * 1000;           // em milissegundos
+    Assert.AreEqual(1, BackfillRevisions(Scan, FState, T));
+    Assert.AreEqual('old', FState.Rec('a.pas').Rev);
+  finally
+    Scan.Free;
+  end;
+end;
+
+procedure TReviewRulesTests.BackfillSkipsFilesWithoutTimeOrAlreadyKnown;
+var
+  Scan: TProjectScan;
+  A, B, C: TUnitInfo;
+  T: TArray<TCommitTime>;
+begin
+  A := MakeUnitInfo('a.pas', 'Raiz', [Meth('One')]);
+  B := MakeUnitInfo('b.pas', 'Raiz', [Meth('Two')]);
+  C := MakeUnitInfo('c.pas', 'Raiz', [Meth('Three')]);
+  Scan := NewScan(1, [A, B, C]);
+  try
+    SetLength(T, 1);
+    T[0].Hash := 'h';
+    T[0].Time := 1;
+    SetMethodReview(A, FState.Rec('a.pas'), 'One', rsInReview);      // sem hora (so "feito" regista)
+    SetMethodReview(B, FState.Rec('b.pas'), 'Two', rsDone);
+    FState.Rec('b.pas').Rev := 'ja-tem';
+    FState.Rec('c.pas').Ts := 5000;                                   // tem hora mas esta por rever
+    Assert.AreEqual(0, BackfillRevisions(Scan, FState, T));
+    Assert.AreEqual('', FState.Rec('a.pas').Rev);
+    Assert.AreEqual('ja-tem', FState.Rec('b.pas').Rev);
+    Assert.AreEqual('', FState.Rec('c.pas').Rev);
+  finally
+    Scan.Free;
+  end;
+end;
+
+procedure TReviewRulesTests.RevisionRoundTripsThroughJson;
+var
+  Loaded: TProgressState;
+  S: TUnitState;
+begin
+  S := FState.Rec('a.pas');
+  S.Done := True;
+  S.Rev := '0123abcd';
+  Loaded := TProgressState.Create;
+  try
+    Loaded.LoadFromJSONString(FState.ToJSONString);
+    Assert.AreEqual('0123abcd', Loaded.Find('a.pas').Rev);
+  finally
+    Loaded.Free;
+  end;
+  S.Rev := '';
+  Assert.AreEqual('{"a.pas":{"done":true}}', FState.ToJSONString, 'sem commit, o formato de sempre');
 end;
 
 end.

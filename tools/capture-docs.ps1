@@ -94,6 +94,8 @@ function ToSet($names) {
   foreach ($n in $names) { $set[[string]$n] = $true }
   $set
 }
+$oldCommit = $null
+try { $oldCommit = (& git -C $Root rev-parse 'HEAD~8' 2>$null) } catch { }
 $progress = [ordered]@{}
 $ts = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
 $doneFiles = 0; $doneMethods = 0; $compilaFiles = 0; $sonarFiles = 0
@@ -119,6 +121,8 @@ foreach ($f in $files) {
     if ($rest.Count -gt 1 -and $p -match 'CM\.(Pages\.Dashboard|MainForm)\.pas$') { $unit.mf = ToSet @($rest[1]) }
   }
   if ($p -match 'CM\.(Analyzer|Plan|MainForm)\.pas$') { $unit.star = $true }
+  # revisoes de demonstracao feitas num commit antigo: como os ficheiros mudaram desde entao, aparecem "ALTERADO"
+  if ($oldCommit -and $p -match '^src/Core/CM\.(Analyzer|Plan|Store)\.pas$') { $unit.rc = $oldCommit }
   if ($p -match 'CM\.TreeList\.pas$') { $unit.note = 'Rever o desenho das linhas do Mapa' }
   if ($unit.Count -gt 0) { $progress[$p] = $unit }
 }

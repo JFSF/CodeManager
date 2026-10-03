@@ -6,6 +6,8 @@ uses
   CM.Analyzer in 'src\Core\CM.Analyzer.pas',
   CM.SafeFile in 'src\Core\CM.SafeFile.pas',
   CM.Metrics in 'src\Core\CM.Metrics.pas',
+  CM.Git in 'src\Infrastructure\CM.Git.pas',
+  CM.GitReview in 'src\Services\CM.GitReview.pas',
   CM.Store in 'src\Core\CM.Store.pas',
   CM.Stats in 'src\Core\CM.Stats.pas',
   CM.Html in 'src\Services\CM.Html.pas',

@@ -60,8 +60,8 @@ flowchart TB
 | Camada | Units | Responsabilidade |
 |---|---|---|
 | **Core** | `CM.Analyzer`, `CM.Metrics`, `CM.Plan`, `CM.Stats`, `CM.Store`, `CM.History`, `CM.SafeFile` | Analisar código e planos, calcular estatísticas, guardar/ler JSON. **Só usa a RTL** (`System.*`): nada de `FMX.*`, `Vcl.*` ou `Winapi.*`. |
-| **Infrastructure** | `CM.Watcher`, `CM.Resources` | Tudo o que toca no sistema operativo: `ReadDirectoryChangesW` numa thread e leitura de recursos embutidos. |
-| **Services** | `CM.Export`, `CM.Html`, `CM.Print` | Produzem ficheiros e papel a partir de uma análise: Markdown, TXT, CSV, JSON, páginas HTML offline e impressão. |
+| **Infrastructure** | `CM.Watcher`, `CM.Resources`, `CM.Git` | Tudo o que toca no sistema operativo: `ReadDirectoryChangesW` numa thread, leitura de recursos embutidos e a execução (só leitura) do `git`. |
+| **Services** | `CM.Export`, `CM.Html`, `CM.Print`, `CM.GitReview` | Produzem ficheiros e papel a partir de uma análise: Markdown, TXT, CSV, JSON, páginas HTML offline e impressão. |
 | **UI** | `CM.MainForm`, `CM.Controls`, `CM.TreeList`, `CM.Layouts`, `CM.Theme` e `Pages\*` | Janela, controlos pintados e páginas. |
 
 A regra de dependência é: `Core` não importa ninguém; `Infrastructure` importa `Core`; `Services` importa `Core` e
@@ -176,6 +176,11 @@ Pontos a reter:
   `implementation` (já sem comentários nem textos, mas com as mudanças de linha) e o `CM.Analyzer` associa ao método
   pelo cabeçalho. Zero significa «sem corpo medido». Como entram na comparação de `RescanFile`, editar só o corpo de
   um método atualiza as medidas.
+- **A revisão e o Git.** Cada ficheiro guarda o commit da última revisão (`TUnitState.Rev`, campo opcional `rc`).
+  `CM.Git` (Infrastructure) corre o `git` sem janela e só lê; `CM.GitReview` (Services) compara os commits guardados
+  com `git diff --name-only --relative <commit>` (uma consulta por commit, não por ficheiro) e devolve os ficheiros
+  revistos que mudaram. As regras puras (`StaleReviews`, `ResetReview`, `BackfillRevisions`, `CommitAt`) estão no
+  Core e testam-se sem Git; `Tests.Git` usa um repositório temporário real.
 - **O histórico** guarda um `TSnapshot` por dia (o último do dia substitui o anterior).
 
 ## Analisar um projeto

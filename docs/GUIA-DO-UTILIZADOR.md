@@ -122,6 +122,7 @@ A página de revisão: ficheiros agrupados por pasta, com o progresso à vista.
 
 - **Progresso:** o anel dos ficheiros concluídos, a barra dos métodos revistos e uma barra por camada.
 - **Estado da revisão:** os quatro estados, cada um com o número de ficheiros; clica para filtrar (podes juntar vários).
+- **Git:** num repositório, o commit atual e quantos ficheiros revistos mudaram desde a revisão (ver abaixo).
 - **Filtrar por camada:** clica nas camadas para ver só essas.
 - **Ações:** expandir/colapsar, **Markdown** (copia a checklist para a área de transferência), **Exportar HTML**,
   **Exportar/Importar** o progresso (`.json`) e **Reiniciar progresso**.
@@ -152,6 +153,24 @@ esquerda para passar ao seguinte; a caixa continua a marcar «concluído».
   caixa; o CSV tem a coluna **Revisão** e o JSON o campo `review` (`pending`, `inReview`, `needsChange`, `done`).
 - As **páginas HTML offline** continuam a conhecer só o «concluído»: mostram o resto como por concluir, mas não o
   perdem ao exportar o progresso.
+
+### Alterações desde a revisão (Git)
+
+Se a pasta do projeto está num repositório **Git** (e o `git` está no `PATH`), a Checklist avisa quando um ficheiro
+que já revistes mudou depois disso:
+
+- Cada ficheiro guarda o **commit** em que o revistes (muda sempre que alteras o seu estado). Os ficheiros revistos
+  antes desta funcionalidade ganham o commit que era o atual na hora em que os concluístes.
+- Um ficheiro revisto cujo conteúdo é diferente desse commit — seja por commits novos ou por alterações ainda por
+  gravar no Git — leva a etiqueta **ALTERADO**. Passa o rato pelo nome para ver os últimos commits que lhe tocaram.
+- O cartão **Git** mostra o commit atual e quantos ficheiros mudaram. **Só alterados** filtra a lista;
+  **Atualizar** volta a perguntar ao Git (também acontece sozinho depois de analisar, e quando o vigia deteta
+  alterações); **Voltar a «por rever»** repõe esses ficheiros, depois de confirmares. Compila, Sonar, prioridade e
+  notas mantêm-se.
+- Voltas a rever um ficheiro (mudas-lhe o estado) e a etiqueta desaparece: a revisão passa a ser do commit atual.
+
+O CodeManager **só lê** o repositório (`git rev-parse`, `log`, `diff`): nunca faz commits nem altera nada. Sem Git,
+ou fora de um repositório, o cartão e as etiquetas simplesmente não aparecem.
 
 ## Painel
 

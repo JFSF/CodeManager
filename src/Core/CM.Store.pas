@@ -57,6 +57,9 @@ type
     Sonar: Boolean;
     Note: string;
     Ts: Int64;
+    // commit Git (HEAD) no momento da ultima alteracao do estado de revisao; '' = desconhecido.
+    // Serve para saber se o ficheiro mudou desde a revisao; nao conta para IsEmpty
+    Rev: string;
     MDone: THashSet<string>;   // metodos revistos
     MWip: THashSet<string>;    // metodos em revisao
     MFix: THashSet<string>;    // metodos que precisam de alteracao
@@ -372,6 +375,7 @@ begin
       if S.Sonar then U.AddPair('sonar', TJSONBool.Create(True));
       if S.Note <> '' then U.AddPair('note', S.Note);
       if S.Ts <> 0 then U.AddPair('ts', TJSONNumber.Create(S.Ts));
+      if S.Rev <> '' then U.AddPair('rc', S.Rev);
       SetToJson(U, 'm', S.MDone);
       SetToJson(U, 'mw', S.MWip);
       SetToJson(U, 'mf', S.MFix);
@@ -418,6 +422,7 @@ begin
       S.Compila := JsonBool(U, 'compila', False);
       S.Sonar := JsonBool(U, 'sonar', False);
       S.Note := U.GetValue<string>('note', '');
+      S.Rev := U.GetValue<string>('rc', '');
       if U.TryGetValue<TJSONNumber>('ts', Num) then
         S.Ts := Trunc(Num.AsDouble);
       JsonToSet(U, 'm', S.MDone);

@@ -22,7 +22,7 @@ a document describing what the project *should* contain, it compares the two.
 ## Features
 
 - **Map** — the folder → file → method tree, with search, statistics and the **lines and complexity** of each method.
-- **Checklist** — mark what you reviewed, what is under review or needs changes, what compiles, what passed Sonar, what is a priority; add notes.
+- **Checklist** — mark what you reviewed, what is under review or needs changes, what compiles, what passed Sonar, what is a priority; add notes. In a Git repository it flags the files that changed since you reviewed them.
   A file is *done* when **all its methods** are reviewed.
 - **Dashboard** — numbers and charts for progress and code distribution, including day-by-day evolution.
 - **Plan in Markdown** — write the intended structure (and code) in a `.md` file and see what is implemented,

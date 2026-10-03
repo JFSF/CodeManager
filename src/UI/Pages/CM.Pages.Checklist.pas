@@ -9,7 +9,7 @@ uses
   System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math, System.IOUtils,
   System.Rtti,
   FMX.Types, FMX.Controls, FMX.Layouts, FMX.Dialogs, FMX.Platform, FMX.DialogService.Sync,
-  CM.Theme, CM.Controls, CM.Layouts, CM.TreeList, CM.Analyzer, CM.Store, CM.Stats, CM.Plan, CM.Pages.Host;
+  CM.Theme, CM.Controls, CM.Layouts, CM.TreeList, CM.Analyzer, CM.Store, CM.Stats, CM.Plan, CM.GitReview, CM.Pages.Host;
 
 type
   TChecklistPage = class(TCMControl)
@@ -19,6 +19,11 @@ type
     FList: TCMTreeList;
     FRing: TCMRing;
     FBars: TCMBars;
+    FGitCard: TCMPanel;            // so aparece num repositorio Git
+    FGitInfo: TCMKeyValue;
+    FGitShowBtn: TCMButton;
+    FGitTimer: TTimer;             // adia a consulta ao git: o IDE grava varias vezes seguidas
+    FStalePaths: TArray<string>;
     FPlanStats: TCMKeyValue;       // cobertura do plano; o cartao so aparece quando ha plano
     FChips: TCMChipFlow;
     FStateChips: TCMChipFlow;      // filtros por estado de revisao, com a contagem de ficheiros
@@ -31,6 +36,11 @@ type
     procedure Hint(const AText: string);
     procedure FitProgressCard;
     procedure ShowPlanCard;
+    procedure GitTick(Sender: TObject);
+    procedure GitShowClick(Sender: TObject);
+    procedure GitRefreshClick(Sender: TObject);
+    procedure GitResetClick(Sender: TObject);
+    procedure ShowGitCard(const AHead: string);
     procedure FitChipsCard(Sender: TObject);
     procedure FitStateCard(Sender: TObject);
     procedure RebuildStateChips(const St: TStats);
@@ -56,6 +66,9 @@ type
     procedure ClearStats;
     procedure ShowStats(const St: TStats);
     procedure RebuildChips;
+    // pede para ver que ficheiros revistos mudaram desde a revisao (Git); junta pedidos seguidos
+    procedure RequestGitRefresh;
+    procedure RefreshGit;
     procedure CloseNote(Sender: TObject);
     // fecha a nota se o ficheiro deixou de existir na analise
     procedure CloseNoteIfRemoved(AScan: TProjectScan);
@@ -114,6 +127,24 @@ begin
   FStateChips.Align := TAlignLayout.Top;
   FStateChips.Margins.Top := 12;
   FStateChips.OnRelayout := FitStateCard;
+
+  FGitCard := SideCard(Self, Side, 200);
+  FGitCard.Visible := False;
+  TCMLabel.Make(FGitCard, 'Git', 15, True).Align := TAlignLayout.Top;
+  FGitInfo := TCMKeyValue.Create(Self);
+  FGitInfo.Parent := FGitCard;
+  FGitInfo.Align := TAlignLayout.Top;
+  FGitInfo.Margins.Top := 8;
+  Row := NewButtonRow(Self, FGitCard);
+  Row.Margins.Top := 10;
+  FGitShowBtn := TCMButton.Make(Row, 'Só alterados', icChecklist, bkSecondary, GitShowClick);
+  TCMButton.Make(Row, 'Atualizar', icRefresh, bkSecondary, GitRefreshClick);
+  Row := NewButtonRow(Self, FGitCard);
+  TCMButton.Make(Row, 'Voltar a «por rever»', icRefresh, bkSecondary, GitResetClick);
+  FGitTimer := TTimer.Create(Self);
+  FGitTimer.Enabled := False;
+  FGitTimer.Interval := 900;
+  FGitTimer.OnTimer := GitTick;
 
   Card := SideCard(Self, Side, 200);
   Card.Visible := False;
@@ -350,6 +381,103 @@ begin
   B := TCMButton(Sender);
   FList.ToggleReviewState(TReviewState(B.Tag));
   B.Active := FList.ReviewStateActive(TReviewState(B.Tag));
+end;
+
+procedure TChecklistPage.RequestGitRefresh;
+begin
+  FGitTimer.Enabled := False;
+  FGitTimer.Enabled := True;
+end;
+
+procedure TChecklistPage.GitTick(Sender: TObject);
+begin
+  FGitTimer.Enabled := False;
+  RefreshGit;
+end;
+
+procedure TChecklistPage.RefreshGit;
+var
+  Scan: TProjectScan;
+  R: TGitReviewResult;
+begin
+  FGitTimer.Enabled := False;
+  Scan := FHost.CurrentScan;
+  if (Scan = nil) or (Scan.Root = '') then
+  begin
+    FList.SetGit('', '', nil);
+    FStalePaths := nil;
+    ShowGitCard('');
+    Exit;
+  end;
+  R := FindStaleReviews(Scan.Root, Scan, FHost.CurrentState);
+  try
+    FList.SetGit(Scan.Root, R.Head, R.Stale);
+    FStalePaths := R.Stale.ToArray;
+    if R.Backfilled > 0 then
+      FHost.MarkStateDirty;          // as revisoes antigas ganharam o commit
+    ShowGitCard(R.Head);
+  finally
+    R.Stale.Free;
+  end;
+end;
+
+// o cartao so existe num repositorio; mostra o commit actual e quantos ficheiros revistos mudaram
+procedure TChecklistPage.ShowGitCard(const AHead: string);
+begin
+  FGitCard.Visible := AHead <> '';
+  if AHead = '' then
+  begin
+    if FList.StaleOnly then
+    begin
+      FList.SetStaleOnly(False);
+      FGitShowBtn.Active := False;
+    end;
+    Exit;
+  end;
+  FGitInfo.SetRows([
+    KV('Commit atual', Copy(AHead, 1, 8)),
+    KV('Mudaram desde a revisão', IntToStr(Length(FStalePaths)), Length(FStalePaths) > 0)]);
+  FGitCard.Height := 16 + 16 + 28 + 8 + FGitInfo.Height + 10 + 36 + 8 + 36;
+end;
+
+procedure TChecklistPage.GitShowClick(Sender: TObject);
+begin
+  FList.SetStaleOnly(not FList.StaleOnly);
+  FGitShowBtn.Active := FList.StaleOnly;
+end;
+
+procedure TChecklistPage.GitRefreshClick(Sender: TObject);
+begin
+  RefreshGit;
+  FHost.Toast(Format('Git: %d ficheiros revistos mudaram desde a revisão', [Length(FStalePaths)]));
+end;
+
+procedure TChecklistPage.GitResetClick(Sender: TObject);
+var
+  Path: string;
+  S: TUnitState;
+begin
+  if Length(FStalePaths) = 0 then
+  begin
+    FHost.Toast('Nenhum ficheiro revisto mudou desde a revisão');
+    Exit;
+  end;
+  if TDialogServiceSync.MessageDialog(
+    Format('Voltar a «por rever» os %d ficheiros que mudaram desde a revisão? ' +
+      'Ficam sem estado de revisão; Compila, Sonar, prioridade e notas mantêm-se.', [Length(FStalePaths)]),
+    TMsgDlgType.mtConfirmation, [TMsgDlgBtn.mbYes, TMsgDlgBtn.mbNo], TMsgDlgBtn.mbNo, 0) <> mrYes then
+    Exit;
+  for Path in FStalePaths do
+  begin
+    S := FHost.CurrentState.Find(Path);
+    if S <> nil then
+      ResetReview(S);
+  end;
+  FHost.RefreshAllLists;
+  FHost.UpdateAll;
+  FHost.MarkStateDirty;
+  RefreshGit;
+  FHost.Toast('Ficheiros repostos como por rever');
 end;
 
 procedure TChecklistPage.ChipClick(Sender: TObject);
