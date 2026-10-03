@@ -7,7 +7,7 @@
 interface
 
 uses
-  CM.Analyzer, CM.Store, CM.History, CM.Plan;
+  CM.Analyzer, CM.Store, CM.History, CM.Plan, CM.SonarModel;
 
 type
   TPage = (pgProject, pgMap, pgChecklist, pgDashboard);
@@ -23,8 +23,13 @@ type
     function GetHasPlan: Boolean;
     function GetPlanSummary: TPlanSummary;
     function GetCurrentPlanView: TProjectScan;
+    function GetCurrentSonar: TSonarSnapshot;
+    function GetSonarBusy: Boolean;
+    function GetSonarMessage: string;
 
     procedure Toast(const AText: string);
+    // volta a consultar o SonarQube (so se o utilizador o activou e o projecto tem chave); em segundo plano
+    procedure RequestSonarRefresh;
     procedure MarkStateDirty;
     procedure MarkSettingsDirty;
     procedure ShowPage(APage: TPage);
@@ -56,6 +61,11 @@ type
     property PlanSummary: TPlanSummary read GetPlanSummary;
     // a analise do codigo cruzada com o plano (nil sem plano); e de quem a janela, nao a liberte
     property CurrentPlanView: TProjectScan read GetCurrentPlanView;
+    // o que o SonarQube disse na ultima consulta (nil sem Sonar ou se falhou); e da janela, nao a liberte
+    property CurrentSonar: TSonarSnapshot read GetCurrentSonar;
+    property SonarBusy: Boolean read GetSonarBusy;
+    // o erro da ultima consulta ('' se correu bem) ou o estado enquanto decorre
+    property SonarMessage: string read GetSonarMessage;
   end;
 
 implementation

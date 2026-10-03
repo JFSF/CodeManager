@@ -11,7 +11,7 @@ uses
   FMX.Types, FMX.Controls, FMX.Layouts, FMX.Dialogs, FMX.DialogService.Sync,
   Winapi.Windows, Winapi.ShellAPI,
   CM.Theme, CM.Controls, CM.Layouts, CM.TreeList, CM.Analyzer, CM.Store, CM.Stats, CM.Html,
-  CM.Watcher, CM.Plan, CM.Pages.Host;
+  CM.Watcher, CM.Plan, CM.Sonar, CM.Secrets, CM.Pages.Host;
 
 type
   TProjectPage = class(TCMControl)
@@ -32,7 +32,17 @@ type
     FProgress: TCMProgress;
     FStatus: TCMLabel;
     FSummary: TCMKeyValue;
+    // SonarQube (opcional, por utilizador): o servidor e o token sao dele; a chave e de cada projecto
+    FSonarSwitch: TCMSwitch;
+    FSonarUrlIn, FSonarTokenIn, FSonarKeyIn: TCMInput;
+    FSonarStatus: TCMLabel;
+    FSonarTestJob: ISonarJob;
+    FSonarTestTimer: TTimer;
 
+    procedure SonarSwitchChanged(Sender: TObject);
+    procedure SonarFieldChanged(Sender: TObject);
+    procedure SonarTestClick(Sender: TObject);
+    procedure SonarTestTick(Sender: TObject);
     procedure ProjListSelect(Sender: TObject);
     procedure FieldChanged(Sender: TObject);
     procedure BrowseRoot(Sender: TObject);
@@ -189,6 +199,39 @@ begin
   FOutIn.OnTrailingClick := BrowseOut;
   FPlanIn.OnTrailingClick := BrowsePlan;
 
+  // SonarQube: opcional. Cada utilizador decide se o usa e como; nada se liga sem ele o activar
+  Card := NewCard(Self, Right, 486);
+  TCMLabel.Make(Card, 'SonarQube (opcional)', 15, True).Align := TAlignLayout.Top;
+  Sub := TCMLabel.Make(Card, 'Cada utilizador decide se o usa. O endereço e o token ficam nos teus dados;' + sLineBreak +
+    'o token é cifrado e só funciona neste computador e nesta conta do Windows.', 11.5, False, lcFaint);
+  Sub.Align := TAlignLayout.Top;
+  Sub.Height := 36;
+  Sub.Margins.Top := 4;
+  FSonarSwitch := TCMSwitch.Create(Self);
+  FSonarSwitch.Parent := Card;
+  FSonarSwitch.Align := TAlignLayout.Top;
+  FSonarSwitch.Margins.Top := 8;
+  FSonarSwitch.Text := 'Usar o SonarQube neste computador';
+  FSonarSwitch.OnChange := SonarSwitchChanged;
+  FSonarUrlIn := AddField(Self, Card, 'Endereço do servidor', 'http://localhost:5000', False);
+  FSonarTokenIn := AddField(Self, Card, 'Token de utilizador', 'cola aqui o token (My Account › Security)', False);
+  FSonarTokenIn.Edit.Password := True;
+  FSonarKeyIn := AddField(Self, Card, 'Chave deste projeto no SonarQube', 'ex.: CodeManager', False);
+  FSonarUrlIn.OnChangeText := SonarFieldChanged;
+  FSonarTokenIn.OnChangeText := SonarFieldChanged;
+  FSonarKeyIn.OnChangeText := SonarFieldChanged;
+  Row := NewButtonRow(Self, Card);
+  Row.Margins.Top := 14;
+  TCMButton.Make(Row, 'Testar ligação', icRefresh, bkSecondary, SonarTestClick);
+  FSonarStatus := TCMLabel.Make(Card, '', 12, False, lcDim);
+  FSonarStatus.Align := TAlignLayout.Top;
+  FSonarStatus.Height := 38;
+  FSonarStatus.Margins.Top := 8;
+  FSonarTestTimer := TTimer.Create(Self);
+  FSonarTestTimer.Enabled := False;
+  FSonarTestTimer.Interval := 200;
+  FSonarTestTimer.OnTimer := SonarTestTick;
+
   Card := NewCard(Self, Right, 192);
   TCMLabel.Make(Card, 'Ações', 15, True).Align := TAlignLayout.Top;
   Row := NewButtonRow(Self, Card);
@@ -217,6 +260,7 @@ end;
 
 destructor TProjectPage.Destroy;
 begin
+  FSonarTestJob := nil;          // a thread acaba sozinha
   StopWatch;
   inherited;
 end;
@@ -289,6 +333,11 @@ begin
     FExcludeIn.Text := AProfile.ExcludeDirs;
     FOpenSwitch.Checked := FHost.AppSettings.OpenAfterExport;
     FWatchSwitch.Checked := AProfile.Watch;
+    FSonarSwitch.Checked := FHost.AppSettings.SonarEnabled;
+    FSonarUrlIn.Text := FHost.AppSettings.SonarUrl;
+    FSonarTokenIn.Text := UnprotectText(FHost.AppSettings.SonarTokenCipher);
+    FSonarKeyIn.Text := AProfile.SonarKey;
+    FSonarStatus.Text := '';
   finally
     FLoadingFields := False;
   end;
@@ -310,6 +359,63 @@ begin
   I := FProjList.ItemIndex;
   if (I >= 0) and (I < Projects.Count) and (Projects[I] <> FHost.CurrentProfile) then
     FHost.SelectProject(Projects[I]);
+end;
+
+procedure TProjectPage.SonarSwitchChanged(Sender: TObject);
+begin
+  if FLoadingFields then
+    Exit;
+  FHost.AppSettings.SonarEnabled := FSonarSwitch.Checked;
+  FHost.MarkSettingsDirty;
+  FHost.RequestSonarRefresh;
+end;
+
+procedure TProjectPage.SonarFieldChanged(Sender: TObject);
+begin
+  if FLoadingFields then
+    Exit;
+  FHost.AppSettings.SonarUrl := Trim(FSonarUrlIn.Text);
+  FHost.AppSettings.SonarTokenCipher := ProtectText(Trim(FSonarTokenIn.Text));
+  if FHost.CurrentProfile <> nil then
+    FHost.CurrentProfile.SonarKey := Trim(FSonarKeyIn.Text);
+  FHost.MarkSettingsDirty;
+end;
+
+// testa com o que esta nos campos (mesmo que ainda nao esteja activado), em segundo plano
+procedure TProjectPage.SonarTestClick(Sender: TObject);
+var
+  Config: TSonarConfig;
+begin
+  Config.Url := Trim(FSonarUrlIn.Text);
+  Config.Token := Trim(FSonarTokenIn.Text);
+  Config.ProjectKey := Trim(FSonarKeyIn.Text);
+  FSonarStatus.ColorRole := lcDim;
+  FSonarStatus.Text := 'A testar…';
+  FSonarTestJob := StartSonarTest(Config);
+  FSonarTestTimer.Enabled := True;
+end;
+
+procedure TProjectPage.SonarTestTick(Sender: TObject);
+var
+  Job: ISonarJob;
+begin
+  if FSonarTestJob = nil then
+  begin
+    FSonarTestTimer.Enabled := False;
+    Exit;
+  end;
+  if not FSonarTestJob.Done then
+    Exit;
+  FSonarTestTimer.Enabled := False;
+  Job := FSonarTestJob;
+  FSonarTestJob := nil;
+  if Job.Success then
+    FSonarStatus.ColorRole := lcAccentStrong
+  else
+    FSonarStatus.ColorRole := lcDanger;
+  FSonarStatus.Text := Job.Message;
+  if Job.Success and FHost.AppSettings.SonarEnabled then
+    FHost.RequestSonarRefresh;
 end;
 
 procedure TProjectPage.FieldChanged(Sender: TObject);

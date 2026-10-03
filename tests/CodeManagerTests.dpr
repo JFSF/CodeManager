@@ -13,7 +13,10 @@ uses
   CM.History in '..\src\Core\CM.History.pas',
   CM.SafeFile in '..\src\Core\CM.SafeFile.pas',
   CM.Metrics in '..\src\Core\CM.Metrics.pas',
+  CM.SonarModel in '..\src\Core\CM.SonarModel.pas',
   CM.Git in '..\src\Infrastructure\CM.Git.pas',
+  CM.Secrets in '..\src\Infrastructure\CM.Secrets.pas',
+  CM.Sonar in '..\src\Infrastructure\CM.Sonar.pas',
   CM.GitReview in '..\src\Services\CM.GitReview.pas',
   CM.Plan in '..\src\Core\CM.Plan.pas',
   CM.Export in '..\src\Services\CM.Export.pas',
@@ -40,7 +43,8 @@ uses
   Tests.SafeFile in 'Tests.SafeFile.pas',
   Tests.Metrics in 'Tests.Metrics.pas',
   Tests.Review in 'Tests.Review.pas',
-  Tests.Git in 'Tests.Git.pas';
+  Tests.Git in 'Tests.Git.pas',
+  Tests.Sonar in 'Tests.Sonar.pas';
 
 var
   Runner: ITestRunner;

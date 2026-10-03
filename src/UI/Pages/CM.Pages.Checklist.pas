@@ -7,9 +7,9 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math, System.IOUtils,
-  System.Rtti,
+  System.Rtti, System.StrUtils,
   FMX.Types, FMX.Controls, FMX.Layouts, FMX.Dialogs, FMX.Platform, FMX.DialogService.Sync,
-  CM.Theme, CM.Controls, CM.Layouts, CM.TreeList, CM.Analyzer, CM.Store, CM.Stats, CM.Plan, CM.GitReview, CM.Pages.Host;
+  CM.Theme, CM.Controls, CM.Layouts, CM.TreeList, CM.Analyzer, CM.Store, CM.Stats, CM.Plan, CM.GitReview, CM.SonarModel, CM.Pages.Host;
 
 type
   TChecklistPage = class(TCMControl)
@@ -19,6 +19,9 @@ type
     FList: TCMTreeList;
     FRing: TCMRing;
     FBars: TCMBars;
+    FSonarCard: TCMPanel;          // so aparece se o utilizador activou o SonarQube e o projecto tem chave
+    FSonarInfo: TCMKeyValue;
+    FSonarNote: TCMLabel;
     FGitCard: TCMPanel;            // so aparece num repositorio Git
     FGitInfo: TCMKeyValue;
     FGitShowBtn: TCMButton;
@@ -37,6 +40,8 @@ type
     procedure FitProgressCard;
     procedure ShowPlanCard;
     procedure GitTick(Sender: TObject);
+    procedure SonarRefreshClick(Sender: TObject);
+    procedure SonarSyncClick(Sender: TObject);
     procedure GitShowClick(Sender: TObject);
     procedure GitRefreshClick(Sender: TObject);
     procedure GitResetClick(Sender: TObject);
@@ -68,6 +73,8 @@ type
     procedure RebuildChips;
     // pede para ver que ficheiros revistos mudaram desde a revisao (Git); junta pedidos seguidos
     procedure RequestGitRefresh;
+    // mostra (ou esconde) o cartao do SonarQube conforme a ultima consulta
+    procedure ShowSonar;
     procedure RefreshGit;
     procedure CloseNote(Sender: TObject);
     // fecha a nota se o ficheiro deixou de existir na analise
@@ -127,6 +134,21 @@ begin
   FStateChips.Align := TAlignLayout.Top;
   FStateChips.Margins.Top := 12;
   FStateChips.OnRelayout := FitStateCard;
+
+  FSonarCard := SideCard(Self, Side, 220);
+  FSonarCard.Visible := False;
+  TCMLabel.Make(FSonarCard, 'SonarQube', 15, True).Align := TAlignLayout.Top;
+  FSonarInfo := TCMKeyValue.Create(Self);
+  FSonarInfo.Parent := FSonarCard;
+  FSonarInfo.Align := TAlignLayout.Top;
+  FSonarInfo.Margins.Top := 8;
+  FSonarNote := TCMLabel.Make(FSonarCard, '', 12, False, lcDim, False);
+  FSonarNote.Align := TAlignLayout.Top;
+  FSonarNote.Height := 0;
+  Row := NewButtonRow(Self, FSonarCard);
+  Row.Margins.Top := 10;
+  TCMButton.Make(Row, 'Atualizar', icRefresh, bkSecondary, SonarRefreshClick);
+  TCMButton.Make(Row, 'Sincronizar S', icCheck, bkSecondary, SonarSyncClick);
 
   FGitCard := SideCard(Self, Side, 200);
   FGitCard.Visible := False;
@@ -295,6 +317,7 @@ begin
   FitProgressCard;
   RebuildStateChips(St);
   ShowPlanCard;
+  ShowSonar;
 end;
 
 // cobertura do plano (o que ja existe, o que falta e o que sobra); escondido sem plano
@@ -381,6 +404,83 @@ begin
   B := TCMButton(Sender);
   FList.ToggleReviewState(TReviewState(B.Tag));
   B.Active := FList.ReviewStateActive(TReviewState(B.Tag));
+end;
+
+// o SonarQube e opcional: o cartao so existe se o utilizador o activou e este projecto tem chave
+procedure TChecklistPage.ShowSonar;
+var
+  Snap: TSonarSnapshot;
+  Profile: TProjectProfile;
+  Gate, Msg: string;
+  WithIssues: Integer;
+  Info: TSonarFile;
+  U: TUnitInfo;
+begin
+  Profile := FHost.CurrentProfile;
+  FSonarCard.Visible := FHost.AppSettings.SonarEnabled and (Profile <> nil) and (Trim(Profile.SonarKey) <> '');
+  if not FSonarCard.Visible then
+    Exit;
+  Snap := FHost.CurrentSonar;
+  Msg := FHost.SonarMessage;
+  if Snap = nil then
+  begin
+    FSonarInfo.SetRows([KV('Servidor', IfThen(FHost.SonarBusy, 'a consultar…', 'sem dados'))]);
+  end
+  else
+  begin
+    WithIssues := 0;
+    if FHost.CurrentScan <> nil then
+      for U in FHost.CurrentScan.Units do
+        if Snap.Find(U.Path, Info) and (Info.Issues > 0) then
+          Inc(WithIssues);
+    if Snap.GateStatus = 'OK' then Gate := 'aprovada'
+    else if Snap.GateStatus = 'ERROR' then Gate := 'reprovada'
+    else if Snap.GateStatus = 'WARN' then Gate := 'com avisos'
+    else if Snap.GateStatus = 'NONE' then Gate := 'sem gate'
+    else Gate := 'desconhecida';
+    FSonarInfo.SetRows([
+      KV('Quality gate', Gate, Snap.GateStatus = 'OK'),
+      KV('Problemas abertos', IntToStr(Snap.TotalIssues)),
+      KV('Ficheiros com problemas', IntToStr(WithIssues)),
+      KV('Atualizado', FormatDateTime('hh:nn', Snap.FetchedAt))]);
+  end;
+  // erro ou estado numa linha de texto por baixo (so quando ha o que dizer)
+  if Snap = nil then
+    FSonarNote.Text := WrapText(Msg, sLineBreak, [' '], 38)       // o rotulo nao quebra linhas sozinho
+  else
+    FSonarNote.Text := '';
+  if FSonarNote.Text = '' then
+    FSonarNote.Height := 0
+  else
+    FSonarNote.Height := 17 * (Length(FSonarNote.Text.Split([sLineBreak])) ) + 6;
+  FSonarCard.Height := 16 + 16 + 28 + 8 + FSonarInfo.Height + FSonarNote.Height + 10 + 36;
+end;
+
+procedure TChecklistPage.SonarRefreshClick(Sender: TObject);
+begin
+  FHost.RequestSonarRefresh;
+end;
+
+// "S" nos ficheiros que o Sonar analisou sem problemas; tira-o aos que tem problemas abertos
+procedure TChecklistPage.SonarSyncClick(Sender: TObject);
+var
+  R: TSonarSync;
+begin
+  if FHost.CurrentSonar = nil then
+  begin
+    FHost.Toast('Ainda não há dados do SonarQube. Usa «Atualizar».');
+    Exit;
+  end;
+  if TDialogServiceSync.MessageDialog(
+    'Marcar «S» nos ficheiros que o SonarQube analisou sem problemas abertos e tirá-lo aos que têm problemas? ' +
+    'Os ficheiros que o SonarQube não conhece ficam como estão.',
+    TMsgDlgType.mtConfirmation, [TMsgDlgBtn.mbYes, TMsgDlgBtn.mbNo], TMsgDlgBtn.mbNo, 0) <> mrYes then
+    Exit;
+  R := SyncSonarFlags(FHost.CurrentScan, FHost.CurrentState, FHost.CurrentSonar);
+  FHost.RefreshAllLists;
+  FHost.UpdateAll;
+  FHost.MarkStateDirty;
+  FHost.Toast(Format('Sonar: %d ficheiros marcados, %d desmarcados', [R.Marked, R.Cleared]));
 end;
 
 procedure TChecklistPage.RequestGitRefresh;

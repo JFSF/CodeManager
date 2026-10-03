@@ -11,7 +11,7 @@ uses
   System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math, System.IOUtils,
   System.Generics.Collections, System.StrUtils,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Edit, FMX.Printer,
-  CM.Theme, CM.Controls, CM.TreeList, CM.Analyzer, CM.Store, CM.SafeFile, CM.Stats, CM.History, CM.Plan, CM.Export, CM.Print,
+  CM.Theme, CM.Controls, CM.TreeList, CM.Analyzer, CM.Store, CM.SafeFile, CM.SonarModel, CM.Sonar, CM.Secrets, CM.Stats, CM.History, CM.Plan, CM.Export, CM.Print,
   CM.Pages.Host, CM.Pages.Project, CM.Pages.Map, CM.Pages.Checklist, CM.Pages.Dashboard;
 
 type
@@ -32,6 +32,10 @@ type
     FDirtySettings: Boolean;
     FDirtyHistory: Boolean;
     FSaveTimer: TTimer;
+    FSonar: TSonarSnapshot;          // a ultima consulta bem sucedida ao SonarQube (opcional)
+    FSonarJob: ISonarJob;            // a consulta em curso, em segundo plano
+    FSonarTimer: TTimer;             // vigia a consulta (a thread nao toca na janela)
+    FSonarMessage: string;
     FToastTimer: TTimer;           // adia o aviso até a janela estar visível e com a geometria final
     FPendingToast: string;
 {$IFDEF DEBUG}
@@ -83,6 +87,13 @@ type
     function GetHasPlan: Boolean;
     function GetPlanSummary: TPlanSummary;
     function GetCurrentPlanView: TProjectScan;
+    function GetCurrentSonar: TSonarSnapshot;
+    function GetSonarBusy: Boolean;
+    function GetSonarMessage: string;
+    function SonarConfig(out AConfig: TSonarConfig): Boolean;
+    procedure SetSonar(ASnapshot: TSonarSnapshot; const AMessage: string);
+    procedure SonarTick(Sender: TObject);
+    procedure RequestSonarRefresh;
     function MapScan: TProjectScan;
     function SwapPlanView: TProjectScan;
     procedure Toast(const AText: string);
@@ -171,6 +182,10 @@ begin
   FSaveTimer.Enabled := False;
   FSaveTimer.Interval := 700;
   FSaveTimer.OnTimer := SaveTick;
+  FSonarTimer := TTimer.Create(Self);
+  FSonarTimer.Enabled := False;
+  FSonarTimer.Interval := 250;
+  FSonarTimer.OnTimer := SonarTick;
   FToastTimer := TTimer.Create(Self);
   FToastTimer.Enabled := False;
   FToastTimer.Interval := 150;
@@ -204,6 +219,7 @@ end;
 destructor TMainForm.Destroy;
 begin
   FShuttingDown := True;
+  FSonarJob := nil;              // a thread acaba sozinha
   FProject.StopWatch;
   FPlanView.Free;
   FPlan.Free;
@@ -211,6 +227,7 @@ begin
   FHistory.Free;
   FState.Free;
   FSettings.Free;
+  FSonar.Free;
   inherited;
 end;
 
@@ -465,6 +482,84 @@ begin
   Result := FPlanView;
 end;
 
+function TMainForm.GetCurrentSonar: TSonarSnapshot;
+begin
+  Result := FSonar;
+end;
+
+function TMainForm.GetSonarBusy: Boolean;
+begin
+  Result := FSonarJob <> nil;
+end;
+
+function TMainForm.GetSonarMessage: string;
+begin
+  Result := FSonarMessage;
+end;
+
+// o SonarQube e opcional: so se usa se o utilizador o activou, deu o endereco e o projecto tem chave
+function TMainForm.SonarConfig(out AConfig: TSonarConfig): Boolean;
+begin
+  AConfig := Default(TSonarConfig);
+  Result := FSettings.SonarEnabled and (FProfile <> nil) and (Trim(FProfile.SonarKey) <> '');
+  if not Result then
+    Exit;
+  AConfig.Url := FSettings.SonarUrl;
+  AConfig.Token := UnprotectText(FSettings.SonarTokenCipher);
+  AConfig.ProjectKey := Trim(FProfile.SonarKey);
+  Result := SonarMissing(AConfig) = '';
+end;
+
+// troca o resultado da consulta; as listas deixam de apontar para o antigo antes de ele ser libertado
+procedure TMainForm.SetSonar(ASnapshot: TSonarSnapshot; const AMessage: string);
+begin
+  FMap.List.SetSonar(nil);
+  FCk.List.SetSonar(nil);
+  FSonar.Free;
+  FSonar := ASnapshot;
+  FSonarMessage := AMessage;
+  FMap.List.SetSonar(FSonar);
+  FCk.List.SetSonar(FSonar);
+  FCk.ShowSonar;
+end;
+
+procedure TMainForm.RequestSonarRefresh;
+var
+  Config: TSonarConfig;
+begin
+  FSonarJob := nil;              // um pedido anterior ainda a decorrer fica sem efeito
+  FSonarTimer.Enabled := False;
+  if not SonarConfig(Config) then
+  begin
+    SetSonar(nil, '');
+    Exit;
+  end;
+  FSonarMessage := 'A consultar o SonarQube…';
+  FSonarJob := StartSonarFetch(Config);
+  FSonarTimer.Enabled := True;
+  FCk.ShowSonar;
+end;
+
+procedure TMainForm.SonarTick(Sender: TObject);
+var
+  Job: ISonarJob;
+begin
+  if FSonarJob = nil then
+  begin
+    FSonarTimer.Enabled := False;
+    Exit;
+  end;
+  if not FSonarJob.Done then
+    Exit;
+  FSonarTimer.Enabled := False;
+  Job := FSonarJob;
+  FSonarJob := nil;
+  if Job.Success then
+    SetSonar(Job.TakeSnapshot, '')
+  else
+    SetSonar(nil, Job.Message);
+end;
+
 // o que o Mapa mostra: a vista cruzada com o plano, ou a analise do codigo
 function TMainForm.MapScan: TProjectScan;
 begin
@@ -642,6 +737,7 @@ begin
   Old.Free;
   FCk.RebuildChips;
   FCk.RequestGitRefresh;
+  RequestSonarRefresh;
   UpdateAll;
   UpdateHeader;
   if FScan <> nil then

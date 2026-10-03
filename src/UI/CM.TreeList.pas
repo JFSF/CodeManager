@@ -10,7 +10,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math,
   System.Generics.Collections, System.Generics.Defaults, System.StrUtils, FMX.Types, FMX.Controls, FMX.Graphics,
-  CM.Analyzer, CM.Metrics, CM.Store, CM.Stats, CM.GitReview, CM.Theme, CM.Controls;
+  CM.Analyzer, CM.Metrics, CM.Store, CM.Stats, CM.GitReview, CM.SonarModel, CM.Theme, CM.Controls;
 
 type
   TListMode = (lmMap, lmChecklist);
@@ -68,6 +68,7 @@ type
     FStaleHints: TDictionary<string, string>;   // dicas ja calculadas (cada uma custa uma chamada ao git)
     FStaleOnly: Boolean;
     FGitRoot, FGitHead: string;
+    FSonar: TSonarSnapshot;           // nao e nosso; nil sem Sonar
     FScrollY: Single;
     FContentH: Single;
     FHoverRow: Integer;
@@ -158,6 +159,8 @@ type
     // actual (fica registado em cada revisao nova); AHead = '' sem Git
     procedure SetGit(const ARoot, AHead: string; AStale: THashSet<string>);
     procedure SetStaleOnly(AValue: Boolean);
+    // problemas abertos no SonarQube por ficheiro (nil = sem Sonar); a lista nao fica dona
+    procedure SetSonar(ASnapshot: TSonarSnapshot);
     property StaleOnly: Boolean read FStaleOnly;
     property GitHead: string read FGitHead;
     procedure ToggleReviewState(AState: TReviewState);
@@ -939,6 +942,7 @@ var
   L: TRowLayout;
   Text, Shown, Status: string;
   Size: Single;
+  SonarInfo: TSonarFile;
 begin
   Result := '';
   case ARow.Kind of
@@ -950,6 +954,13 @@ begin
         Status := PlanStatusText(ARow.U.PlanStatus, ARow.U.PlannedPath, False);
         if (FMode = lmChecklist) and FStale.Contains(ARow.U.Path) then
           Status := StaleHintFor(ARow);
+        if (FSonar <> nil) and FSonar.Find(ARow.U.Path, SonarInfo) and (SonarInfo.Issues > 0) then
+        begin
+          if Status <> '' then
+            Status := Status + sLineBreak;
+          Status := Status + Format('SonarQube: %d problemas abertos (a pior: %s)',
+            [SonarInfo.Issues, SeverityText(SonarInfo.Worst)]);
+        end;
       end;
     rkMethod:
       begin
@@ -1330,7 +1341,8 @@ var
   Full, Part1, Part2, Base: string;
   R, TR, NR: TRectF;
   W1, W2, TagW: Single;
-  NameColor, ExtColor, PillFg: TAlphaColor;
+  NameColor, ExtColor, PillFg, SonarColor: TAlphaColor;
+  SonarInfo: TSonarFile;
   Y: Single;
 begin
   P := Pal;
@@ -1366,6 +1378,17 @@ begin
   if (FMode = lmChecklist) and FStale.Contains(U.Path) then
   begin
     TagW := DrawTag(NR.Right, NR.CenterPoint.Y, 'ALTERADO', P.Pending);
+    NR.Right := NR.Right - TagW - 10;
+  end;
+  if (FSonar <> nil) and FSonar.Find(U.Path, SonarInfo) and (SonarInfo.Issues > 0) then
+  begin
+    case SonarInfo.Worst of
+      ssBlocker, ssCritical: SonarColor := P.Danger;
+      ssMajor: SonarColor := P.Pending;
+    else
+      SonarColor := P.TextDim;
+    end;
+    TagW := DrawTag(NR.Right, NR.CenterPoint.Y, 'Sonar ' + IntToStr(SonarInfo.Issues), SonarColor);
     NR.Right := NR.Right - TagW - 10;
   end;
   SetFont(13, MonoFont);
@@ -1659,6 +1682,12 @@ begin
   FStaleOnly := AValue;
   FScrollY := 0;
   Rebuild;
+end;
+
+procedure TCMTreeList.SetSonar(ASnapshot: TSonarSnapshot);
+begin
+  FSonar := ASnapshot;
+  Repaint;
 end;
 
 function TCMTreeList.ReviewStateActive(AState: TReviewState): Boolean;

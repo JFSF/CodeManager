@@ -22,6 +22,7 @@ type
     Watch: Boolean;           // acompanhar alteracoes na pasta do projecto
     Finalized: Boolean;
     FinalizedAt: string;
+    SonarKey: string;         // chave do projecto no SonarQube; vazio = este projecto nao usa o Sonar
     constructor Create;
   end;
 
@@ -31,6 +32,11 @@ type
     FRecovered: Boolean;
   public
     Theme: string;              // 'light' | 'dark' | '' (segue o Windows)
+    // SonarQube: opcional e por utilizador (estas definicoes ficam nos dados dele). O token nunca se guarda
+    // em claro: SonarTokenCipher e o texto ja protegido por quem o guarda (CM.Secrets)
+    SonarEnabled: Boolean;
+    SonarUrl: string;
+    SonarTokenCipher: string;
     ActiveProjectId: string;
     OpenAfterExport: Boolean;
     constructor Create;
@@ -188,7 +194,7 @@ procedure TAppSettings.Load;
 var
   FileName, Text: string;
   Root, Item: TJSONValue;
-  Obj, PObj: TJSONObject;
+  Obj, PObj, SObj: TJSONObject;
   Arr: TJSONArray;
   P: TProjectProfile;
 begin
@@ -208,6 +214,15 @@ begin
     Theme := Obj.GetValue<string>('theme', '');
     ActiveProjectId := Obj.GetValue<string>('activeProject', '');
     OpenAfterExport := JsonBool(Obj, 'openAfterExport', True);
+    SonarEnabled := False;
+    SonarUrl := '';
+    SonarTokenCipher := '';
+    if Obj.TryGetValue<TJSONObject>('sonar', SObj) then
+    begin
+      SonarEnabled := JsonBool(SObj, 'enabled', False);
+      SonarUrl := SObj.GetValue<string>('url', '');
+      SonarTokenCipher := SObj.GetValue<string>('token', '');
+    end;
     FProjects.Clear;
     if Obj.TryGetValue<TJSONArray>('projects', Arr) then
       for Item in Arr do
@@ -225,6 +240,7 @@ begin
         P.Watch := JsonBool(PObj, 'watch', False);
         P.Finalized := JsonBool(PObj, 'finalized', False);
         P.FinalizedAt := PObj.GetValue<string>('finalizedAt', '');
+        P.SonarKey := PObj.GetValue<string>('sonarKey', '');
         FProjects.Add(P);
       end;
   finally
@@ -234,7 +250,7 @@ end;
 
 procedure TAppSettings.Save;
 var
-  Obj, PObj: TJSONObject;
+  Obj, PObj, SObj: TJSONObject;
   Arr: TJSONArray;
   P: TProjectProfile;
 begin
@@ -243,6 +259,14 @@ begin
     Obj.AddPair('theme', Theme);
     Obj.AddPair('activeProject', ActiveProjectId);
     Obj.AddPair('openAfterExport', TJSONBool.Create(OpenAfterExport));
+    if SonarEnabled or (SonarUrl <> '') or (SonarTokenCipher <> '') then
+    begin
+      SObj := TJSONObject.Create;
+      SObj.AddPair('enabled', TJSONBool.Create(SonarEnabled));
+      SObj.AddPair('url', SonarUrl);
+      SObj.AddPair('token', SonarTokenCipher);
+      Obj.AddPair('sonar', SObj);
+    end;
     Arr := TJSONArray.Create;
     for P in FProjects do
     begin
@@ -256,6 +280,8 @@ begin
       PObj.AddPair('watch', TJSONBool.Create(P.Watch));
       PObj.AddPair('finalized', TJSONBool.Create(P.Finalized));
       PObj.AddPair('finalizedAt', P.FinalizedAt);
+      if P.SonarKey <> '' then
+        PObj.AddPair('sonarKey', P.SonarKey);
       Arr.AddElement(PObj);
     end;
     Obj.AddPair('projects', Arr);

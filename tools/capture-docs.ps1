@@ -153,6 +153,7 @@ Write-Settings $true
 $steps = @(
   'wait:8'
   'shot:{IMG}\01-projeto.png'
+  'size:1344,1500;wait:2;shot:{IMG}\12-projeto-sonarqube.png;size:1344,821;wait:1'
   'page:1;wait:1;shot:{IMG}\02-mapa.png'
   'search:CM.P;wait:1;shot:{IMG}\03-mapa-plano.png'
   'search:CM.Metrics;wait:1;click:1080,686;wait:1;shot:{IMG}\10-mapa-metricas.png;click:1230,686;wait:1'

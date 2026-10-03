@@ -59,8 +59,8 @@ flowchart TB
 
 | Camada | Units | Responsabilidade |
 |---|---|---|
-| **Core** | `CM.Analyzer`, `CM.Metrics`, `CM.Plan`, `CM.Stats`, `CM.Store`, `CM.History`, `CM.SafeFile` | Analisar código e planos, calcular estatísticas, guardar/ler JSON. **Só usa a RTL** (`System.*`): nada de `FMX.*`, `Vcl.*` ou `Winapi.*`. |
-| **Infrastructure** | `CM.Watcher`, `CM.Resources`, `CM.Git` | Tudo o que toca no sistema operativo: `ReadDirectoryChangesW` numa thread, leitura de recursos embutidos e a execução (só leitura) do `git`. |
+| **Core** | `CM.Analyzer`, `CM.Metrics`, `CM.Plan`, `CM.Stats`, `CM.Store`, `CM.History`, `CM.SafeFile`, `CM.SonarModel` | Analisar código e planos, calcular estatísticas, guardar/ler JSON. **Só usa a RTL** (`System.*`): nada de `FMX.*`, `Vcl.*` ou `Winapi.*`. |
+| **Infrastructure** | `CM.Watcher`, `CM.Resources`, `CM.Git`, `CM.Secrets`, `CM.Sonar` | Tudo o que toca no sistema operativo ou na rede: `ReadDirectoryChangesW` numa thread, leitura de recursos embutidos, a execução (só leitura) do `git`, a cifra do token (DPAPI) e o cliente HTTP do SonarQube. |
 | **Services** | `CM.Export`, `CM.Html`, `CM.Print`, `CM.GitReview` | Produzem ficheiros e papel a partir de uma análise: Markdown, TXT, CSV, JSON, páginas HTML offline e impressão. |
 | **UI** | `CM.MainForm`, `CM.Controls`, `CM.TreeList`, `CM.Layouts`, `CM.Theme` e `Pages\*` | Janela, controlos pintados e páginas. |
 
@@ -180,7 +180,16 @@ Pontos a reter:
   `CM.Git` (Infrastructure) corre o `git` sem janela e só lê; `CM.GitReview` (Services) compara os commits guardados
   com `git diff --name-only --relative <commit>` (uma consulta por commit, não por ficheiro) e devolve os ficheiros
   revistos que mudaram. As regras puras (`StaleReviews`, `ResetReview`, `BackfillRevisions`, `CommitAt`) estão no
-  Core e testam-se sem Git; `Tests.Git` usa um repositório temporário real.
+  Core e testam-se sem Git; `Tests.Git` usa um repositório temporário real. `Tests.Sonar` cobre o modelo, os analisadores, a cifra do token e as definições sem precisar de um servidor.
+- **O SonarQube é opcional e por utilizador.** `TAppSettings` guarda o interruptor, o endereço e o token (cifrado
+  por `CM.Secrets` com o DPAPI e uma mistura própria da aplicação, por isso só se decifra na mesma conta e
+  computador); cada `TProjectProfile` guarda a sua chave (`sonarKey`), e sem chave o projeto não usa o Sonar. Os campos
+  só entram no `settings.json` quando usados. `CM.Sonar` (Infrastructure) faz GET autenticado (Basic com o token) a
+  `measures/component_tree`, `issues/search` e `qualitygates/project_status` e preenche um `TSonarSnapshot` do Core;
+  os analisadores das respostas são puros e testam-se com textos de exemplo. As consultas correm numa thread
+  (`ISonarJob`) que **nunca toca na janela**: a janela consulta `Done` num temporizador e a thread guarda a sua
+  própria referência, por isso fechar a janela a meio é seguro. O token nunca vai para URLs, logs nem ficheiros
+  do repositório.
 - **O histórico** guarda um `TSnapshot` por dia (o último do dia substitui o anterior).
 
 ## Analisar um projeto

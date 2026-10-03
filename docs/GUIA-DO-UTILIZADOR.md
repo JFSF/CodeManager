@@ -123,6 +123,7 @@ A página de revisão: ficheiros agrupados por pasta, com o progresso à vista.
 - **Progresso:** o anel dos ficheiros concluídos, a barra dos métodos revistos e uma barra por camada.
 - **Estado da revisão:** os quatro estados, cada um com o número de ficheiros; clica para filtrar (podes juntar vários).
 - **Git:** num repositório, o commit atual e quantos ficheiros revistos mudaram desde a revisão (ver abaixo).
+- **SonarQube:** só se o ativaste (ver abaixo): a *quality gate*, os problemas abertos e **Sincronizar S**.
 - **Filtrar por camada:** clica nas camadas para ver só essas.
 - **Ações:** expandir/colapsar, **Markdown** (copia a checklist para a área de transferência), **Exportar HTML**,
   **Exportar/Importar** o progresso (`.json`) e **Reiniciar progresso**.
@@ -171,6 +172,37 @@ que já revistes mudou depois disso:
 
 O CodeManager **só lê** o repositório (`git rev-parse`, `log`, `diff`): nunca faz commits nem altera nada. Sem Git,
 ou fora de um repositório, o cartão e as etiquetas simplesmente não aparecem.
+
+### SonarQube (opcional)
+
+O SonarQube é **opcional e pessoal**: cada utilizador decide se o usa, e a configuração fica nos dados dele. Enquanto
+não o ativares, o CodeManager não fala com nenhum servidor e nada aparece.
+
+![SonarQube na página Projeto](images/12-projeto-sonarqube.png)
+
+Na página **Projeto**, no cartão **SonarQube (opcional)**:
+
+| Campo | O que é |
+|---|---|
+| **Usar o SonarQube neste computador** | Liga ou desliga tudo. É uma definição tua, não do projeto. |
+| **Endereço do servidor** | Por exemplo `http://localhost:5000` ou o teu servidor da empresa. |
+| **Token de utilizador** | Cria-o no SonarQube em *My Account › Security*. Fica **cifrado** com a proteção de dados do Windows: só se decifra nesta conta de utilizador e neste computador. |
+| **Chave deste projeto** | A `sonar.projectKey` do projeto (por exemplo `CodeManager`). É guardada por projeto; sem chave, o projeto não usa o Sonar. |
+
+**Testar ligação** verifica o servidor, o token e a chave (com o que estiver nos campos, mesmo antes de ativares).
+
+Com tudo configurado, a Checklist e o Mapa passam a mostrar:
+
+- A etiqueta **Sonar N** nos ficheiros com problemas abertos, a **vermelho** se houver um bloqueante ou crítico, a
+  âmbar se o pior for «maior» e a cinzento nos restantes. Passa o rato pelo nome para ver a gravidade pior.
+- Na Checklist, o cartão **SonarQube** com a *quality gate* (aprovada, reprovada, com avisos), os problemas abertos,
+  quantos ficheiros os têm e a hora da consulta. **Atualizar** volta a consultar (também acontece ao abrir ou
+  analisar o projeto). **Sincronizar S** põe a marca «S» nos ficheiros que o Sonar analisou sem problemas abertos e
+  tira-a aos que têm problemas; os que o Sonar não conhece ficam como estão (pede confirmação).
+
+Os ficheiros associam-se pelo fim do caminho, por isso funciona quer o Sonar analise a raiz do repositório
+(`src/Core/a.pas`) quer o CodeManager analise só uma subpasta (`Core/a.pas`). O CodeManager **só lê** o Sonar. As
+consultas correm em segundo plano e, se o servidor estiver em baixo, o cartão diz porquê sem incomodar o resto.
 
 ## Painel
 

@@ -96,7 +96,10 @@
         <DCCReference Include="src\Core\CM.Analyzer.pas"/>
         <DCCReference Include="src\Core\CM.SafeFile.pas"/>
         <DCCReference Include="src\Core\CM.Metrics.pas"/>
+        <DCCReference Include="src\Core\CM.SonarModel.pas"/>
         <DCCReference Include="src\Infrastructure\CM.Git.pas"/>
+        <DCCReference Include="src\Infrastructure\CM.Secrets.pas"/>
+        <DCCReference Include="src\Infrastructure\CM.Sonar.pas"/>
         <DCCReference Include="src\Services\CM.GitReview.pas"/>
         <DCCReference Include="src\Core\CM.Store.pas"/>
         <DCCReference Include="src\Core\CM.Stats.pas"/>

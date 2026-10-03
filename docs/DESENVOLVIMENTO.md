@@ -81,6 +81,9 @@ ci.bat sonar      ... e depois o sonar-scanner
 Para o Sonar define `SONAR_HOST_URL` e `SONAR_TOKEN` (nunca no repositório) e tem o `sonar-scanner` no `PATH` (ou
 aponta `SONAR_SCANNER` para o executável). A configuração está em `sonar-project.properties`.
 
+Isto é só para o `ci.bat`. A vista do SonarQube dentro do CodeManager é outra coisa: opcional e configurada por cada
+utilizador na página Projeto (ver o [guia](GUIA-DO-UTILIZADOR.md#sonarqube-opcional)); não usa estas variáveis.
+
 O fluxo `.github/workflows/ci.yml` corre o mesmo num *runner* **self-hosted** (Windows com o RAD Studio instalado
 e a etiqueta `delphi`), porque os *runners* alojados do GitHub não têm Delphi.
 
