@@ -11,7 +11,7 @@
 interface
 
 uses
-  System.SysUtils, System.Classes, System.SyncObjs, System.JSON, System.NetEncoding, System.Net.HttpClient,
+  System.SysUtils, System.Classes, System.SyncObjs, System.StrUtils, System.JSON, System.NetEncoding, System.Net.HttpClient,
   System.Net.URLClient, CM.SonarModel;
 
 type
@@ -25,6 +25,8 @@ type
 function NormalizeSonarUrl(const AUrl: string): string;
 // estado da quality gate ('OK', 'WARN', 'ERROR', 'NONE') de /api/qualitygates/project_status; '' se nao se entende
 function ParseGateStatus(const AJson: string): string;
+// as chaves dos projectos de /api/components/search (para ajudar quando a chave indicada nao existe)
+function ParseProjectKeys(const AJson: string): TArray<string>;
 // acrescenta a ASnap os problemas de uma pagina de /api/issues/search; devolve quantos; ATotal = paging.total
 function ParseIssuesPage(const AJson, AProjectKey: string; ASnap: TSonarSnapshot; out ATotal: Integer): Integer;
 // acrescenta a ASnap os ficheiros de uma pagina de /api/measures/component_tree; devolve quantos; ATotal = paging.total
@@ -116,6 +118,27 @@ begin
     Result := Copy(Result, Pos(':', Result) + 1, MaxInt)
   else
     Result := '';
+end;
+
+function ParseProjectKeys(const AJson: string): TArray<string>;
+var
+  V, Item: TJSONValue;
+  Comps: TJSONArray;
+  List: TStringList;
+begin
+  Result := nil;
+  V := TJSONObject.ParseJSONValue(AJson);
+  List := TStringList.Create;
+  try
+    if (V is TJSONObject) and TJSONObject(V).TryGetValue<TJSONArray>('components', Comps) then
+      for Item in Comps do
+        if (Item is TJSONObject) and (TJSONObject(Item).GetValue<string>('key', '') <> '') then
+          List.Add(TJSONObject(Item).GetValue<string>('key', ''));
+    Result := List.ToStringArray;
+  finally
+    List.Free;
+    V.Free;
+  end;
 end;
 
 function ParseIssuesPage(const AJson, AProjectKey: string; ASnap: TSonarSnapshot; out ATotal: Integer): Integer;
@@ -245,6 +268,20 @@ begin
   end;
 end;
 
+// ajuda quando a chave nao existe: que projectos tem o servidor (ate 5)
+function AvailableKeysHint(const AConfig: TSonarConfig): string;
+var
+  Body, Fail: string;
+  Keys: TArray<string>;
+begin
+  if HttpGet(AConfig, '/api/components/search?qualifiers=TRK&ps=6', Body, Fail) <> 200 then
+    Exit('');
+  Keys := ParseProjectKeys(Body);
+  if Length(Keys) = 0 then
+    Exit('O servidor ainda não tem projetos analisados: corre primeiro o sonar-scanner (ci.bat sonar).');
+  Result := 'Chaves que existem: ' + string.Join(', ', Copy(Keys, 0, 5)) + IfThen(Length(Keys) > 5, ', …', '') + '.';
+end;
+
 function SonarTest(const AConfig: TSonarConfig; out AMessage: string): Boolean;
 var
   Body, Fail, Version: string;
@@ -280,6 +317,8 @@ begin
   if Status <> 200 then
   begin
     AMessage := StatusMessage(Status, Fail, AConfig);
+    if Status = 404 then
+      AMessage := AMessage + ' ' + AvailableKeysHint(AConfig);
     Exit;
   end;
   AMessage := 'Ligado ao SonarQube ' + Version + ': projeto «' + AConfig.ProjectKey + '» encontrado.';

@@ -7,7 +7,7 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math, System.IOUtils,
-  System.Generics.Collections, System.Threading,
+  System.Generics.Collections, System.Threading, System.StrUtils,
   FMX.Types, FMX.Controls, FMX.Layouts, FMX.Dialogs, FMX.DialogService.Sync,
   Winapi.Windows, Winapi.ShellAPI,
   CM.Theme, CM.Controls, CM.Layouts, CM.TreeList, CM.Analyzer, CM.Store, CM.Stats, CM.Html,
@@ -413,7 +413,8 @@ begin
     FSonarStatus.ColorRole := lcAccentStrong
   else
     FSonarStatus.ColorRole := lcDanger;
-  FSonarStatus.Text := Job.Message;
+  FSonarStatus.Text := WrapText(Job.Message, sLineBreak, [' '], 90);       // o rotulo nao quebra linhas sozinho
+  FSonarStatus.Height := 18 * Length(FSonarStatus.Text.Split([sLineBreak])) + 4;
   if Job.Success and FHost.AppSettings.SonarEnabled then
     FHost.RequestSonarRefresh;
 end;

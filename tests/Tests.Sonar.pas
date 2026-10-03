@@ -48,6 +48,8 @@ type
     [Test] procedure MeasuresPageWithoutNclocKeepsZeroLines;
     [Test] procedure ConnectionFailureHasAClearMessage;
     [Test] procedure MissingUrlIsReported;
+    [Test] procedure ProjectKeysAreListed;
+    [Test] procedure ProjectKeysOfGarbageAreEmpty;
     [Test] procedure MissingPiecesAreNamed;
     [Test] procedure BackgroundTestReportsTheFailureWithoutBlocking;
     [Test] procedure BackgroundFetchFailsCleanlyAndGivesNoSnapshot;
@@ -436,6 +438,22 @@ begin
   while not AJob.Done and (TThread.GetTickCount64 - T < UInt64(ATimeoutMs)) do
     Sleep(10);
   Result := AJob.Done;
+end;
+
+procedure TSonarClientTests.ProjectKeysAreListed;
+var
+  K: TArray<string>;
+begin
+  K := ParseProjectKeys('{"paging":{"total":2},"components":[{"key":"A","name":"a"},{"key":"B:x","name":"b"},{"name":"sem chave"}]}');
+  Assert.AreEqual<NativeInt>(2, Length(K));
+  Assert.AreEqual('A', K[0]);
+  Assert.AreEqual('B:x', K[1]);
+end;
+
+procedure TSonarClientTests.ProjectKeysOfGarbageAreEmpty;
+begin
+  Assert.AreEqual<NativeInt>(0, Length(ParseProjectKeys('')));
+  Assert.AreEqual<NativeInt>(0, Length(ParseProjectKeys('{"errors":[]}')));
 end;
 
 procedure TSonarClientTests.MissingPiecesAreNamed;
