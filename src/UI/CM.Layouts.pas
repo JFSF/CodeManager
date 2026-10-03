@@ -198,13 +198,15 @@ begin
   if Total <= ViewH + 1 then
     Exit;                                   // cabe tudo: nada a indicar
   Top := ViewportPosition.Y;
+  // depois de pintar os filhos o canvas continua deslocado pelo scroll (as coordenadas sao as do conteudo):
+  // soma-se Top para o esbatido e o indicador ficarem colados as bordas visiveis e nao andarem com o conteudo
   if Top + ViewH < Total - 1 then
-    Fade(TRectF.Create(0, ViewH - FadeH, Width, ViewH), 0, 235);
+    Fade(TRectF.Create(0, Top + ViewH - FadeH, Width, Top + ViewH), 0, 235);
   if Top > 1 then
-    Fade(TRectF.Create(0, 0, Width, FadeH * 0.6), 235, 0);
+    Fade(TRectF.Create(0, Top, Width, Top + FadeH * 0.6), 235, 0);
   // indicador de posicao (fino, junto a borda direita)
   ThumbH := Max(28, ViewH * ViewH / Total);
-  ThumbY := (ViewH - ThumbH) * Top / (Total - ViewH);
+  ThumbY := Top + (ViewH - ThumbH) * Top / (Total - ViewH);
   R := TRectF.Create(Width - ThumbW - 2, ThumbY, Width - 2, ThumbY + ThumbH);
   FillRound(Canvas, R, ThumbW / 2, Pal.BorderStrong);
 end;
