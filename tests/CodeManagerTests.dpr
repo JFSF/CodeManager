@@ -59,7 +59,8 @@ uses
   Tests.Deps in 'Tests.Deps.pas',
   Tests.DepsReport in 'Tests.DepsReport.pas',
   Tests.Highlight in 'Tests.Highlight.pas',
-  Tests.Clicks in 'Tests.Clicks.pas';
+  Tests.Clicks in 'Tests.Clicks.pas',
+  Tests.SonarMeasures in 'Tests.SonarMeasures.pas';
 
 var
   Runner: ITestRunner;

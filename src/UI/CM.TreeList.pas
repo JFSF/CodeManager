@@ -972,6 +972,13 @@ begin
           Status := Status + Format(Tr('SonarQube: %d problemas abertos (a pior: %s)'),
             [SonarInfo.Issues, SeverityText(SonarInfo.Worst)]);
         end;
+        // as medidas do ficheiro no Sonar, numa linha
+        if (FSonar <> nil) and FSonar.Find(ARow.U.Path, SonarInfo) and (SonarFileText(SonarInfo) <> '') then
+        begin
+          if Status <> '' then
+            Status := Status + sLineBreak;
+          Status := Status + 'SonarQube: ' + SonarFileText(SonarInfo);
+        end;
       end;
     rkMethod:
       begin

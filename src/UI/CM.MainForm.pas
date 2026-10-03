@@ -119,6 +119,7 @@ type
     procedure DevTick(Sender: TObject);
     procedure DevExec(const ACmd: string);
     procedure DevOpenCode(const AArg: string);
+    procedure DevSonarDemo;
     procedure DevPrintPreview(APage, ADpi: Integer; ALandscape: Boolean; const AFile: string);
 {$ENDIF}
   protected
@@ -617,6 +618,9 @@ begin
   FMap.List.SetSonar(FSonar);
   FCk.List.SetSonar(FSonar);
   FCk.ShowSonar;
+  FMap.ShowSonar;
+  FDashboard.SonarChanged;
+  FCode.SonarChanged;
 end;
 
 procedure TMainForm.RequestSonarRefresh;
@@ -951,6 +955,106 @@ begin
 end;
 
 {$IFDEF DEBUG}
+// sonardemo - enche o SonarQube com dados INVENTADOS (so para as imagens da documentacao e para testar a interface):
+// medidas por ficheiro e do projecto, problemas em linhas do codigo e hotspots
+procedure TMainForm.DevSonarDemo;
+const
+  Msgs: array[0..4] of string = (
+    'Remove this unused local variable.', 'Refactor this method to reduce its Cognitive Complexity from 22 to the 15 allowed.',
+    'Possible nil dereference: check the result before using it.', 'Add a nested comment explaining why this method is empty.',
+    'Rename this identifier to match the naming convention.');
+  Rules: array[0..4] of string = ('delphi:UnusedVariable', 'delphi:CognitiveComplexity', 'delphi:NilDereference',
+    'delphi:EmptyMethod', 'delphi:NamingConvention');
+  Kinds: array[0..4] of string = ('CODE_SMELL', 'CODE_SMELL', 'BUG', 'CODE_SMELL', 'CODE_SMELL');
+  Sevs: array[0..4] of TSonarSeverity = (ssMinor, ssCritical, ssBlocker, ssMajor, ssInfo);
+var
+  Snap: TSonarSnapshot;
+  U: TUnitInfo;
+  M: TMethodInfo;
+  F: TSonarFile;
+  Issue: TSonarIssue;
+  Spot: TSonarHotspot;
+  P: TSonarProject;
+  H, K, Count, Lines, Complexity: Integer;
+  Full: string;
+begin
+  if FScan = nil then
+    Exit;
+  Snap := TSonarSnapshot.Create;
+  Snap.ProjectKey := 'CodeManager';
+  Snap.GateStatus := 'OK';
+  P := NewSonarProject;
+  for U in FScan.Units do
+  begin
+    Full := TPath.Combine(FScan.Root, U.Path.Replace('/', PathDelim));
+    if TFile.Exists(Full) then
+      Count := Length(TFile.ReadAllLines(Full))
+    else
+      Count := 100;
+    Lines := 0;
+    Complexity := 0;
+    for M in U.Methods do
+    begin
+      Inc(Lines, M.Lines);
+      Inc(Complexity, M.Complexity);
+    end;
+    // um numero estavel por ficheiro (nao muda de captura para captura)
+    H := 7;
+    for K := 1 to Length(U.Path) do
+      H := (H * 31 + Ord(U.Path[K])) and $7FFFFFFF;
+    F := NewSonarFile(U.Path);
+    F.Lines := Max(1, Lines);
+    F.Complexity := Complexity;
+    F.Cognitive := Complexity + (H mod 15);
+    if H mod 4 <> 0 then
+      F.Coverage := 20 + (H mod 75);
+    F.DupDensity := (H mod 60) / 10;
+    F.DebtMin := (H mod 35) * 15;
+    F.Bugs := Ord(H mod 11 = 0);
+    F.Vulns := Ord(H mod 17 = 0);
+    F.Smells := H mod 6;
+    F.Hotspots := Ord(H mod 13 = 0);
+    Snap.AddFile(U.Path, F.Lines);
+    Snap.SetFileMeasures(U.Path, F);
+    for K := 0 to (H mod 5) - 1 do
+    begin
+      Issue := Default(TSonarIssue);
+      Issue.Line := 8 + ((H div (K + 3)) mod Max(1, Count - 12));
+      Issue.Severity := Sevs[(H + K) mod 5];
+      Issue.Kind := Kinds[(H + K) mod 5];
+      Issue.Rule := Rules[(H + K) mod 5];
+      Issue.Message := Msgs[(H + K) mod 5];
+      Snap.AddIssue(U.Path, Issue);
+    end;
+    if H mod 13 = 0 then
+    begin
+      Spot := Default(TSonarHotspot);
+      Spot.Line := 10 + (H mod Max(1, Count - 14));
+      Spot.Probability := 'MEDIUM';
+      Spot.Message := 'Make sure that this file operation is safe.';
+      Snap.AddHotspot(U.Path, Spot);
+    end;
+    Inc(P.Lines, F.Lines);
+    Inc(P.DebtMin, F.DebtMin);
+    Inc(P.Bugs, F.Bugs);
+    Inc(P.Vulns, F.Vulns);
+    Inc(P.Smells, F.Smells);
+    Inc(P.Hotspots, F.Hotspots);
+    Inc(P.Complexity, F.Complexity);
+    Inc(P.Cognitive, F.Cognitive);
+  end;
+  P.Coverage := 61.3;
+  P.DupDensity := 2.4;
+  P.ReliabilityRating := 2;
+  P.SecurityRating := 1;
+  P.MaintainabilityRating := 1;
+  P.ReviewRating := 3;
+  P.Known := True;
+  Snap.Project := P;
+  Snap.FetchedAt := Now;
+  SetSonar(Snap, '');
+end;
+
 // code:caminho[#metodo] - abre o codigo de uma unit (e o metodo, pelo nome) na pagina Codigo
 procedure TMainForm.DevOpenCode(const AArg: string);
 var
@@ -1184,6 +1288,8 @@ begin
     SelectProject(FSettings.Projects[StrToInt(Arg)])
   else if Cmd = 'code' then
     DevOpenCode(Arg)
+  else if Cmd = 'sonardemo' then
+    DevSonarDemo
   else if (Cmd = 'click') or (Cmd = 'dblclick') or (Cmd = 'move') then
   begin
     Parts := Arg.Split([',']);

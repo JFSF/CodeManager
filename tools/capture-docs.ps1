@@ -167,6 +167,8 @@ $steps = @(
   'theme:dark;wait:2;shot:{IMG}\07-painel-escuro.png'
   'page:2;wait:1;shot:{IMG}\08-checklist-escuro.png'
   'page:1;wait:1;shot:{IMG}\09-mapa-escuro.png'
+  'theme:light;size:1344,821;wait:1;sonardemo;wait:1;code:src/Core/CM.Highlight.pas#LineDefines;wait:2;shot:{IMG}\15-codigo-sonar.png'
+  'page:3;wait:2;size:1344,3600;wait:2;shot:{IMG}\16-painel-sonar.png'
   'quit'
 )
 Invoke-App ($steps -join ';')

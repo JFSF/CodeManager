@@ -11,6 +11,14 @@ uses
   CM.Theme, CM.Controls, CM.Highlight;
 
 type
+  // um ponto na margem de uma linha (por exemplo um problema do SonarQube); Line a partir de 0
+  TCodeMarker = record
+    Line: Integer;
+    Color: TAlphaColor;
+    Ring: Boolean;           // so o contorno (em vez de cheio)
+    Hint: string;            // o que se mostra ao apontar a margem dessa linha
+  end;
+
   TCMCodeView = class(TCMControl)
   private
     FDoc: TCodeDoc;              // de quem chama (a vista nao o liberta)
@@ -21,6 +29,8 @@ type
     FEmptyText: string;
     FLineH, FCharW: Single;
     FLigatures: Boolean;
+    FMarkers: TArray<TCodeMarker>;       // por linha, a ordem de chegada
+    function MarkersOnLine(ALine: Integer): TArray<TCodeMarker>;
     procedure MeasureFont;
     procedure SetLigatures(const Value: Boolean);
     function GutterW: Single;
@@ -58,7 +68,9 @@ type
     property ScrollY: Single read FScrollY;
     property MarkLine: Integer read FMarkLine write SetMarkLine;
     property EmptyText: string read FEmptyText write FEmptyText;
-    // ligaduras da fonte (-> => <> := ...): desligadas, cada operador desenha-se no seu lugar, sem se fundir
+    // pontos na margem (por exemplo os problemas do Sonar); varios na mesma linha somam-se na dica
+    procedure SetMarkers(const AMarkers: TArray<TCodeMarker>);
+    // ligaduras da fonte (-> => <> := ...: desligadas, cada operador desenha-se no seu lugar, sem se fundir
     property Ligatures: Boolean read FLigatures write SetLigatures;
     // a fonte do tema mudou (SetCodeFont): volta a medir e a desenhar
     procedure FontChanged;
@@ -66,6 +78,40 @@ type
     function VisibleLines: Integer;
     // a linha (a partir de 0) em cada posicao da vista; -1 fora do codigo
     function LineAtY(AY: Single): Integer;
+  end;
+
+  // uma linha da lista de problemas; Line a partir de 1 (0 = sem linha)
+  TIssueRow = record
+    Line: Integer;
+    Color: TAlphaColor;
+    Tag: string;             // 'BUG', 'HOTSPOT'...
+    Text: string;
+  end;
+
+  TCMLineEvent = procedure(Sender: TObject; ALine: Integer) of object;
+
+  // lista de itens ligados a linhas do codigo (problemas do Sonar, hotspots); um clique leva a vista a linha
+  TCMIssueList = class(TCMControl)
+  private
+    FRows: TArray<TIssueRow>;
+    FScrollY: Single;
+    FHover: Integer;
+    FEmptyText: string;
+    FOnPick: TCMLineEvent;
+    function MaxScroll: Single;
+    function RowAt(Y: Single): Integer;
+  protected
+    procedure Paint; override;
+    procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Single); override;
+    procedure MouseMove(Shift: TShiftState; X, Y: Single); override;
+    procedure MouseWheel(Shift: TShiftState; WheelDelta: Integer; var Handled: Boolean); override;
+    procedure DoMouseLeave; override;
+  public
+    constructor Create(AOwner: TComponent); override;
+    procedure SetRows(const ARows: TArray<TIssueRow>);
+    property EmptyText: string read FEmptyText write FEmptyText;
+    // ALine: a linha escolhida, a partir de 0
+    property OnPick: TCMLineEvent read FOnPick write FOnPick;
   end;
 
   TCMTabEvent = procedure(Sender: TObject; AIndex: Integer) of object;
@@ -107,6 +153,7 @@ const
   TabH = 36;
   MaxTabW = 230;
   MinTabW = 96;
+  IssueRowH = 28;
 
 { TCMCodeView }
 
@@ -128,6 +175,22 @@ begin
   FCharW := MeasureText('0', CodeFontSize, CodeFont);
   if FCharW < 4 then
     FCharW := 7.5;
+end;
+
+procedure TCMCodeView.SetMarkers(const AMarkers: TArray<TCodeMarker>);
+begin
+  FMarkers := AMarkers;
+  Repaint;
+end;
+
+function TCMCodeView.MarkersOnLine(ALine: Integer): TArray<TCodeMarker>;
+var
+  M: TCodeMarker;
+begin
+  Result := nil;
+  for M in FMarkers do
+    if M.Line = ALine then
+      Result := Result + [M];
 end;
 
 procedure TCMCodeView.FontChanged;
@@ -371,7 +434,8 @@ var
   First, Last, I: Integer;
   Y: Single;
   G: Single;
-  NumR, Row: TRectF;
+  NumR, Row, Dot: TRectF;
+  Mk: TCodeMarker;
 begin
   State := Canvas.SaveState;
   try
@@ -397,6 +461,16 @@ begin
         FillRound(Canvas, Row, 0, Fade(Pal.Accent, 0.13));
       end;
       NumR := TRectF.Create(0, Y, G - 10, Y + FLineH);
+      if Length(FMarkers) > 0 then
+        for Mk in MarkersOnLine(I) do
+        begin
+          Dot := TRectF.Create(5, Y + FLineH / 2 - 3.5, 12, Y + FLineH / 2 + 3.5);
+          if Mk.Ring then
+            StrokeRound(Canvas, Dot, 3.5, Mk.Color, 1.5)
+          else
+            FillRound(Canvas, Dot, 3.5, Mk.Color);
+          Break;                    // um ponto por linha: a dica leva todos
+        end;
       DrawTextRect(Canvas, NumR, IntToStr(I + 1), Pick(I = FMarkLine, Pal.Accent, Pal.TextFaint), CodeFontSize - 1,
         CodeFont, [], TTextAlign.Trailing);
     end;
@@ -456,8 +530,34 @@ procedure TCMCodeView.MouseMove(Shift: TShiftState; X, Y: Single);
 var
   T: TRectF;
   Ratio: Single;
+  Line: Integer;
+  Marks: TArray<TCodeMarker>;
+  M: TCodeMarker;
+  Text: string;
 begin
   inherited;
+  if not (FDragV or FDragH) then
+  begin
+    // ao apontar a margem: a dica reune o que ha nessa linha
+    Text := '';
+    if (X < GutterW) and (Length(FMarkers) > 0) then
+    begin
+      Line := LineAtY(Y - 4);
+      if Line >= 0 then
+      begin
+        Marks := MarkersOnLine(Line);
+        for M in Marks do
+        begin
+          if Text <> '' then
+            Text := Text + sLineBreak;
+          Text := Text + M.Hint;
+        end;
+      end;
+    end;
+    if Text <> Hint then
+      Hint := Text;
+    ShowHint := Text <> '';
+  end;
   if FDragV then
   begin
     T := VThumb;
@@ -506,6 +606,134 @@ begin
     Exit;
   end;
   Key := 0;
+end;
+
+{ TCMIssueList }
+
+constructor TCMIssueList.Create(AOwner: TComponent);
+begin
+  inherited;
+  HitTest := True;
+  ClipChildren := True;
+  FHover := -1;
+end;
+
+procedure TCMIssueList.SetRows(const ARows: TArray<TIssueRow>);
+begin
+  FRows := ARows;
+  FScrollY := 0;
+  FHover := -1;
+  Repaint;
+end;
+
+function TCMIssueList.MaxScroll: Single;
+begin
+  Result := Max(0, Length(FRows) * IssueRowH + 8 - Height);
+end;
+
+procedure TCMIssueList.Paint;
+var
+  I, First: Integer;
+  Y: Single;
+  R, Dot, ThumbR: TRectF;
+  Row: TIssueRow;
+  LineTxt: string;
+  W, TrackH, ThumbH: Single;
+begin
+  if Length(FRows) = 0 then
+  begin
+    DrawTextRect(Canvas, TRectF.Create(8, 0, Width - 8, Height), FEmptyText, Pal.TextFaint, 12, UiFont, [],
+      TTextAlign.Leading);
+    Exit;
+  end;
+  First := Max(0, Trunc(FScrollY / IssueRowH));
+  for I := First to High(FRows) do
+  begin
+    Y := 4 + I * IssueRowH - FScrollY;
+    if Y > Height then
+      Break;
+    Row := FRows[I];
+    R := TRectF.Create(2, Y, Width - 14, Y + IssueRowH - 2);
+    if I = FHover then
+      FillRound(Canvas, R, 6, Pal.Hover);
+    Dot := TRectF.Create(R.Left + 8, R.CenterPoint.Y - 4, R.Left + 16, R.CenterPoint.Y + 4);
+    FillRound(Canvas, Dot, 4, Row.Color);
+    if Row.Line > 0 then
+      LineTxt := IntToStr(Row.Line)
+    else
+      LineTxt := '—';
+    DrawTextRect(Canvas, TRectF.Create(R.Left + 24, R.Top, R.Left + 72, R.Bottom), LineTxt, Pal.TextFaint, 11.5,
+      CodeFont, [], TTextAlign.Trailing);
+    W := MeasureText(Row.Tag, 10, UiFont, [TFontStyle.fsBold]) + 14;
+    ThumbR := TRectF.Create(R.Left + 82, R.CenterPoint.Y - 9, R.Left + 82 + W, R.CenterPoint.Y + 9);
+    StrokeRound(Canvas, ThumbR, 9, Row.Color, 1);
+    DrawTextRect(Canvas, ThumbR, Row.Tag, Row.Color, 10, UiFont, [TFontStyle.fsBold], TTextAlign.Center);
+    DrawTextRect(Canvas, TRectF.Create(ThumbR.Right + 10, R.Top, R.Right - 6, R.Bottom),
+      FitText(Canvas, Row.Text, R.Right - 6 - (ThumbR.Right + 10)), Pal.Text, 12, UiFont);
+  end;
+  if MaxScroll > 0 then
+  begin
+    TrackH := Height - 8;
+    ThumbH := Max(24, TrackH * Height / (Length(FRows) * IssueRowH + 8));
+    ThumbR := TRectF.Create(Width - 9, 4 + (TrackH - ThumbH) * (FScrollY / MaxScroll), Width - 3,
+      4 + (TrackH - ThumbH) * (FScrollY / MaxScroll) + ThumbH);
+    FillRound(Canvas, ThumbR, 3, Fade(Pal.TextFaint, 0.55));
+  end;
+end;
+
+function TCMIssueList.RowAt(Y: Single): Integer;
+begin
+  Result := Trunc((Y - 4 + FScrollY) / IssueRowH);
+  if (Result < 0) or (Result >= Length(FRows)) then
+    Result := -1;
+end;
+
+procedure TCMIssueList.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Single);
+var
+  Idx: Integer;
+begin
+  inherited;
+  if Button <> TMouseButton.mbLeft then
+    Exit;
+  Idx := RowAt(Y);
+  if (Idx >= 0) and (FRows[Idx].Line > 0) and Assigned(FOnPick) then
+    FOnPick(Self, FRows[Idx].Line - 1);
+end;
+
+procedure TCMIssueList.MouseMove(Shift: TShiftState; X, Y: Single);
+var
+  Idx: Integer;
+begin
+  inherited;
+  Idx := RowAt(Y);
+  if Idx <> FHover then
+  begin
+    FHover := Idx;
+    if Idx >= 0 then
+    begin
+      Hint := FRows[Idx].Text;
+      ShowHint := True;
+      Cursor := crHandPoint;
+    end
+    else
+      Cursor := crDefault;
+    Repaint;
+  end;
+end;
+
+procedure TCMIssueList.DoMouseLeave;
+begin
+  inherited;
+  FHover := -1;
+  Repaint;
+end;
+
+procedure TCMIssueList.MouseWheel(Shift: TShiftState; WheelDelta: Integer; var Handled: Boolean);
+begin
+  inherited;
+  FScrollY := EnsureRange(FScrollY - WheelDelta / 120 * IssueRowH * 2, 0, MaxScroll);
+  Handled := True;
+  Repaint;
 end;
 
 { TCMTabBar }

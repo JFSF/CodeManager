@@ -92,6 +92,15 @@ para a sua linha.
 
 ![Leitura do código](docs/images/14-codigo.png)
 
+### Trazer o SonarQube para dentro do código
+
+Com o SonarQube ligado (opcional e por utilizador), os problemas aparecem na margem das linhas do código, e o Mapa e o
+Painel ganham as medidas do servidor: cobertura, duplicação, dívida técnica, classificações A–E e *hotspots*.
+
+![Código com problemas do SonarQube](docs/images/15-codigo-sonar.png)
+
+<sub>A imagem usa dados de demonstração do Sonar.</sub>
+
 ### Rever com método
 
 A **Checklist** agrupa os ficheiros por pasta. Um ficheiro fica concluído quando **todos os métodos** estão revistos;

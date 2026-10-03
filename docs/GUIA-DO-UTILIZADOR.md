@@ -227,6 +227,25 @@ Com tudo configurado, a Checklist e o Mapa passam a mostrar:
   analisar o projeto). **Sincronizar S** põe a marca «S» nos ficheiros que o Sonar analisou sem problemas abertos e
   tira-a aos que têm problemas; os que o Sonar não conhece ficam como estão (pede confirmação).
 
+Além disso, cada consulta traz as **medidas** do SonarQube, que aparecem em vários sítios:
+
+![Código com os problemas do SonarQube](images/15-codigo-sonar.png)
+
+- **Mapa:** o cartão **SonarQube** com as medidas do projeto (linhas de código, cobertura de testes, duplicação,
+  dívida técnica, bugs, vulnerabilidades, *code smells*, *security hotspots* e as classificações A–E de fiabilidade,
+  segurança, manutenção e revisão de hotspots). A dica do nome de cada ficheiro junta as dele: cobertura, duplicação,
+  dívida técnica e complexidade cognitiva.
+- **Código:** ao ler um ficheiro, uma bolinha na margem marca cada linha com um problema (vermelha se for
+  bloqueante ou crítica, âmbar se for «maior», azul nas restantes; um anel roxo para um *hotspot*). Apontar a margem
+  mostra a mensagem. Por baixo, a lista dos problemas e hotspots do ficheiro, com o tipo, a regra e as medidas dele; um
+  clique numa linha da lista leva o código a essa linha.
+- **Painel:** os cartões **Cobertura de testes**, **Duplicação**, **Dívida técnica** e **Problemas abertos**, e os
+  gráficos **Dívida técnica por camada** e **Ficheiros com mais dívida técnica**.
+
+As medidas de cobertura ou duplicação que o SonarQube não tem aparecem como «—» (e não como 0 %). Os *hotspots* e as
+medidas do projeto são opcionais: um servidor antigo, ou um token sem essa permissão, deixa-os de fora e o resto
+continua a funcionar.
+
 Os ficheiros associam-se pelo fim do caminho, por isso funciona quer o Sonar analise a raiz do repositório
 (`src/Core/a.pas`) quer o CodeManager analise só uma subpasta (`Core/a.pas`). O CodeManager **só lê** o Sonar. As
 consultas correm em segundo plano e, se o servidor estiver em baixo, o cartão diz porquê sem incomodar o resto.
@@ -264,6 +283,8 @@ Lê o código-fonte de uma unit sem sair da aplicação, em **modo de leitura** 
 - **Leitura:** números de linha, realce de sintaxe Delphi (palavras reservadas, textos, comentários, números e
   directivas), scroll vertical e horizontal (rato, `Shift` + roda, teclas `↑ ↓ PgUp PgDn Home End`). Um clique numa
   linha destaca-a. **Copiar tudo** põe o ficheiro na área de transferência.
+- **SonarQube:** com o Sonar ligado, os problemas e *hotspots* do ficheiro aparecem na margem e numa lista por baixo
+  (ver [SonarQube](#sonarqube-opcional)).
 - **Fonte e ligaduras:** usa a primeira fonte moderna instalada (JetBrains Mono, Fira Code, Cascadia Code, Monaspace
   Neon, Source Code Pro ou Consolas); o botão com o nome da fonte passa para a seguinte. **Ligaduras** liga ou desliga
   a fusão dos operadores (`->`, `=>`, `<>`, `:=`, `>=` …). As duas escolhas ficam guardadas nas definições.

@@ -6,7 +6,7 @@
 interface
 
 const
-  LangRows: array[0..423] of array[0..3] of string = (
+  LangRows: array[0..457] of array[0..3] of string = (
   ('Projeto', 'Project', 'Projet', 'Projekt'),
   ('Mapa', 'Map', 'Carte', 'Karte'),
   ('Checklist', 'Checklist', 'Checklist', 'Checkliste'),
@@ -432,7 +432,41 @@ const
   ('Ligaduras', 'Ligatures', 'Ligatures', 'Ligaturen'),
   ('Muda a fonte do código (as fontes modernas instaladas).', 'Changes the code font (the modern fonts installed).', 'Change la police du code (les polices modernes installées).', 'Ändert die Codeschrift (die installierten modernen Schriften).'),
   ('Mostra os operadores como -> => <> := fundidos (ligaduras da fonte).', 'Shows operators such as -> => <> := joined together (font ligatures).', 'Affiche les opérateurs comme -> => <> := fusionnés (ligatures de la police).', 'Zeigt Operatoren wie -> => <> := verbunden an (Schriftligaturen).'),
-  ('Só há uma fonte de código instalada.', 'Only one code font is installed.', 'Une seule police de code est installée.', 'Es ist nur eine Codeschrift installiert.')
+  ('Só há uma fonte de código instalada.', 'Only one code font is installed.', 'Une seule police de code est installée.', 'Es ist nur eine Codeschrift installiert.'),
+  ('Linhas de código', 'Lines of code', 'Lignes de code', 'Codezeilen'),
+  ('Cobertura de testes', 'Test coverage', 'Couverture des tests', 'Testabdeckung'),
+  ('Duplicação', 'Duplication', 'Duplication', 'Duplizierung'),
+  ('Dívida técnica', 'Technical debt', 'Dette technique', 'Technische Schulden'),
+  ('Bugs', 'Bugs', 'Bugs', 'Bugs'),
+  ('Vulnerabilidades', 'Vulnerabilities', 'Vulnérabilités', 'Schwachstellen'),
+  ('Code smells', 'Code smells', 'Code smells', 'Code Smells'),
+  ('Security hotspots', 'Security hotspots', 'Security hotspots', 'Security Hotspots'),
+  ('Fiabilidade', 'Reliability', 'Fiabilité', 'Zuverlässigkeit'),
+  ('Segurança', 'Security', 'Sécurité', 'Sicherheit'),
+  ('Manutenção', 'Maintainability', 'Maintenabilité', 'Wartbarkeit'),
+  ('Revisão de hotspots', 'Hotspots review', 'Revue des hotspots', 'Hotspot-Prüfung'),
+  ('cobertura ', 'coverage ', 'couverture ', 'Abdeckung '),
+  ('duplicação ', 'duplication ', 'duplication ', 'Duplizierung '),
+  ('dívida ', 'debt ', 'dette ', 'Schulden '),
+  ('complexidade cognitiva ', 'cognitive complexity ', 'complexité cognitive ', 'kognitive Komplexität '),
+  ('VULN.', 'VULN.', 'VULN.', 'SCHW.'),
+  ('PROBLEMA', 'ISSUE', 'PROBLÈME', 'PROBLEM'),
+  ('risco ', 'risk ', 'risque ', 'Risiko '),
+  ('Sem problemas abertos neste ficheiro.', 'No open issues in this file.', 'Aucun problème ouvert dans ce fichier.', 'Keine offenen Probleme in dieser Datei.'),
+  ('problema', 'issue', 'problème', 'Problem'),
+  ('problemas', 'issues', 'problèmes', 'Probleme'),
+  ('hotspot', 'hotspot', 'hotspot', 'Hotspot'),
+  ('hotspots', 'hotspots', 'hotspots', 'Hotspots'),
+  ('segundo o SonarQube', 'according to SonarQube', 'selon SonarQube', 'laut SonarQube'),
+  ('o SonarQube não tem cobertura', 'SonarQube has no coverage data', 'SonarQube n''a pas de couverture', 'SonarQube hat keine Abdeckungsdaten'),
+  ('de linhas duplicadas', 'of duplicated lines', 'de lignes dupliquées', 'duplizierte Zeilen'),
+  ('manutenção ', 'maintainability ', 'maintenabilité ', 'Wartbarkeit '),
+  ('%d bugs · %d vulnerab. · %d smells', '%d bugs · %d vulnerab. · %d smells', '%d bugs · %d vulnérab. · %d smells', '%d Bugs · %d Schwachst. · %d Smells'),
+  ('Dívida técnica por camada', 'Technical debt by layer', 'Dette technique par couche', 'Technische Schulden pro Schicht'),
+  ('Horas estimadas pelo SonarQube', 'Hours estimated by SonarQube', 'Heures estimées par SonarQube', 'Von SonarQube geschätzte Stunden'),
+  ('Horas', 'Hours', 'Heures', 'Stunden'),
+  ('Ficheiros com mais dívida técnica', 'Files with the most technical debt', 'Fichiers avec le plus de dette technique', 'Dateien mit den meisten technischen Schulden'),
+  ('Os %d com mais horas de dívida', 'The %d with the most hours of debt', 'Les %d avec le plus d''heures de dette', 'Die %d mit den meisten Schuldenstunden')
   );
 
   // trocos dos modelos HTML (res/templates), por ordem de leitura

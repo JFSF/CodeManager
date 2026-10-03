@@ -11,6 +11,10 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
 - **Grafo de dependências:** nova página com o mapa visual de quem usa quem (cláusulas `uses` da *interface* e da
   *implementation*), acoplamento, instabilidade, **ciclos**, filtro, simplificação e relatório em HTML (mapa em SVG)
   ou Markdown.
+- **Mais do SonarQube:** cada consulta traz agora as medidas do projeto e de cada ficheiro (linhas, cobertura,
+  duplicação, dívida técnica, complexidade, bugs, vulnerabilidades, *code smells*, *hotspots*, classificações A–E), o
+  detalhe dos problemas (linha, tipo, regra, mensagem) e os *security hotspots* por rever. Mostram-se no cartão do Mapa,
+  na dica dos ficheiros, na página Código (marcadores na margem e lista de problemas) e numa secção nova do Painel.
 - **Mais métricas por método:** número de **parâmetros** e **aninhamento** de blocos (`begin`, `try`, `case`,
   `repeat`), na dica do método e nas colunas/campos do CSV e do JSON.
 - **Leitura do código:** nova página **Código**, aberta por duplo clique numa unit do Grafo ou num ficheiro ou método do

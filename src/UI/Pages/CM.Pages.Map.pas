@@ -9,7 +9,7 @@ uses
   System.SysUtils, System.Classes, System.Types, System.IOUtils, System.Generics.Collections,
   FMX.Types, FMX.Controls, FMX.Layouts, FMX.Dialogs, FMX.Printer,
   CM.Theme, CM.Controls, CM.Layouts, CM.TreeList, CM.Analyzer, CM.Store, CM.Stats, CM.Export,
-  CM.Print, CM.Plan, CM.Pages.Host;
+  CM.Print, CM.Plan, CM.SonarModel, CM.Pages.Host;
 
 type
   TMapPage = class(TCMControl)
@@ -18,6 +18,8 @@ type
     FSearch: TCMInput;
     FList: TCMTreeList;
     FStats: TCMKeyValue;
+    FSonarCard: TCMPanel;
+    FSonarInfo: TCMKeyValue;
     FExpMethods, FExpProgress: TCMSwitch;
     procedure Hint(const AText: string);
     procedure ListChanged(Sender: TObject);
@@ -39,6 +41,8 @@ type
     procedure ApplyTheme;
     procedure ClearStats;
     procedure ShowStats(const St: TStats);
+    // as medidas do SonarQube (so com uma consulta que as traga): liga e desliga o cartao
+    procedure ShowSonar;
     function ExportOptionsNow: TExportOptions;
     // grava a estrutura no formato pedido; devolve False (com aviso) se falhar
     function SaveStructure(AFormat: TExportFormat; const AFileName: string): Boolean;
@@ -91,6 +95,14 @@ begin
   FStats.Parent := Card;
   FStats.Align := TAlignLayout.Top;
   FStats.Margins.Top := 8;
+
+  FSonarCard := SideCard(Self, Side, 200);
+  FSonarCard.Visible := False;
+  TCMLabel.Make(FSonarCard, 'SonarQube', 15, True).Align := TAlignLayout.Top;
+  FSonarInfo := TCMKeyValue.Create(Self);
+  FSonarInfo.Parent := FSonarCard;
+  FSonarInfo.Align := TAlignLayout.Top;
+  FSonarInfo.Margins.Top := 8;
 
   Card := SideCard(Self, Side, 176);
   TCMLabel.Make(Card, Tr('Vista'), 15, True).Align := TAlignLayout.Top;
@@ -219,6 +231,28 @@ begin
     Rows.Free;
   end;
   FitStatsCard;
+end;
+
+procedure TMapPage.ShowSonar;
+var
+  Snap: TSonarSnapshot;
+  Lines: TArray<TSonarLine>;
+  Rows: TArray<TKeyValue>;
+  I: Integer;
+begin
+  Snap := FHost.CurrentSonar;
+  FSonarCard.Visible := False;
+  if Snap = nil then
+    Exit;
+  Lines := SonarProjectLines(Snap.Project);
+  if Length(Lines) = 0 then
+    Exit;
+  SetLength(Rows, Length(Lines));
+  for I := 0 to High(Lines) do
+    Rows[I] := KV(Lines[I].Caption, Lines[I].Value, Lines[I].Good);
+  FSonarInfo.SetRows(Rows);
+  FSonarCard.Height := 16 + 16 + 28 + 8 + FSonarInfo.Height;
+  FSonarCard.Visible := True;
 end;
 
 procedure TMapPage.ExpandAllClick(Sender: TObject);

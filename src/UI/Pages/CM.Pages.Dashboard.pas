@@ -7,11 +7,11 @@
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math,
+  System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math, System.StrUtils,
   System.Generics.Collections, System.Generics.Defaults,
   FMX.Types, FMX.Controls, FMX.Layouts,
   Chart4D.Types, Chart4D.Style, Chart4D.Axis, Chart4D.FMX,
-  CM.Theme, CM.Controls, CM.Layouts, CM.Analyzer, CM.Store, CM.Stats, CM.History, CM.Plan, CM.Metrics, CM.Pages.Host;
+  CM.Theme, CM.Controls, CM.Layouts, CM.Analyzer, CM.Store, CM.Stats, CM.History, CM.Plan, CM.Metrics, CM.SonarModel, CM.Pages.Host;
 
 type
   TDashboardPage = class(TCMControl)
@@ -26,6 +26,11 @@ type
     FRows: array[0..4] of TCMCardRow;           // a ultima so aparece quando ha plano
     FEvolution, FLayers, FStatus, FTop, FHist, FLayerMethods, FCompilaSonar: TChart4D;
     FPlanLayers, FPlanOverview, FComplexTop, FComplexDist: TChart4D;
+    FSonarKpiRow: TCMCardRow;                   // so aparecem com medidas do SonarQube
+    FSonarKpi: array[0..3] of TCMKpi;
+    FSonarRow: TCMCardRow;
+    FSonarDebt, FSonarTop: TChart4D;
+    FSonarOn: Boolean;
     FStats: TStats;
     FHasStats: Boolean;
     FDirty: Boolean;
@@ -44,6 +49,7 @@ type
     procedure FillLayerMethods;
     procedure FillPlan;
     procedure FillComplexity;
+    procedure FillSonar;
     procedure Reset(AChart: TChart4D; AKind: TChartKind; const ATitle, ASubtitle: string);
   protected
     procedure Resize; override;
@@ -54,6 +60,8 @@ type
     procedure ShowStats(const St: TStats);
     // a pagina passou a estar visivel: actualiza os graficos se os dados mudaram
     procedure Activate;
+    // chegou uma consulta nova ao SonarQube: os cartoes e graficos do Sonar refazem-se
+    procedure SonarChanged;
   end;
 
 implementation
@@ -129,6 +137,27 @@ begin
     FRows[I].Padding.Bottom := RowGap;
   end;
 
+  FSonarKpiRow := TCMCardRow.Create(Self);
+  FSonarKpiRow.Parent := FBody;
+  FSonarKpiRow.Align := TAlignLayout.Top;
+  FSonarKpiRow.Height := KpiHeight + RowGap;
+  FSonarKpiRow.Padding.Bottom := RowGap;
+  FSonarKpiRow.Columns := 4;
+  FSonarKpiRow.Visible := False;
+  for I := 0 to 3 do
+  begin
+    FSonarKpi[I] := TCMKpi.Create(Self);
+    FSonarKpi[I].Parent := FSonarKpiRow;
+  end;
+  FSonarRow := TCMCardRow.Create(Self);
+  FSonarRow.Parent := FBody;
+  FSonarRow.Align := TAlignLayout.Top;
+  FSonarRow.Height := 380;
+  FSonarRow.Padding.Bottom := RowGap;
+  FSonarRow.Visible := False;
+  FSonarDebt := MakeChart(FSonarRow, False);
+  FSonarTop := MakeChart(FSonarRow, False);
+
   FEvolution := MakeChart(FEvoRow, True);
   FLayers := AddChartCard(0);
   FStatus := AddChartCard(0);
@@ -174,6 +203,14 @@ begin
   FBody.Height := FBody.Height + FRows[3].Height;
   if FRows[4].Visible then
     FBody.Height := FBody.Height + FRows[4].Height;
+  if FSonarOn then
+  begin
+    if Narrow then FSonarKpiRow.Columns := 2 else FSonarKpiRow.Columns := 4;
+    FSonarKpiRow.Height := FSonarKpiRow.HeightFor(KpiHeight);
+    if Narrow then FSonarRow.Columns := 1 else FSonarRow.Columns := 2;
+    FSonarRow.Height := FSonarRow.HeightFor(Cell);
+    FBody.Height := FBody.Height + FSonarKpiRow.Height + FSonarRow.Height;
+  end;
 end;
 
 function TDashboardPage.AddChartCard(ARow: Integer): TChart4D;
@@ -202,7 +239,7 @@ procedure TDashboardPage.StyleAll;
 var
   C: TChart4D;
 begin
-  for C in [FEvolution, FLayers, FStatus, FTop, FHist, FLayerMethods, FCompilaSonar, FPlanLayers, FPlanOverview, FComplexTop, FComplexDist] do
+  for C in [FEvolution, FLayers, FStatus, FTop, FHist, FLayerMethods, FCompilaSonar, FPlanLayers, FPlanOverview, FComplexTop, FComplexDist, FSonarDebt, FSonarTop] do
     C.Plot.Style := ThemedStyle;
 end;
 
@@ -224,6 +261,13 @@ procedure TDashboardPage.ShowStats(const St: TStats);
 begin
   FStats := St;
   FHasStats := True;
+  FDirty := True;
+  if Visible then
+    Rebuild;
+end;
+
+procedure TDashboardPage.SonarChanged;
+begin
   FDirty := True;
   if Visible then
     Rebuild;
@@ -267,6 +311,7 @@ begin
   FillCompilaSonar;
   FillComplexity;
   FillPlan;
+  FillSonar;
   Relayout;                // a linha do plano aparece ou desaparece conforme ha plano
 end;
 
@@ -339,6 +384,103 @@ begin
   FLayers.Plot.Categories := Names;
   FLayers.Plot.AddSeries(Tr('Concluídos'), Done).Color := Pal.Accent;
   FLayers.Plot.AddSeries(Tr('Por concluir'), Pending).Color := Pal.BorderStrong;
+end;
+
+// SonarQube: numeros do projecto e onde esta a divida tecnica. So aparece quando a ultima consulta traz medidas
+procedure TDashboardPage.FillSonar;
+const
+  TopN = 10;
+type
+  TDebt = record
+    Name: string;
+    Minutes: Integer;
+  end;
+var
+  Snap: TSonarSnapshot;
+  P: TSonarProject;
+  Info: TSonarFile;
+  U: TUnitInfo;
+  Files: TList<TDebt>;
+  ByLayer: TDictionary<string, Integer>;
+  D: TDebt;
+  LayerNames: TArray<string>;
+  Hours: TArray<Double>;
+  Names: TArray<string>;
+  Values: TArray<Double>;
+  I, N, Total: Integer;
+  Letter: string;
+  NoSpark: TArray<Double>;
+begin
+  Snap := FHost.CurrentSonar;
+  FSonarOn := (Snap <> nil) and Snap.Project.Known and (FHost.CurrentScan <> nil);
+  FSonarKpiRow.Visible := FSonarOn;
+  FSonarRow.Visible := FSonarOn;
+  if not FSonarOn then
+    Exit;
+  P := Snap.Project;
+  SetLength(NoSpark, 0);
+  if P.Coverage >= 0 then
+    FSonarKpi[0].SetValues(Tr('Cobertura de testes'), FormatFloat('0.#', P.Coverage) + '%',
+      Tr('segundo o SonarQube'), NoSpark, Pal.FlagCompila)
+  else
+    FSonarKpi[0].SetValues(Tr('Cobertura de testes'), '—', Tr('o SonarQube não tem cobertura'), NoSpark, Pal.FlagCompila);
+  if P.DupDensity >= 0 then
+    FSonarKpi[1].SetValues(Tr('Duplicação'), FormatFloat('0.#', P.DupDensity) + '%', Tr('de linhas duplicadas'),
+      NoSpark, Pal.FlagSonar)
+  else
+    FSonarKpi[1].SetValues(Tr('Duplicação'), '—', '', NoSpark, Pal.FlagSonar);
+  Letter := RatingLetter(P.MaintainabilityRating);
+  FSonarKpi[2].SetValues(Tr('Dívida técnica'), DebtText(P.DebtMin),
+    IfThen(Letter <> '', Tr('manutenção ') + Letter, ''), NoSpark, Pal.Pending);
+  FSonarKpi[3].SetValues(Tr('Problemas abertos'), IntToStr(Snap.TotalIssues),
+    Format(Tr('%d bugs · %d vulnerab. · %d smells'), [P.Bugs, P.Vulns, P.Smells]), NoSpark, Pal.Danger);
+
+  Files := TList<TDebt>.Create;
+  ByLayer := TDictionary<string, Integer>.Create;
+  try
+    for U in FHost.CurrentScan.Units do
+      if Snap.Find(U.Path, Info) and (Info.DebtMin > 0) then
+      begin
+        D.Name := U.FileName;
+        D.Minutes := Info.DebtMin;
+        Files.Add(D);
+        if ByLayer.TryGetValue(U.Layer, Total) then
+          ByLayer[U.Layer] := Total + Info.DebtMin
+        else
+          ByLayer.Add(U.Layer, Info.DebtMin);
+      end;
+    Files.Sort(TComparer<TDebt>.Construct(
+      function(const A, B: TDebt): Integer
+      begin
+        Result := B.Minutes - A.Minutes;
+        if Result = 0 then
+          Result := CompareText(A.Name, B.Name);
+      end));
+    N := Min(TopN, Files.Count);
+    SetLength(Names, N);
+    SetLength(Values, N);
+    for I := 0 to N - 1 do
+    begin
+      Names[I] := Files[I].Name;
+      Values[I] := Files[I].Minutes / 60;
+    end;
+    LayerNames := ByLayer.Keys.ToArray;
+    TArray.Sort<string>(LayerNames);
+    SetLength(Hours, Length(LayerNames));
+    for I := 0 to High(LayerNames) do
+      Hours[I] := ByLayer[LayerNames[I]] / 60;
+  finally
+    ByLayer.Free;
+    Files.Free;
+  end;
+  Reset(FSonarDebt, TChartKind.Bar, Tr('Dívida técnica por camada'), Tr('Horas estimadas pelo SonarQube'));
+  FSonarDebt.Plot.Categories := LayerNames;
+  FSonarDebt.Plot.AddSeries(Tr('Horas'), Hours).Color := Pal.Pending;
+  Reset(FSonarTop, TChartKind.Bar, Tr('Ficheiros com mais dívida técnica'),
+    Format(Tr('Os %d com mais horas de dívida'), [N]));
+  FSonarTop.Plot.Orientation := TChartOrientation.Horizontal;
+  FSonarTop.Plot.Categories := Names;
+  FSonarTop.Plot.AddSeries(Tr('Horas'), Values).Color := Pal.Danger;
 end;
 
 procedure TDashboardPage.FillKpis;

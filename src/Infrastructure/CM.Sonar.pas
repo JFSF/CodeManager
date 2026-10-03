@@ -29,8 +29,20 @@ function ParseGateStatus(const AJson: string): string;
 function ParseProjectKeys(const AJson: string): TArray<string>;
 // acrescenta a ASnap os problemas de uma pagina de /api/issues/search; devolve quantos; ATotal = paging.total
 function ParseIssuesPage(const AJson, AProjectKey: string; ASnap: TSonarSnapshot; out ATotal: Integer): Integer;
-// acrescenta a ASnap os ficheiros de uma pagina de /api/measures/component_tree; devolve quantos; ATotal = paging.total
+// acrescenta a ASnap os ficheiros de uma pagina de /api/measures/component_tree (com as medidas de cada um);
+// devolve quantos; ATotal = paging.total
 function ParseMeasuresPage(const AJson: string; ASnap: TSonarSnapshot; out ATotal: Integer): Integer;
+// as medidas do projecto inteiro de /api/measures/component; False se a resposta nao as traz
+function ParseProjectMeasures(const AJson: string; ASnap: TSonarSnapshot): Boolean;
+// acrescenta a ASnap os security hotspots de uma pagina de /api/hotspots/search; devolve quantos; ATotal = paging.total
+function ParseHotspotsPage(const AJson, AProjectKey: string; ASnap: TSonarSnapshot; out ATotal: Integer): Integer;
+
+const
+  // as medidas pedidas ao Sonar (no maximo 15 por pedido)
+  FileMetricKeys = 'ncloc,coverage,duplicated_lines_density,sqale_index,complexity,cognitive_complexity,' +
+    'bugs,vulnerabilities,code_smells,security_hotspots';
+  ProjectMetricKeys = FileMetricKeys + ',reliability_rating,security_rating,sqale_rating,security_review_rating';
+
 type
   // um pedido em segundo plano. A interface consulta Done (por exemplo num temporizador) e depois le o
   // resultado; a thread nunca toca nos objectos da janela. Se ninguem recolher o resultado, liberta-se sozinho
@@ -147,9 +159,10 @@ end;
 function ParseIssuesPage(const AJson, AProjectKey: string; ASnap: TSonarSnapshot; out ATotal: Integer): Integer;
 var
   V, Item: TJSONValue;
-  Root, Issue, Impact: TJSONObject;
+  Root, Issue, Impact, Range: TJSONObject;
   Issues, Impacts: TJSONArray;
   Path, Sev: string;
+  Detail: TSonarIssue;
 begin
   Result := 0;
   ATotal := 0;
@@ -176,12 +189,65 @@ begin
         Impact := TJSONObject(Impacts.Items[0]);
         Sev := Impact.GetValue<string>('severity', '');
       end;
-      ASnap.AddIssue(Path, ImpactToSeverity(Sev));
+      Detail := Default(TSonarIssue);
+      Detail.Severity := ImpactToSeverity(Sev);
+      Detail.Line := Issue.GetValue<Integer>('line', 0);
+      if (Detail.Line = 0) and Issue.TryGetValue<TJSONObject>('textRange', Range) then
+        Detail.Line := Range.GetValue<Integer>('startLine', 0);
+      Detail.Kind := Issue.GetValue<string>('type', '');
+      Detail.Rule := Issue.GetValue<string>('rule', '');
+      Detail.Message := Issue.GetValue<string>('message', '');
+      ASnap.AddIssue(Path, Detail);
       Inc(Result);
     end;
   finally
     V.Free;
   end;
+end;
+
+function ToFloat(const AText: string; ADefault: Double): Double;
+begin
+  Result := StrToFloatDef(AText, ADefault, TFormatSettings.Invariant);
+end;
+
+// o Sonar escreve as classificacoes como '1.0'..'5.0'
+function ToRating(const AText: string): Integer;
+begin
+  Result := Round(ToFloat(AText, 0));
+  if (Result < 1) or (Result > 5) then
+    Result := 0;
+end;
+
+procedure ApplyFileMetric(var AFile: TSonarFile; const AMetric, AValue: string);
+begin
+  if AMetric = 'ncloc' then AFile.Lines := Round(ToFloat(AValue, 0))
+  else if AMetric = 'coverage' then AFile.Coverage := ToFloat(AValue, -1)
+  else if AMetric = 'duplicated_lines_density' then AFile.DupDensity := ToFloat(AValue, -1)
+  else if AMetric = 'sqale_index' then AFile.DebtMin := Round(ToFloat(AValue, 0))
+  else if AMetric = 'complexity' then AFile.Complexity := Round(ToFloat(AValue, 0))
+  else if AMetric = 'cognitive_complexity' then AFile.Cognitive := Round(ToFloat(AValue, 0))
+  else if AMetric = 'bugs' then AFile.Bugs := Round(ToFloat(AValue, 0))
+  else if AMetric = 'vulnerabilities' then AFile.Vulns := Round(ToFloat(AValue, 0))
+  else if AMetric = 'code_smells' then AFile.Smells := Round(ToFloat(AValue, 0))
+  else if AMetric = 'security_hotspots' then AFile.Hotspots := Round(ToFloat(AValue, 0));
+end;
+
+procedure ApplyProjectMetric(var AProject: TSonarProject; const AMetric, AValue: string);
+begin
+  if AMetric = 'ncloc' then AProject.Lines := Round(ToFloat(AValue, 0))
+  else if AMetric = 'coverage' then AProject.Coverage := ToFloat(AValue, -1)
+  else if AMetric = 'duplicated_lines_density' then AProject.DupDensity := ToFloat(AValue, -1)
+  else if AMetric = 'sqale_index' then AProject.DebtMin := Round(ToFloat(AValue, 0))
+  else if AMetric = 'complexity' then AProject.Complexity := Round(ToFloat(AValue, 0))
+  else if AMetric = 'cognitive_complexity' then AProject.Cognitive := Round(ToFloat(AValue, 0))
+  else if AMetric = 'bugs' then AProject.Bugs := Round(ToFloat(AValue, 0))
+  else if AMetric = 'vulnerabilities' then AProject.Vulns := Round(ToFloat(AValue, 0))
+  else if AMetric = 'code_smells' then AProject.Smells := Round(ToFloat(AValue, 0))
+  else if AMetric = 'security_hotspots' then AProject.Hotspots := Round(ToFloat(AValue, 0))
+  else if AMetric = 'reliability_rating' then AProject.ReliabilityRating := ToRating(AValue)
+  else if AMetric = 'security_rating' then AProject.SecurityRating := ToRating(AValue)
+  else if AMetric = 'sqale_rating' then AProject.MaintainabilityRating := ToRating(AValue)
+  else if AMetric = 'security_review_rating' then AProject.ReviewRating := ToRating(AValue);
 end;
 
 function ParseMeasuresPage(const AJson: string; ASnap: TSonarSnapshot; out ATotal: Integer): Integer;
@@ -190,7 +256,7 @@ var
   Root, Comp: TJSONObject;
   Comps, Measures: TJSONArray;
   Path: string;
-  Lines: Integer;
+  F: TSonarFile;
 begin
   Result := 0;
   ATotal := 0;
@@ -210,12 +276,76 @@ begin
       Path := Comp.GetValue<string>('path', '');
       if Path = '' then
         Continue;
-      Lines := 0;
+      F := NewSonarFile(Path);
       if Comp.TryGetValue<TJSONArray>('measures', Measures) then
         for M in Measures do
-          if (M is TJSONObject) and (TJSONObject(M).GetValue<string>('metric', '') = 'ncloc') then
-            Lines := StrToIntDef(TJSONObject(M).GetValue<string>('value', '0'), 0);
-      ASnap.AddFile(Path, Lines);
+          if M is TJSONObject then
+            ApplyFileMetric(F, TJSONObject(M).GetValue<string>('metric', ''), TJSONObject(M).GetValue<string>('value', ''));
+      ASnap.AddFile(Path, F.Lines);
+      ASnap.SetFileMeasures(Path, F);
+      Inc(Result);
+    end;
+  finally
+    V.Free;
+  end;
+end;
+
+function ParseProjectMeasures(const AJson: string; ASnap: TSonarSnapshot): Boolean;
+var
+  V, M: TJSONValue;
+  Comp: TJSONObject;
+  Measures: TJSONArray;
+  P: TSonarProject;
+begin
+  Result := False;
+  V := TJSONObject.ParseJSONValue(AJson);
+  try
+    if not (V is TJSONObject) or not TJSONObject(V).TryGetValue<TJSONObject>('component', Comp) or
+       not Comp.TryGetValue<TJSONArray>('measures', Measures) then
+      Exit;
+    P := NewSonarProject;
+    for M in Measures do
+      if M is TJSONObject then
+        ApplyProjectMetric(P, TJSONObject(M).GetValue<string>('metric', ''), TJSONObject(M).GetValue<string>('value', ''));
+    P.Known := Measures.Count > 0;
+    ASnap.Project := P;
+    Result := P.Known;
+  finally
+    V.Free;
+  end;
+end;
+
+function ParseHotspotsPage(const AJson, AProjectKey: string; ASnap: TSonarSnapshot; out ATotal: Integer): Integer;
+var
+  V, Item: TJSONValue;
+  Root, H: TJSONObject;
+  Hotspots: TJSONArray;
+  Path: string;
+  Spot: TSonarHotspot;
+begin
+  Result := 0;
+  ATotal := 0;
+  V := TJSONObject.ParseJSONValue(AJson);
+  try
+    if not (V is TJSONObject) then
+      Exit;
+    Root := TJSONObject(V);
+    ATotal := PagingTotal(Root);
+    if not Root.TryGetValue<TJSONArray>('hotspots', Hotspots) then
+      Exit;
+    for Item in Hotspots do
+    begin
+      if not (Item is TJSONObject) then
+        Continue;
+      H := TJSONObject(Item);
+      Path := ComponentPath(H.GetValue<string>('component', ''), AProjectKey);
+      if Path = '' then
+        Continue;
+      Spot := Default(TSonarHotspot);
+      Spot.Line := H.GetValue<Integer>('line', 0);
+      Spot.Probability := UpperCase(H.GetValue<string>('vulnerabilityProbability', ''));
+      Spot.Message := H.GetValue<string>('message', '');
+      ASnap.AddHotspot(Path, Spot);
       Inc(Result);
     end;
   finally
@@ -343,8 +473,8 @@ begin
     Page := 1;
     Seen := 0;
     repeat
-      Status := HttpGet(AConfig, Format('/api/measures/component_tree?component=%s&metricKeys=ncloc&qualifiers=FIL,UTS&ps=%d&p=%d',
-        [Enc(AConfig.ProjectKey), PageSize, Page]), Body, Fail);
+      Status := HttpGet(AConfig, Format('/api/measures/component_tree?component=%s&metricKeys=%s&qualifiers=FIL,UTS&ps=%d&p=%d',
+        [Enc(AConfig.ProjectKey), FileMetricKeys, PageSize, Page]), Body, Fail);
       if Status <> 200 then
       begin
         AError := StatusMessage(Status, Fail, AConfig);
@@ -371,7 +501,24 @@ begin
       Inc(Page);
     until (Got = 0) or (Seen >= Total) or (Page > MaxPages);
 
-    // 3) a quality gate (opcional: sem permissao ou sem gate fica desconhecida)
+    // 3) as medidas do projecto e os security hotspots (opcionais: uma versao antiga ou sem permissao fica sem eles)
+    Status := HttpGet(AConfig, Format('/api/measures/component?component=%s&metricKeys=%s',
+      [Enc(AConfig.ProjectKey), ProjectMetricKeys]), Body, Fail);
+    if Status = 200 then
+      ParseProjectMeasures(Body, ASnapshot);
+    Page := 1;
+    Seen := 0;
+    repeat
+      Status := HttpGet(AConfig, Format('/api/hotspots/search?projectKey=%s&status=TO_REVIEW&ps=%d&p=%d',
+        [Enc(AConfig.ProjectKey), PageSize, Page]), Body, Fail);
+      if Status <> 200 then
+        Break;
+      Got := ParseHotspotsPage(Body, AConfig.ProjectKey, ASnapshot, Total);
+      Inc(Seen, PageSize);
+      Inc(Page);
+    until (Got = 0) or (Seen >= Total) or (Page > MaxPages);
+
+    // 4) a quality gate (opcional: sem permissao ou sem gate fica desconhecida)
     Status := HttpGet(AConfig, '/api/qualitygates/project_status?projectKey=' + Enc(AConfig.ProjectKey), Body, Fail);
     if Status = 200 then
       ASnapshot.GateStatus := ParseGateStatus(Body);

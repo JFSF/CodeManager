@@ -7,9 +7,10 @@
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Types, System.IOUtils, System.Rtti, System.Generics.Collections,
+  System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math, System.IOUtils, System.Rtti,
+  System.Generics.Collections,
   FMX.Types, FMX.Controls, FMX.Platform,
-  CM.Theme, CM.Controls, CM.Layouts, CM.CodeView, CM.Highlight, CM.Analyzer, CM.Pages.Host;
+  CM.Theme, CM.Controls, CM.Layouts, CM.CodeView, CM.Highlight, CM.Analyzer, CM.SonarModel, CM.Pages.Host;
 
 type
   TCodeTab = class
@@ -31,11 +32,16 @@ type
     FView: TCMCodeView;
     FInfo: TCMLabel;
     FFontBtn, FLigBtn: TCMButton;
+    FSonarPanel: TCMPanel;
+    FSonarTitle: TCMLabel;
+    FIssues: TCMIssueList;
     FList: TObjectList<TCodeTab>;
     FActive: Integer;
     procedure TabSelect(Sender: TObject; AIndex: Integer);
     procedure TabClose(Sender: TObject; AIndex: Integer);
     procedure CopyClick(Sender: TObject);
+    procedure IssuePick(Sender: TObject; ALine: Integer);
+    procedure RefreshSonar;
     procedure FontClick(Sender: TObject);
     procedure LigaturesClick(Sender: TObject);
     procedure CloseClick(Sender: TObject);
@@ -57,6 +63,8 @@ type
     function OpenUnit(AUnit: TUnitInfo; AMethodIndex: Integer = -1): Boolean;
     // a pagina passou a estar visivel: se o ficheiro aberto mudou no disco, volta a le-lo
     procedure Activate;
+    // chegou uma consulta nova ao SonarQube (ou deixou de haver): refaz os pontos da margem e a lista
+    procedure SonarChanged;
     function TabCount: Integer;
     function ActivePath: string;
     // a linha em destaque no separador activo (-1 = nenhuma)
@@ -130,6 +138,21 @@ begin
 
   FInfo := TCMLabel.Make(Bar, '', 12.5, False, lcDim, True);
   FInfo.Align := TAlignLayout.Client;
+
+  FSonarPanel := TCMPanel.Create(Self);
+  FSonarPanel.Parent := Self;
+  FSonarPanel.Align := TAlignLayout.Bottom;
+  FSonarPanel.Height := 190;
+  FSonarPanel.Margins.Top := 10;
+  FSonarPanel.Padding.Rect := TRectF.Create(14, 10, 8, 6);
+  FSonarPanel.Visible := False;
+  FSonarTitle := TCMLabel.Make(FSonarPanel, '', 12.5, True, lcAccentStrong, True);
+  FSonarTitle.Align := TAlignLayout.Top;
+  FSonarTitle.Height := 26;
+  FIssues := TCMIssueList.Create(Self);
+  FIssues.Parent := FSonarPanel;
+  FIssues.Align := TAlignLayout.Client;
+  FIssues.OnPick := IssuePick;
 
   Holder := TCMPanel.Create(Self);
   Holder.Parent := Self;
@@ -263,6 +286,7 @@ begin
   end;
   RefreshTabs;
   ShowInfo;
+  RefreshSonar;
 end;
 
 function TCodePage.OpenUnit(AUnit: TUnitInfo; AMethodIndex: Integer): Boolean;
@@ -348,6 +372,7 @@ begin
     ReloadIfChanged(FList[FActive]);
     ShowInfo;
   end;
+  RefreshSonar;
 end;
 
 procedure TCodePage.Reset;
@@ -398,6 +423,127 @@ end;
 procedure TCodePage.CloseAllClick(Sender: TObject);
 begin
   Reset;
+end;
+
+function PercentText(AValue: Double): string;
+begin
+  Result := FormatFloat('0.#', AValue) + '%';
+end;
+
+function SeverityColor(ASeverity: TSonarSeverity): TAlphaColor;
+begin
+  case ASeverity of
+    ssBlocker, ssCritical: Result := Pal.Danger;
+    ssMajor: Result := Pal.Pending;
+  else
+    Result := Pal.FlagCompila;
+  end;
+end;
+
+function KindTag(const AKind: string): string;
+begin
+  if SameText(AKind, 'BUG') then Result := 'BUG'
+  else if SameText(AKind, 'VULNERABILITY') then Result := Tr('VULN.')
+  else if SameText(AKind, 'CODE_SMELL') then Result := 'SMELL'
+  else Result := Tr('PROBLEMA');
+end;
+
+// os problemas e os hotspots do SonarQube para o ficheiro aberto: pontos na margem, a lista em baixo e as medidas no titulo
+procedure TCodePage.RefreshSonar;
+var
+  Snap: TSonarSnapshot;
+  Path, Title: string;
+  Info: TSonarFile;
+  Issues: TArray<TSonarIssue>;
+  Spots: TArray<TSonarHotspot>;
+  Marks: TArray<TCodeMarker>;
+  Rows: TArray<TIssueRow>;
+  I: Integer;
+  Mk: TCodeMarker;
+  Row: TIssueRow;
+begin
+  Snap := FHost.CurrentSonar;
+  Path := ActivePath;
+  if (Snap = nil) or (Path = '') or not Snap.Find(Path, Info) then
+  begin
+    FView.SetMarkers(nil);
+    FSonarPanel.Visible := False;
+    Exit;
+  end;
+  Issues := Snap.IssuesOf(Path);
+  Spots := Snap.HotspotsOf(Path);
+  SetLength(Marks, 0);
+  SetLength(Rows, 0);
+  for I := 0 to High(Issues) do
+  begin
+    Row.Line := Issues[I].Line;
+    Row.Color := SeverityColor(Issues[I].Severity);
+    Row.Tag := KindTag(Issues[I].Kind);
+    Row.Text := Issues[I].Message;
+    if Issues[I].Rule <> '' then
+      Row.Text := Row.Text + '  (' + Issues[I].Rule + ')';
+    Rows := Rows + [Row];
+    if Issues[I].Line > 0 then
+    begin
+      Mk.Line := Issues[I].Line - 1;
+      Mk.Color := Row.Color;
+      Mk.Ring := False;
+      Mk.Hint := Format('%s · %s: %s', [SeverityText(Issues[I].Severity), Row.Tag, Issues[I].Message]);
+      Marks := Marks + [Mk];
+    end;
+  end;
+  for I := 0 to High(Spots) do
+  begin
+    Row.Line := Spots[I].Line;
+    Row.Color := Pal.FlagSonar;
+    Row.Tag := 'HOTSPOT';
+    Row.Text := Spots[I].Message;
+    if Spots[I].Probability <> '' then
+      Row.Text := Row.Text + '  (' + Tr('risco ') + Spots[I].Probability + ')';
+    Rows := Rows + [Row];
+    if Spots[I].Line > 0 then
+    begin
+      Mk.Line := Spots[I].Line - 1;
+      Mk.Color := Pal.FlagSonar;
+      Mk.Ring := True;
+      Mk.Hint := 'HOTSPOT: ' + Spots[I].Message;
+      Marks := Marks + [Mk];
+    end;
+  end;
+  FView.SetMarkers(Marks);
+  FIssues.SetRows(Rows);
+
+  Title := 'SonarQube  ·  ' + TrCount(Length(Issues), 'problema', 'problemas');
+  if Length(Spots) > 0 then
+    Title := Title + '  ·  ' + TrCount(Length(Spots), 'hotspot', 'hotspots');
+  if Info.HasMeasures then
+  begin
+    if Info.Coverage >= 0 then
+      Title := Title + '  ·  ' + Tr('cobertura ') + PercentText(Info.Coverage);
+    if Info.DupDensity >= 0 then
+      Title := Title + '  ·  ' + Tr('duplicação ') + PercentText(Info.DupDensity);
+    if Info.DebtMin > 0 then
+      Title := Title + '  ·  ' + Tr('dívida ') + DebtText(Info.DebtMin);
+  end;
+  FSonarTitle.Text := Title;
+  if Length(Rows) = 0 then
+  begin
+    FIssues.EmptyText := Tr('Sem problemas abertos neste ficheiro.');
+    FSonarPanel.Height := 84;
+  end
+  else
+    FSonarPanel.Height := 44 + Min(Length(Rows), 5) * 28 + 14;
+  FSonarPanel.Visible := True;
+end;
+
+procedure TCodePage.SonarChanged;
+begin
+  RefreshSonar;
+end;
+
+procedure TCodePage.IssuePick(Sender: TObject; ALine: Integer);
+begin
+  FView.ShowLine(ALine);
 end;
 
 // passa para a fonte seguinte da lista das instaladas (e grava a escolha)
