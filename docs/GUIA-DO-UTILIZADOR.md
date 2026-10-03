@@ -282,11 +282,12 @@ Na pasta `%APPDATA%\CodeManager`:
 
 | Ficheiro | Conteúdo |
 |---|---|
-| `settings.json` | Os projetos e o tema |
-| `progress-<id>.json` | O progresso de cada projeto |
+| `settings.json` | Os projetos, o tema e, se o usas, a configuração do SonarQube (o token vai **cifrado**, só se decifra nesta conta e neste computador) |
+| `progress-<id>.json` | O progresso de cada projeto: concluído, estados de revisão, Compila, Sonar, prioridade, notas e o commit Git da revisão |
 | `history-<id>.json` | O histórico diário de cada projeto (alimenta a evolução) |
+| `*.bak`, `*.corrupt` | A gravação é atómica e guarda a versão anterior em `.bak`. Se um ficheiro ficar danificado, a cópia é restaurada sozinha, o danificado fica em `.corrupt` e a aplicação avisa |
 
-Para fazer uma cópia de segurança, copia essa pasta. Mais pormenores em [ARQUITETURA.md](ARQUITETURA.md#onde-ficam-os-dados).
+Para fazer uma cópia de segurança, copia essa pasta (sem o token do Sonar, que só funciona na tua conta). Mais pormenores em [ARQUITETURA.md](ARQUITETURA.md#onde-ficam-os-dados).
 
 ## Resolução de problemas
 
@@ -299,4 +300,12 @@ Para fazer uma cópia de segurança, copia essa pasta. Mais pormenores em [ARQUI
 | O vigia não reage | Confirma que **Acompanhar alterações** está ligado e que gravaste em disco. Em pastas de rede o Windows pode não avisar. |
 | O plano mostra tudo `PLANEADO`/`EXTRA` | Os caminhos do plano não coincidem com os do código. Ver [FORMATO-DO-PLANO.md](FORMATO-DO-PLANO.md#avisos-e-problemas-comuns). |
 | A evolução só tem um ponto | O histórico regista um ponto por dia; a curva aparece a partir do segundo dia. |
-| Perdi o progresso | Procura em `%APPDATA%\CodeManager` os `progress-<id>.json`. Remover um projeto da lista apaga o seu progresso. |
+| Perdi o progresso | Procura em `%APPDATA%\CodeManager` os `progress-<id>.json` (e os `.bak`). Remover um projeto da lista apaga o seu progresso. |
+| Não aparece o cartão **Git** | A pasta não está num repositório Git, ou o `git` não está no `PATH`. Abre um terminal e confirma com `git --version` e `git -C <pasta> status`. |
+| «ALTERADO» num ficheiro que não mexi | O conteúdo difere do commit da revisão: por exemplo, mudanças de fim de linha, ou um *merge*/*rebase* que o alterou. Volta a rever o ficheiro, ou usa **Voltar a «por rever»**. Se a história foi reescrita e o commit já não existe, o ficheiro deixa de ser avaliado. |
+| Não aparece o cartão **SonarQube** | O interruptor está desligado ou o projeto não tem chave (**Projeto › SonarQube**). Nada se liga sem o ativares. |
+| Sonar: «O servidor recusou o token» (401) | O token está errado ou o servidor exige um. Gera um *User Token* em *My Account › Security*. |
+| Sonar: «O token não tem permissão» (403) | É provavelmente um token de **análise** (só serve para o `sonar-scanner`, não para ler). Usa um *User Token* de uma conta com «Browse» no projeto. |
+| Sonar: «Não encontrei o projeto» (404) | A chave não existe nesse servidor. A mensagem lista as chaves que existem; copia a certa (é a `sonar.projectKey`). |
+| Sonar: o cartão diz que não há ficheiros analisados | O projeto existe mas ainda não tem análises. Corre o `sonar-scanner` (ver [DESENVOLVIMENTO.md](DESENVOLVIMENTO.md#integração-contínua-e-sonar)). |
+| Sonar: «0 ficheiros com problemas» mas há problemas no servidor | A chave pertence a outro projeto, ou os caminhos não coincidem. Os ficheiros associam-se pelo fim do caminho: confirma que a pasta do projeto é a que o Sonar analisou. |

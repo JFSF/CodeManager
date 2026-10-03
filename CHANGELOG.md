@@ -14,14 +14,17 @@ Primeira versão pública.
   pastas ignoradas configuráveis; fechar um projeto como finalizado.
 - **Mapa:** árvore pastas → ficheiros → métodos, pesquisa, estatísticas, caixas Compila/Sonar, dicas com o texto completo;
   **linhas de código e complexidade ciclomática** de cada método (`cx`, a âmbar acima de 10 e a vermelho acima de 20).
-- **Checklist:** conclusão automática por ficheiro quando todos os métodos estão revistos, **estados de revisão**
-  (por rever, em revisão, precisa de alteração, concluído) com filtros e contagens, **ficheiros alterados desde a
-  revisão** (Git, só leitura) com a etiqueta «ALTERADO» e «Voltar a por rever», **SonarQube opcional** (cada
-  utilizador decide; token cifrado com o DPAPI do Windows) com problemas abertos por ficheiro e quality gate,
-  prioridade, notas, filtros por
-  camada, importar/exportar progresso (formato compatível com as páginas HTML), cópia em Markdown.
+- **Checklist:** conclusão automática por ficheiro quando todos os métodos estão revistos; **estados de revisão**
+  (por rever, em revisão, precisa de alteração, concluído) com filtros e contagens; prioridade, notas e filtros por
+  camada; importar/exportar progresso (formato compatível com as páginas HTML); cópia em Markdown.
+- **Git (só leitura):** os ficheiros revistos que mudaram desde a revisão levam a etiqueta «ALTERADO», com a dica dos
+  últimos commits, o filtro «Só alterados» e «Voltar a por rever».
+- **SonarQube (opcional e por utilizador):** problemas abertos por ficheiro («Sonar N»), *quality gate* e
+  «Sincronizar S». O interruptor, o endereço e o token (cifrado com o DPAPI do Windows) são de cada utilizador; a
+  chave é de cada projeto. As consultas correm em segundo plano.
 - **Painel:** cartões de números e gráficos (Chart4D) — evolução do progresso, progresso por camada, estado dos
-  ficheiros, maiores units, métodos por camada, distribuição de métodos, Compila e Sonar por camada. Segue o tema e
+  ficheiros (incluindo em revisão e a alterar), maiores units, métodos por camada, distribuição de métodos, Compila e
+  Sonar por camada, métodos mais complexos e complexidade dos métodos, e a cobertura do plano. Segue o tema e
   adapta-se à largura da janela.
 - **Histórico:** um registo por dia por projeto, para mostrar a evolução ao longo do tempo.
 - **Plano em Markdown:** leitura tolerante de um documento com a estrutura e o código previstos e cruzamento com o
@@ -37,5 +40,5 @@ Primeira versão pública.
 
 - Código organizado em camadas (`Core`, `Infrastructure`, `Services`, `UI`) com a regra de dependência verificada por
   testes automáticos.
-- Mais de 400 testes DUnitX.
+- Mais de 490 testes DUnitX (incluindo os da integração com o Git, contra um repositório temporário real).
 - Contraste do texto com pelo menos 4,5:1 nos dois temas.

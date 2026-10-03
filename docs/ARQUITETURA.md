@@ -359,7 +359,7 @@ regista o dia no histórico.
 ```mermaid
 flowchart LR
     subgraph APPDATA["%APPDATA%\CodeManager"]
-        S["settings.json<br/>projetos, tema"]
+        S["settings.json<br/>projetos, tema, Sonar (token cifrado)"]
         P["progress-id.json<br/>marcas por projeto"]
         H["history-id.json<br/>um registo por dia"]
     end

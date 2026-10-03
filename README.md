@@ -178,7 +178,7 @@ aplicação **só lê** os ficheiros do projeto analisado.
 
 ## Estado do projeto
 
-Em desenvolvimento ativo, desenvolvido e testado em **Windows / Win64** com **Delphi 13**. Mais de 400 testes
+Em desenvolvimento ativo, desenvolvido e testado em **Windows / Win64** com **Delphi 13**. Mais de 490 testes
 automáticos cobrem o motor, as exportações, o vigia e as regras de arquitetura; a interface é verificada com o
 [modo de desenvolvimento](docs/DESENVOLVIMENTO.md#modo-de-desenvolvimento---dev).
 

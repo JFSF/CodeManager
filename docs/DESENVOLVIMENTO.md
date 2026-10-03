@@ -59,8 +59,10 @@ tests\run-tests.bat --run:Tests.Store.TAppSettingsTests
 Compila (`dcc64`, Win64) e corre os testes **DUnitX** em consola; opções do DUnitX passam-se tal e qual. O código
 de saída é **0** se tudo passou, **1** se algum teste falhou e **2** se o compilador falhou.
 
-Os testes cobrem o `Core`, os `Services`, o vigia e as regras de arquitetura (ver
-[ARQUITETURA.md](ARQUITETURA.md#testes)). A interface não tem testes automáticos.
+Os testes cobrem o `Core`, os `Services`, o vigia, o cliente do Sonar (com respostas de exemplo, sem servidor), a cifra
+do token e as regras de arquitetura (ver [ARQUITETURA.md](ARQUITETURA.md#testes)). A interface não tem testes
+automáticos. Os testes do Git (`Tests.Git`) criam um repositório temporário com o `git` do `PATH`; se não houver
+`git`, passam sem verificar nada.
 
 ## Integração contínua e Sonar
 
@@ -81,6 +83,18 @@ ci.bat sonar      ... e depois o sonar-scanner
 Para o Sonar define `SONAR_HOST_URL` e `SONAR_TOKEN` (nunca no repositório) e tem o `sonar-scanner` no `PATH` (ou
 aponta `SONAR_SCANNER` para o executável). A configuração está em `sonar-project.properties`.
 
+Para o analisador de Delphi (SonarDelphi) o `sonar-project.properties` define `sonar.delphi.installationPath` e
+`sonar.delphi.compilerVersion`. Dois cuidados:
+
+- Num ficheiro `.properties` a **barra invertida é escape**: escreve os caminhos do Windows com `/`
+  (`C:/Program Files (x86)/Embarcadero/Studio/37.0`). Com `\` o caminho perde as barras e o plugin falha com
+  «Path to Delphi standard library is invalid».
+- O `installationPath` é o caminho do Delphi **desta máquina**: ajusta-o à tua instalação.
+
+O `sonar-scanner` precisa de um token de **análise** (*Project Analysis Token*) ou de um *User Token* com
+«Execute Analysis»; sem `SONAR_TOKEN` falha com `401 Unauthorized`. Este token é diferente do que o CodeManager usa
+para **ler** o Sonar (um *User Token*, configurado na página Projeto).
+
 Isto é só para o `ci.bat`. A vista do SonarQube dentro do CodeManager é outra coisa: opcional e configurada por cada
 utilizador na página Projeto (ver o [guia](GUIA-DO-UTILIZADOR.md#sonarqube-opcional)); não usa estas variáveis.
 
@@ -92,9 +106,9 @@ e a etiqueta `delphi`), porque os *runners* alojados do GitHub não têm Delphi.
 ```text
 CodeManager.dpr / .dproj   projeto da aplicação
 src\
-  Core\                    motor: análise, plano, estatísticas, JSON, histórico (só RTL)
-  Infrastructure\          vigia de pastas, recursos embutidos
-  Services\                exportações e impressão
+  Core\                    motor: análise, medidas, plano, estatísticas, JSON, histórico, modelo do Sonar (só RTL)
+  Infrastructure\          vigia de pastas, recursos embutidos, Git, cifra do token, cliente do Sonar
+  Services\                exportações, impressão e o cruzamento revisões × Git
   UI\                      janela, controlos pintados, tema
   UI\Pages\                Projeto, Mapa, Checklist, Painel e o IPageHost
 res\                       ícone e modelos das páginas HTML
@@ -172,8 +186,11 @@ O script `tools\capture-docs.ps1`:
 1. arranca a aplicação com uma pasta de dados temporária e um projeto «CodeManager» apontado a **este repositório**
    e ao plano de demonstração `tools\demo\plano-demo.md`;
 2. exporta a estrutura (JSON) para conhecer os ficheiros e métodos;
-3. semeia um **progresso** e um **histórico de demonstração** (o histórico é inventado: serve só para a imagem);
-4. percorre as páginas, em claro e escuro, e grava as capturas em `docs\images`, mais a imagem principal `hero.png`.
+3. semeia um **progresso** e um **histórico de demonstração** (o histórico é inventado: serve só para a imagem), com
+   alguns **estados de revisão** e, se o repositório tiver histórico (`HEAD~8`), revisões antigas de alguns ficheiros para
+   mostrarem a etiqueta «ALTERADO». O SonarQube fica **desligado** nas imagens (é o estado por omissão);
+4. percorre as páginas, em claro e escuro, e grava as capturas em `docs\images` (incluindo as métricas dos métodos, os
+   estados de revisão e a configuração do SonarQube), mais a imagem principal `hero.png`.
 
 O caminho do repositório não pode ter espaços.
 
