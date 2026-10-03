@@ -32,6 +32,8 @@ type
     FDirtySettings: Boolean;
     FDirtyHistory: Boolean;
     FSaveTimer: TTimer;
+    FToastTimer: TTimer;           // adia o aviso até a janela estar visível e com a geometria final
+    FPendingToast: string;
 {$IFDEF DEBUG}
     FDevQueue: TStringList;
     FDevTimer: TTimer;
@@ -67,6 +69,7 @@ type
     procedure NavClick(Sender: TObject);
     function ActiveList: TCMTreeList;
     procedure SaveTick(Sender: TObject);
+    procedure ToastTick(Sender: TObject);
     procedure SaveAll;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
@@ -118,6 +121,15 @@ var
 
 implementation
 
+// texto do aviso quando um ficheiro de dados não pôde ser lido
+function ReadFailure(const AWhat: string; E: Exception): string;
+begin
+  if E is EDataFileCorrupt then
+    Result := 'Não foi possível ler ' + AWhat + ': o ficheiro está danificado e não há cópia de segurança.'
+  else
+    Result := 'Não foi possível ler ' + AWhat + ' (' + E.Message + ').';
+end;
+
 const
   ProjectFinalizedTitle = 'PROJETO FINALIZADO';
 
@@ -143,7 +155,7 @@ begin
       FStartupNote := 'As definições estavam danificadas: foram recuperadas da cópia de segurança.';
   except
     on E: Exception do   // definicoes ilegiveis: recomecar com os valores por omissao
-      FStartupNote := 'Não foi possível ler as definições (' + E.Message + ') — a recomeçar.';
+      FStartupNote := ReadFailure('as definições', E) + ' A recomeçar.';
   end;
   if FSettings.Theme = 'dark' then
     SetThemeMode(tmDark)
@@ -158,6 +170,10 @@ begin
   FSaveTimer.Enabled := False;
   FSaveTimer.Interval := 700;
   FSaveTimer.OnTimer := SaveTick;
+  FToastTimer := TTimer.Create(Self);
+  FToastTimer.Enabled := False;
+  FToastTimer.Interval := 150;
+  FToastTimer.OnTimer := ToastTick;
 
   BuildUI;
   ApplyTheme;
@@ -172,6 +188,11 @@ begin
     if FProfile = nil then
       FProfile := FSettings.Projects[0];
     SelectProject(FProfile);
+  end;
+  if FStartupNote <> '' then
+  begin
+    Toast(FStartupNote);
+    FStartupNote := '';
   end;
 {$IFDEF DEBUG}
   if (ParamCount >= 2) and (ParamStr(1) = '--dev') then
@@ -383,7 +404,22 @@ end;
 
 procedure TMainForm.Toast(const AText: string);
 begin
-  FToast.ShowText(AText);
+  if Visible then
+    FToast.ShowText(AText)
+  else
+  begin
+    // ainda no arranque: a janela não tem a geometria final, o aviso ficaria fora do sítio
+    FPendingToast := AText;
+    FToastTimer.Enabled := True;
+  end;
+end;
+
+procedure TMainForm.ToastTick(Sender: TObject);
+begin
+  FToastTimer.Enabled := False;
+  if FPendingToast <> '' then
+    FToast.ShowText(FPendingToast);
+  FPendingToast := '';
 end;
 
 { ---------------------------------------------------------------- IPageHost: estado partilhado }
@@ -531,7 +567,7 @@ begin
       on E: Exception do
       begin
         FState.Clear;
-        Warn := 'Não foi possível ler o progresso guardado (' + E.Message + ').';
+        Warn := ReadFailure('o progresso guardado', E);
       end;
     end;
 
@@ -548,7 +584,7 @@ begin
       begin
         FHistory.Clear;
         if Warn = '' then
-          Warn := 'Não foi possível ler o histórico guardado (' + E.Message + ').';
+          Warn := ReadFailure('o histórico guardado', E);
       end;
     end;
 
@@ -563,6 +599,11 @@ begin
   if ((AProfile.RootPath <> '') and TDirectory.Exists(AProfile.RootPath)) or
      ((AProfile.RootPath = '') and (AProfile.PlanPath <> '') and TFile.Exists(AProfile.PlanPath)) then
     FProject.StartScan;
+  if FStartupNote <> '' then
+  begin
+    Warn := FStartupNote;         // as definições danificadas têm prioridade sobre o aviso do projecto
+    FStartupNote := '';
+  end;
   if Warn <> '' then
     Toast(Warn);
 end;

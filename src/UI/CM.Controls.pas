@@ -200,7 +200,7 @@ type
     procedure Paint; override;
   public
     constructor Create(AOwner: TComponent); override;
-    procedure SetData(const ACaption, AValue, ASub: string; const ASpark: TArray<Double>;
+    procedure SetValues(const ACaption, AValue, ASub: string; const ASpark: TArray<Double>;
       ASparkColor: TAlphaColor);
   end;
 
@@ -398,7 +398,7 @@ begin
   Bordered := True;
 end;
 
-procedure TCMKpi.SetData(const ACaption, AValue, ASub: string; const ASpark: TArray<Double>;
+procedure TCMKpi.SetValues(const ACaption, AValue, ASub: string; const ASpark: TArray<Double>;
   ASparkColor: TAlphaColor);
 begin
   FCaption := ACaption;

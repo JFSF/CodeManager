@@ -352,13 +352,13 @@ begin
     Compila[I] := History[First + I].PercentFilesCompila;
     Sonar[I] := History[First + I].PercentFilesSonar;
   end;
-  FKpi[0].SetData('Ficheiros concluídos', Format('%d / %d', [FStats.DoneFiles, FStats.Files]),
+  FKpi[0].SetValues('Ficheiros concluídos', Format('%d / %d', [FStats.DoneFiles, FStats.Files]),
     Format('%d%% do projeto', [Pct(FStats.DoneFiles, FStats.Files)]), Files, Pal.Accent);
-  FKpi[1].SetData('Métodos revistos', Format('%d / %d', [FStats.DoneMethods, FStats.Methods]),
+  FKpi[1].SetValues('Métodos revistos', Format('%d / %d', [FStats.DoneMethods, FStats.Methods]),
     Format('%d%% dos métodos', [Pct(FStats.DoneMethods, FStats.Methods)]), Methods, Pal.FlagCompila);
-  FKpi[2].SetData('Compila', Format('%d / %d', [FStats.FilesCompila, FStats.Files]),
+  FKpi[2].SetValues('Compila', Format('%d / %d', [FStats.FilesCompila, FStats.Files]),
     Format('%d%% dos ficheiros', [Pct(FStats.FilesCompila, FStats.Files)]), Compila, Pal.FlagCompila);
-  FKpi[3].SetData('Sonar', Format('%d / %d', [FStats.FilesSonar, FStats.Files]),
+  FKpi[3].SetValues('Sonar', Format('%d / %d', [FStats.FilesSonar, FStats.Files]),
     Format('%d%% dos ficheiros', [Pct(FStats.FilesSonar, FStats.Files)]), Sonar, Pal.FlagSonar);
 end;
 
