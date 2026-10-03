@@ -9,7 +9,7 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.Generics.Collections, System.Generics.Defaults,
-  System.IOUtils, System.JSON, CM.Stats;
+  System.IOUtils, System.JSON, CM.Stats, CM.SafeFile;
 
 type
   TSnapshot = record
@@ -32,6 +32,7 @@ type
   THistory = class
   private
     FItems: TList<TSnapshot>;
+    FRecovered: Boolean;
     function GetCount: Integer;
     function GetItem(AIndex: Integer): TSnapshot;
   public
@@ -45,6 +46,8 @@ type
     procedure LoadFromJSONString(const AJson: string);
     procedure LoadFromFile(const AFileName: string);
     procedure SaveToFile(const AFileName: string);
+    // a ultima leitura teve de usar a copia de seguranca (o ficheiro estava danificado)
+    property RecoveredFromBackup: Boolean read FRecovered;
     property Count: Integer read GetCount;
     property Items[AIndex: Integer]: TSnapshot read GetItem; default;
   end;
@@ -252,12 +255,12 @@ end;
 
 procedure THistory.LoadFromFile(const AFileName: string);
 begin
-  LoadFromJSONString(TFile.ReadAllText(AFileName, TEncoding.UTF8));
+  LoadFromJSONString(ReadJsonFile(AFileName, FRecovered));
 end;
 
 procedure THistory.SaveToFile(const AFileName: string);
 begin
-  TFile.WriteAllText(AFileName, ToJSONString, TUTF8Encoding.Create(False));
+  WriteFileAtomic(AFileName, ToJSONString, TUTF8Encoding.Create(False));
 end;
 
 end.

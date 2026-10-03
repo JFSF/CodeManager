@@ -11,7 +11,7 @@ uses
   System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math, System.IOUtils,
   System.Generics.Collections, System.StrUtils,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Edit, FMX.Printer,
-  CM.Theme, CM.Controls, CM.TreeList, CM.Analyzer, CM.Store, CM.Stats, CM.History, CM.Plan, CM.Export, CM.Print,
+  CM.Theme, CM.Controls, CM.TreeList, CM.Analyzer, CM.Store, CM.SafeFile, CM.Stats, CM.History, CM.Plan, CM.Export, CM.Print,
   CM.Pages.Host, CM.Pages.Project, CM.Pages.Map, CM.Pages.Checklist, CM.Pages.Dashboard;
 
 type
@@ -27,6 +27,7 @@ type
     FHistory: THistory;
     FPage: TPage;
     FShuttingDown: Boolean;
+    FStartupNote: string;          // aviso a mostrar quando a janela estiver pronta
     FDirtyState: Boolean;
     FDirtySettings: Boolean;
     FDirtyHistory: Boolean;
@@ -138,8 +139,11 @@ begin
   FHistory := THistory.Create;
   try
     FSettings.Load;
+    if FSettings.RecoveredFromBackup then
+      FStartupNote := 'As definições estavam danificadas: foram recuperadas da cópia de segurança.';
   except
-    on Exception do ;   // definicoes ilegiveis: recomecar com os valores por omissao
+    on E: Exception do   // definicoes ilegiveis: recomecar com os valores por omissao
+      FStartupNote := 'Não foi possível ler as definições (' + E.Message + ') — a recomeçar.';
   end;
   if FSettings.Theme = 'dark' then
     SetThemeMode(tmDark)
@@ -507,7 +511,7 @@ end;
 
 procedure TMainForm.SelectProject(AProfile: TProjectProfile);
 var
-  F: string;
+  F, Warn: string;
 begin
   SaveAll;                       // guarda o progresso do projecto que estava aberto
   FProject.CancelScan;           // descarta qualquer analise ainda a decorrer
@@ -515,23 +519,37 @@ begin
   FSettings.ActiveProjectId := AProfile.Id;
   MarkSettingsDirty;
 
+  Warn := '';
   FState.Clear;
   F := ProgressFileFor(AProfile.Id);
-  if TFile.Exists(F) then
+  if DataFileExists(F) then
     try
-      FState.LoadFromFile(F);
+      FState.LoadStored(F);
+      if FState.RecoveredFromBackup then
+        Warn := 'O progresso estava danificado: foi recuperado da cópia de segurança.';
     except
-      on Exception do FState.Clear;
+      on E: Exception do
+      begin
+        FState.Clear;
+        Warn := 'Não foi possível ler o progresso guardado (' + E.Message + ').';
+      end;
     end;
 
   FHistory.Clear;
   FDirtyHistory := False;
   F := HistoryFileFor(AProfile.Id);
-  if TFile.Exists(F) then
+  if DataFileExists(F) then
     try
       FHistory.LoadFromFile(F);
+      if FHistory.RecoveredFromBackup and (Warn = '') then
+        Warn := 'O histórico estava danificado: foi recuperado da cópia de segurança.';
     except
-      on Exception do FHistory.Clear;
+      on E: Exception do
+      begin
+        FHistory.Clear;
+        if Warn = '' then
+          Warn := 'Não foi possível ler o histórico guardado (' + E.Message + ').';
+      end;
     end;
 
   FProject.LoadFields(AProfile);
@@ -545,6 +563,8 @@ begin
   if ((AProfile.RootPath <> '') and TDirectory.Exists(AProfile.RootPath)) or
      ((AProfile.RootPath = '') and (AProfile.PlanPath <> '') and TFile.Exists(AProfile.PlanPath)) then
     FProject.StartScan;
+  if Warn <> '' then
+    Toast(Warn);
 end;
 
 procedure TMainForm.DetachProfile;

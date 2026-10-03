@@ -8,7 +8,7 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.Generics.Collections, System.IOUtils, System.JSON,
-  System.DateUtils;
+  System.DateUtils, CM.SafeFile;
 
 type
   TProjectProfile = class
@@ -28,6 +28,7 @@ type
   TAppSettings = class
   private
     FProjects: TObjectList<TProjectProfile>;
+    FRecovered: Boolean;
   public
     Theme: string;              // 'light' | 'dark' | '' (segue o Windows)
     ActiveProjectId: string;
@@ -40,6 +41,8 @@ type
     procedure Load;
     procedure Save;
     property Projects: TObjectList<TProjectProfile> read FProjects;
+    // a ultima leitura teve de usar a copia de seguranca (o ficheiro estava danificado)
+    property RecoveredFromBackup: Boolean read FRecovered;
   end;
 
   TUnitState = class
@@ -61,6 +64,7 @@ type
   TProgressState = class
   private
     FUnits: TObjectDictionary<string, TUnitState>;
+    FRecovered: Boolean;
   public
     constructor Create;
     destructor Destroy; override;
@@ -69,8 +73,13 @@ type
     procedure Clear;
     function ToJSONString: string;
     procedure LoadFromJSONString(const AJson: string);
+    // le um ficheiro qualquer (ex.: progresso importado): estrito, sem copias de seguranca
     procedure LoadFromFile(const AFileName: string);
+    // le o ficheiro de progresso guardado pela aplicacao; se estiver danificado usa a copia .bak
+    procedure LoadStored(const AFileName: string);
+    // grava de forma atomica, mantendo a versao anterior em .bak
     procedure SaveToFile(const AFileName: string);
+    property RecoveredFromBackup: Boolean read FRecovered;
   end;
 
 function AppDataDir: string;
@@ -160,15 +169,9 @@ begin
 end;
 
 procedure TAppSettings.RemoveProject(AProject: TProjectProfile);
-var
-  F: string;
 begin
-  F := ProgressFileFor(AProject.Id);
-  if TFile.Exists(F) then
-    TFile.Delete(F);
-  F := HistoryFileFor(AProject.Id);
-  if TFile.Exists(F) then
-    TFile.Delete(F);
+  DeleteDataFile(ProgressFileFor(AProject.Id));
+  DeleteDataFile(HistoryFileFor(AProject.Id));
   FProjects.Remove(AProject);
 end;
 
@@ -181,9 +184,10 @@ var
   P: TProjectProfile;
 begin
   FileName := TPath.Combine(AppDataDir, SettingsFileName);
-  if not TFile.Exists(FileName) then
+  FRecovered := False;
+  if not DataFileExists(FileName) then
     Exit;
-  Text := TFile.ReadAllText(FileName, TEncoding.UTF8);
+  Text := ReadJsonFile(FileName, FRecovered);
   Root := TJSONObject.ParseJSONValue(Text);
   if not (Root is TJSONObject) then
   begin
@@ -246,7 +250,7 @@ begin
       Arr.AddElement(PObj);
     end;
     Obj.AddPair('projects', Arr);
-    TFile.WriteAllText(TPath.Combine(AppDataDir, SettingsFileName), Obj.ToJSON, TEncoding.UTF8);
+    WriteFileAtomic(TPath.Combine(AppDataDir, SettingsFileName), Obj.ToJSON, TEncoding.UTF8);
   finally
     Obj.Free;
   end;
@@ -414,9 +418,14 @@ begin
   LoadFromJSONString(TFile.ReadAllText(AFileName, TEncoding.UTF8));
 end;
 
+procedure TProgressState.LoadStored(const AFileName: string);
+begin
+  LoadFromJSONString(ReadJsonFile(AFileName, FRecovered));
+end;
+
 procedure TProgressState.SaveToFile(const AFileName: string);
 begin
-  TFile.WriteAllText(AFileName, ToJSONString, TEncoding.UTF8);
+  WriteFileAtomic(AFileName, ToJSONString, TEncoding.UTF8);
 end;
 
 end.

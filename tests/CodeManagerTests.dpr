@@ -11,6 +11,7 @@ uses
   CM.Store in '..\src\Core\CM.Store.pas',
   CM.Stats in '..\src\Core\CM.Stats.pas',
   CM.History in '..\src\Core\CM.History.pas',
+  CM.SafeFile in '..\src\Core\CM.SafeFile.pas',
   CM.Plan in '..\src\Core\CM.Plan.pas',
   CM.Export in '..\src\Services\CM.Export.pas',
   CM.Print in '..\src\Services\CM.Print.pas',
@@ -32,7 +33,8 @@ uses
   Tests.Html in 'Tests.Html.pas',
   Tests.Watcher in 'Tests.Watcher.pas',
   Tests.History in 'Tests.History.pas',
-  Tests.Plan in 'Tests.Plan.pas';
+  Tests.Plan in 'Tests.Plan.pas',
+  Tests.SafeFile in 'Tests.SafeFile.pas';
 
 var
   Runner: ITestRunner;

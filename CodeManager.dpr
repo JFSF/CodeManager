@@ -4,6 +4,7 @@ uses
   System.StartUpCopy,
   FMX.Forms,
   CM.Analyzer in 'src\Core\CM.Analyzer.pas',
+  CM.SafeFile in 'src\Core\CM.SafeFile.pas',
   CM.Store in 'src\Core\CM.Store.pas',
   CM.Stats in 'src\Core\CM.Stats.pas',
   CM.Html in 'src\Services\CM.Html.pas',

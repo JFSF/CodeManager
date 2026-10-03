@@ -9,7 +9,7 @@ interface
 
 uses
   System.SysUtils, System.IOUtils, System.RegularExpressions, System.DateUtils,
-  DUnitX.TestFramework, CM.Store, Tests.Helpers;
+  DUnitX.TestFramework, CM.Store, CM.SafeFile, Tests.Helpers;
 
 type
   [TestFixture]
@@ -45,7 +45,7 @@ type
     [Test] procedure RemoveProjectWithoutProgressFileDoesNotRaise;
     [Test] procedure LoadWithoutAFileLeavesDefaults;
     [Test] procedure SaveThenLoadRoundTripsSettingsAndProjects;
-    [Test] procedure LoadIgnoresANonObjectFile;
+    [Test] procedure LoadRaisesForAFileThatIsNotAnObject;
     [Test] procedure LoadSkipsNonObjectProjectEntries;
     [Test] procedure LoadDefaultsMissingBooleanFields;
     [Test] procedure LoadReplacesThePreviousProjectList;
@@ -261,6 +261,7 @@ procedure TAppSettingsTests.SaveThenLoadRoundTripsSettingsAndProjects;
 var
   Saved, Loaded: TAppSettings;
   P: TProjectProfile;
+  Id: string;
 begin
   Saved := TAppSettings.Create;
   try
@@ -269,6 +270,7 @@ begin
     Saved.OpenAfterExport := False;
     P := Saved.AddProject;
     P.Name := 'Meu Projeto';
+    Id := P.Id;                      // Saved liberta o perfil
     P.RootPath := 'C:\Proj';
     P.OutputFolder := 'C:\Proj\out';
     P.ExcludeDirs := 'bin, obj';
@@ -288,7 +290,7 @@ begin
     Assert.AreEqual('xyz', Loaded.ActiveProjectId);
     Assert.IsFalse(Loaded.OpenAfterExport);
     Assert.AreEqual<NativeInt>(1, Loaded.Projects.Count);
-    Assert.AreEqual(P.Id, Loaded.Projects[0].Id);
+    Assert.AreEqual(Id, Loaded.Projects[0].Id);
     Assert.AreEqual('Meu Projeto', Loaded.Projects[0].Name);
     Assert.AreEqual('C:\Proj', Loaded.Projects[0].RootPath);
     Assert.AreEqual('C:\Proj\out', Loaded.Projects[0].OutputFolder);
@@ -302,15 +304,21 @@ begin
   end;
 end;
 
-procedure TAppSettingsTests.LoadIgnoresANonObjectFile;
+procedure TAppSettingsTests.LoadRaisesForAFileThatIsNotAnObject;
 var
   S: TAppSettings;
 begin
+  // um settings.json que nao e um objecto JSON e tratado como danificado: sem copia de
+  // seguranca valida levanta EDataFileCorrupt (a janela avisa e recomeca com os valores por omissao)
   TFile.WriteAllText(TPath.Combine(FIso.Path, 'settings.json'), '[1, 2, 3]');
   S := TAppSettings.Create;
   try
-    S.Load;   // nao pode levantar excepcao; fica com os valores por omissao
-    Assert.AreEqual('', S.Theme);
+    Assert.WillRaise(
+      procedure
+      begin
+        S.Load;
+      end, EDataFileCorrupt);
+    Assert.AreEqual('', S.Theme, 'os valores por omissao mantem-se');
   finally
     S.Free;
   end;

@@ -24,6 +24,8 @@ Primeira versão pública.
 - **Acompanhar alterações:** reanálise automática do que muda na pasta do projeto, sem perder o scroll.
 - **Exportar e imprimir:** estrutura em Markdown, TXT, CSV e JSON; páginas HTML offline; impressão com paginação.
 - **Tema claro e escuro**, que segue o Windows na primeira execução.
+- **Gravação segura:** definições, progresso e histórico são gravados de forma atómica, com cópia `.bak`;
+  se um ficheiro ficar danificado, a cópia é restaurada automaticamente e a aplicação avisa.
 
 ### Qualidade
 
