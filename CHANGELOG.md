@@ -6,6 +6,8 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
 
 ## [Não lançado]
 
+## [1.0.0] - 2026-10-03
+
 Primeira versão pública.
 
 ### Funcionalidades
@@ -42,3 +44,6 @@ Primeira versão pública.
   testes automáticos.
 - Mais de 490 testes DUnitX (incluindo os da integração com o Git, contra um repositório temporário real).
 - Contraste do texto com pelo menos 4,5:1 nos dois temas.
+
+[Não lançado]: https://github.com/JFSF/CodeManager/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/JFSF/CodeManager/releases/tag/v1.0.0
