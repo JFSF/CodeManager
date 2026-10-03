@@ -261,7 +261,8 @@ begin
   case AStatus of
     0: Result := 'Não foi possível ligar a ' + NormalizeSonarUrl(AConfig.Url) + '. ' + AFail;
     401: Result := 'O servidor recusou o token (ou exige um token). Confirma-o nas definições.';
-    403: Result := 'O token não tem permissão para ver este projeto.';
+    403: Result := 'O token não tem permissão para ler este projeto. Usa um token de utilizador (My Account › Security › ' +
+      'User Token), não o de análise do sonar-scanner, de uma conta com a permissão «Browse» no projeto.';
     404: Result := 'Não encontrei o projeto «' + AConfig.ProjectKey + '» neste servidor.';
   else
     Result := Format('O servidor respondeu com o erro %d.', [AStatus]);
