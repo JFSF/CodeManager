@@ -447,6 +447,10 @@ begin
   // erro ou estado numa linha de texto por baixo (so quando ha o que dizer)
   if Snap = nil then
     FSonarNote.Text := WrapText(Msg, sLineBreak, [' '], 38)       // o rotulo nao quebra linhas sozinho
+  else if Snap.FileCount = 0 then
+    // o projecto existe mas o servidor nao tem ficheiros analisados: "0 problemas" enganaria
+    FSonarNote.Text := WrapText('O servidor ainda não tem ficheiros analisados para este projeto (sem análises, ' +
+      'ou o SonarQube não analisa Delphi sem um plugin).', sLineBreak, [' '], 38)
   else
     FSonarNote.Text := '';
   if FSonarNote.Text = '' then
