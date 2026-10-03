@@ -171,7 +171,7 @@ var
   Html, Slug: string;
 begin
   Slug := SlugOf(AProfile.Name);
-  Html := LoadTextResource('TPL_CHECKLIST');
+  Html := TranslateHtml(LoadTextResource('TPL_CHECKLIST'));
   Html := Html.Replace('__EXCLUDED_NOTE__', ExcludedNote(AScan));
   Html := Html.Replace('__STORAGE_KEY__', 'checklist-' + Slug + '-v1');
   Html := Html.Replace('__GENERATED_DATE__', FormatDateTime('yyyy-mm-dd', Now));
@@ -197,7 +197,7 @@ begin
   if AProfile.Finalized then
     Banner := Tr('<div class="finalized-banner">&#10003; PROJECTO FINALIZADO em ') +
       AProfile.FinalizedAt + '</div>';
-  Html := LoadTextResource('TPL_MAP');
+  Html := TranslateHtml(LoadTextResource('TPL_MAP'));
   Html := Html.Replace('__EXCLUDED_NOTE__', ExcludedNote(AScan));
   Html := Html.Replace('__STORAGE_KEY__', 'mapa-codigo-' + Slug + '-v1');
   Html := Html.Replace('__GENERATED_DATE__', Stamp);

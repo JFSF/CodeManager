@@ -30,6 +30,12 @@ function TrCount(ACount: Integer; const ASingularPt, APluralPt: string): string;
 // todas as versoes (pt e traducoes distintas) de um texto: para reconhecer documentos escritos noutro idioma
 function TranslateAll(const APt: string): TArray<string>;
 
+// traduz um modelo HTML (res	emplates, escrito em portugues) para o idioma activo: substitui os trocos
+// listados em HtmlRows (os mais compridos primeiro); em portugues devolve o modelo tal e qual
+function TranslateHtml(const ATemplate: string): string;
+function TranslateHtmlTo(ALang: TLang; const ATemplate: string): string;
+function HtmlTranslationCount: Integer;
+
 // textos para testes: devolve a traducao de um idioma especifico, ou o original se nao existir
 function TranslateTo(ALang: TLang; const APt: string): string;
 function TranslationCount: Integer;
@@ -37,11 +43,12 @@ function TranslationCount: Integer;
 implementation
 
 uses
-  System.SysUtils, System.Generics.Collections, CM.Lang.Table;
+  System.SysUtils, System.Generics.Collections, System.Generics.Defaults, CM.Lang.Table;
 
 var
   GLang: TLang = lgPt;
   GTables: array[TLang] of TDictionary<string, string>;
+  GHtmlOrder: TArray<Integer>;      // indices de HtmlRows, do troco mais comprido para o mais curto
 
 procedure BuildTables;
 var
@@ -54,6 +61,22 @@ begin
     for L := lgEn to lgDe do
       if LangRows[I][Ord(L)] <> '' then
         GTables[L].AddOrSetValue(LangRows[I][0], LangRows[I][Ord(L)]);
+end;
+
+procedure BuildHtmlOrder;
+var
+  I: Integer;
+begin
+  SetLength(GHtmlOrder, Length(HtmlRows));
+  for I := 0 to High(GHtmlOrder) do
+    GHtmlOrder[I] := I;
+  TArray.Sort<Integer>(GHtmlOrder, TComparer<Integer>.Construct(
+    function(const A, B: Integer): Integer
+    begin
+      Result := Length(HtmlRows[B][0]) - Length(HtmlRows[A][0]);
+      if Result = 0 then
+        Result := A - B;
+    end));
 end;
 
 function CurrentLang: TLang;
@@ -112,6 +135,28 @@ begin
     Result := APt;
 end;
 
+function TranslateHtmlTo(ALang: TLang; const ATemplate: string): string;
+var
+  I: Integer;
+begin
+  Result := ATemplate;
+  if ALang = lgPt then
+    Exit;
+  for I in GHtmlOrder do
+    if HtmlRows[I][Ord(ALang)] <> '' then
+      Result := Result.Replace(HtmlRows[I][0], HtmlRows[I][Ord(ALang)]);
+end;
+
+function TranslateHtml(const ATemplate: string): string;
+begin
+  Result := TranslateHtmlTo(GLang, ATemplate);
+end;
+
+function HtmlTranslationCount: Integer;
+begin
+  Result := Length(HtmlRows);
+end;
+
 function Tr(const APt: string): string;
 begin
   Result := TranslateTo(GLang, APt);
@@ -157,6 +202,7 @@ end;
 
 initialization
   BuildTables;
+  BuildHtmlOrder;
 
 finalization
   GTables[lgEn].Free;

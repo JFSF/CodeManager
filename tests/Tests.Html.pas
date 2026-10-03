@@ -8,7 +8,7 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.IOUtils, System.RegularExpressions,
-  DUnitX.TestFramework, CM.Analyzer, CM.Store, CM.Html, Tests.Helpers, Tests.Export.Fixtures;
+  DUnitX.TestFramework, CM.Lang, CM.Lang.Table, CM.Analyzer, CM.Store, CM.Html, Tests.Helpers, Tests.Export.Fixtures;
 
 type
   [TestFixture]
@@ -25,6 +25,7 @@ type
     FScan: TProjectScan;
     FState: TProgressState;
     FProfile: TProjectProfile;
+    FPrevLang: TLang;
     function Checklist: string;
     function Map: string;
   public
@@ -33,6 +34,11 @@ type
     [Test] procedure ChecklistHasNoLeftoverPlaceholders;
     [Test] procedure MapHasNoLeftoverPlaceholders;
     [Test] procedure ProjectNameIsEscapedForHtml;
+    [Test] procedure PortugueseExportKeepsTheTemplateText;
+    [Test] procedure EachLanguageTranslatesTheMapPage;
+    [Test] procedure EachLanguageTranslatesTheChecklistPage;
+    [Test] procedure EveryTemplateSnippetStillExistsInTheTemplates;
+    [Test] procedure TranslateHtmlLeavesPortugueseUntouchedAndLongestSnippetsWin;
     [Test] procedure ProjectNameIsEscapedForJavaScript;
     [Test] procedure StorageKeysCarryTheSlug;
     [Test] procedure FilesJsonListsEveryUnit;
@@ -89,6 +95,8 @@ end;
 
 procedure TExportHtmlTests.Setup;
 begin
+  FPrevLang := CurrentLang;
+  SetLang(lgPt);
   FDir := TTempDir.Create;
   FScan := BuildSampleScan;
   FState := TProgressState.Create;
@@ -102,6 +110,7 @@ begin
   FState.Free;
   FScan.Free;
   FDir.Free;
+  SetLang(FPrevLang);
 end;
 
 function TExportHtmlTests.Checklist: string;
@@ -130,6 +139,84 @@ end;
 procedure TExportHtmlTests.MapHasNoLeftoverPlaceholders;
 begin
   Assert.AreEqual('', TRegEx.Match(Map, '__[A-Z][A-Z_]*__').Value);
+end;
+
+procedure TExportHtmlTests.PortugueseExportKeepsTheTemplateText;
+begin
+  SetLang(lgPt);
+  Assert.IsTrue(Map.Contains('lang="pt-PT"'));
+  Assert.IsTrue(Map.Contains('Mapa de Código-Fonte'));
+  Assert.IsTrue(Checklist.Contains('Checklist de Código-Fonte'));
+end;
+
+procedure TExportHtmlTests.EachLanguageTranslatesTheMapPage;
+const
+  Titles: array[lgEn..lgDe] of string = ('Source Code Map', 'Carte du code source', 'Quellcode-Karte');
+  Codes: array[lgEn..lgDe] of string = ('lang="en"', 'lang="fr"', 'lang="de"');
+var
+  L: TLang;
+  Prev: TLang;
+  Html: string;
+begin
+  Prev := CurrentLang;
+  try
+    for L := lgEn to lgDe do
+    begin
+      SetLang(L);
+      Html := Map;
+      Assert.IsTrue(Html.Contains(Codes[L]), 'lang ' + LangCodes[L]);
+      Assert.IsTrue(Html.Contains(Titles[L]), 'titulo ' + LangCodes[L]);
+      Assert.IsFalse(Html.Contains('lang="pt-PT"'), 'sem pt-PT em ' + LangCodes[L]);
+      Assert.IsFalse(Html.Contains('Mapa de Código-Fonte'), 'sem titulo portugues em ' + LangCodes[L]);
+      Assert.IsFalse(Html.Contains('Nenhum resultado'), 'sem mensagens portuguesas em ' + LangCodes[L]);
+    end;
+  finally
+    SetLang(Prev);
+  end;
+end;
+
+procedure TExportHtmlTests.EachLanguageTranslatesTheChecklistPage;
+var
+  L: TLang;
+  Prev: TLang;
+  Html: string;
+begin
+  Prev := CurrentLang;
+  try
+    for L := lgEn to lgDe do
+    begin
+      SetLang(L);
+      Html := Checklist;
+      Assert.IsTrue(Html.Contains('lang="' + LangCodes[L] + '"'), 'lang ' + LangCodes[L]);
+      Assert.IsFalse(Html.Contains('lang="pt-PT"'), LangCodes[L]);
+      Assert.IsFalse(Html.Contains('Nenhum ficheiro corresponde'), 'sem mensagens portuguesas em ' + LangCodes[L]);
+      Assert.AreEqual('', TRegEx.Match(Html, '__[A-Z][A-Z_]*__').Value, 'marcadores por preencher');
+    end;
+  finally
+    SetLang(Prev);
+  end;
+end;
+
+// um troco que ja nao existe nos modelos e uma traducao esquecida (ou um texto do modelo que mudou)
+procedure TExportHtmlTests.EveryTemplateSnippetStillExistsInTheTemplates;
+var
+  I: Integer;
+  Pt, Missing: string;
+begin
+  SetLang(lgPt);
+  Pt := Map + Checklist;
+  Missing := '';
+  for I := Low(HtmlRows) to High(HtmlRows) do
+    if not HtmlRows[I][0].Contains('__') and not Pt.Contains(HtmlRows[I][0]) then
+      Missing := Missing + HtmlRows[I][0].Substring(0, 60) + sLineBreak;
+  Assert.AreEqual('', Missing, 'Trocos de translations.tsv (#!html) que ja nao estao nos modelos:');
+end;
+
+procedure TExportHtmlTests.TranslateHtmlLeavesPortugueseUntouchedAndLongestSnippetsWin;
+begin
+  Assert.AreEqual('<b>>Expandir tudo<</b>', TranslateHtmlTo(lgPt, '<b>>Expandir tudo<</b>'));
+  Assert.AreEqual('<b>>Expand all<</b>', TranslateHtmlTo(lgEn, '<b>>Expandir tudo<</b>'));
+  Assert.IsTrue(HtmlTranslationCount > 50);
 end;
 
 procedure TExportHtmlTests.ProjectNameIsEscapedForHtml;

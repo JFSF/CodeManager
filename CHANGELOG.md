@@ -14,7 +14,7 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
 - **Mais métricas por método:** número de **parâmetros** e **aninhamento** de blocos (`begin`, `try`, `case`,
   `repeat`), na dica do método e nas colunas/campos do CSV e do JSON.
 - **Idiomas:** português, inglês, francês e alemão, escolhidos na página Projeto; os relatórios exportados seguem o
-  idioma. Na primeira execução usa o idioma do Windows.
+  idioma, incluindo as **páginas HTML offline** (mapa e checklist). Na primeira execução usa o idioma do Windows.
 - **Repositórios do GitHub:** analisar um repositório em vez de uma pasta; clona-se só a última versão para uma cache
   própria (só leitura) e há «Atualizar do GitHub».
 

@@ -217,6 +217,18 @@ O caminho do repositório não pode ter espaços.
 Em `CM.Pages.Dashboard`: cria o `TChart4D` com `AddChartCard`, preenche-o numa rotina `Fill…` (chamada por
 `Rebuild`) e inclui-o em `StyleAll`. As cores vêm de `Pal` para seguir o tema.
 
+### Traduzir um texto
+
+O português é a chave: no código escreve-se `Tr('Texto em português')` (ou `TrF`, `TrCount`) e as traduções para
+inglês, francês e alemão ficam em `tools/i18n/translations.tsv` (colunas separadas por TAB: pt, en, fr, de). Depois
+de editar o ficheiro, corre `pwsh tools/i18n/generate-lang-table.ps1`, que regenera `src/Core/CM.Lang.Table.pas`
+(não se edita à mão). Os testes avisam de textos marcados com `Tr` que faltam na tabela e de colunas vazias.
+
+Os modelos das páginas HTML (`res/templates`) não usam `Tr`: a secção `#!html` do mesmo `.tsv` lista **trocos
+exatos** do modelo e `TranslateHtml` aplica-os, do mais comprido para o mais curto, antes de se preencherem os
+marcadores `__XXX__`. Se mudares um texto do modelo, muda também o troco; um teste falha quando um troco deixa de
+existir nos modelos.
+
 ### Estender a leitura do plano
 
 A leitura está em `CM.Plan` (`TPlanParser`). Cada estilo reconhecido é um método (`ProcessHeading`,

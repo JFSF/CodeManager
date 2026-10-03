@@ -66,7 +66,7 @@ Enquanto o projeto não tem análise, a lista mostra os **Primeiros passos**.
 ### Idioma
 
 O cartão **Idioma**, no topo da página, muda a aplicação entre **Português**, **English**, **Français** e
-**Deutsch**; a interface reconstrói-se logo, e os relatórios exportados passam a seguir o idioma escolhido. Na
+**Deutsch**; a interface reconstrói-se logo, e os relatórios exportados (Markdown, CSV, relatório de dependências e as páginas HTML do mapa e da checklist) passam a seguir o idioma escolhido. Na
 primeira execução usa o idioma do Windows (português, francês ou alemão; qualquer outro usa o inglês).
 
 ### Repositório do GitHub
