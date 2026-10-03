@@ -25,6 +25,7 @@ a document describing what the project *should* contain, it compares the two.
 - **Checklist** — mark what you reviewed, what is under review or needs changes, what compiles, what passed Sonar, what is a priority; add notes. In a Git repository it flags the files that changed since you reviewed them; SonarQube is optional and per user.
   A file is *done* when **all its methods** are reviewed.
 - **Graph** — a visual map of the dependencies between units (from the `uses` clauses): levels, layer colours, coupling, **cycles**, and an HTML (SVG map) or Markdown report.
+- **Code** — double-click a unit in the Graph, or a file or method in the Map or the Checklist, to read its code in a read-only tab (line numbers, Delphi syntax colouring, a modern font with ligatures; a method jumps to its line).
 - **Dashboard** — numbers and charts for progress and code distribution, including day-by-day evolution, the most
   complex methods and the plan coverage.
 - **Plan in Markdown** — write the intended structure (and code) in a `.md` file and see what is implemented,

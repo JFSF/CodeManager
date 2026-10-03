@@ -10,15 +10,10 @@
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Generics.Collections, Winapi.Windows, CM.Stats;
+  System.SysUtils, System.Classes, System.Generics.Collections, CM.Stats, CM.Proc;
 
 type
-  TGitCommit = record
-    Hash: string;       // abreviado
-    Author: string;
-    Date: string;       // aaaa-mm-dd
-    Subject: string;
-  end;
+  TGitCommit = TVcsCommit;
 
 // corre "git -C ARoot AArgs"; devolve True se terminou com codigo 0. AOutput leva o texto (UTF-8)
 function RunGit(const ARoot, AArgs: string; out AOutput: string; ATimeoutMs: Integer = 20000): Boolean;
@@ -42,84 +37,12 @@ var
 
 function GitQuote(const AText: string): string;
 begin
-  Result := '"' + AText.Replace('"', '\"') + '"';
+  Result := QuoteArg(AText);
 end;
 
 function RunGit(const ARoot, AArgs: string; out AOutput: string; ATimeoutMs: Integer): Boolean;
-var
-  SA: TSecurityAttributes;
-  RdPipe, WrPipe, NulIn: THandle;
-  SI: TStartupInfo;
-  PI: TProcessInformation;
-  Cmd: string;
-  Buf: array[0..8191] of Byte;
-  Data: TBytes;
-  Avail, Got, Code: DWORD;
-  Started: UInt64;
-  Finished: Boolean;
-
-  procedure Drain;
-  begin
-    while PeekNamedPipe(RdPipe, nil, 0, nil, @Avail, nil) and (Avail > 0) do
-      if ReadFile(RdPipe, Buf, SizeOf(Buf), Got, nil) and (Got > 0) then
-      begin
-        SetLength(Data, Length(Data) + Integer(Got));
-        Move(Buf, Data[Length(Data) - Integer(Got)], Got);
-      end
-      else
-        Break;
-  end;
-
 begin
-  AOutput := '';
-  Result := False;
-  SA.nLength := SizeOf(SA);
-  SA.lpSecurityDescriptor := nil;
-  SA.bInheritHandle := True;
-  if not CreatePipe(RdPipe, WrPipe, @SA, 0) then
-    Exit;
-  SetHandleInformation(RdPipe, HANDLE_FLAG_INHERIT, 0);
-  NulIn := CreateFile('NUL', GENERIC_READ, FILE_SHARE_READ or FILE_SHARE_WRITE, @SA, OPEN_EXISTING, 0, 0);
-  try
-    ZeroMemory(@SI, SizeOf(SI));
-    SI.cb := SizeOf(SI);
-    SI.dwFlags := STARTF_USESTDHANDLES or STARTF_USESHOWWINDOW;
-    SI.wShowWindow := SW_HIDE;
-    SI.hStdInput := NulIn;
-    SI.hStdOutput := WrPipe;
-    SI.hStdError := WrPipe;
-    ZeroMemory(@PI, SizeOf(PI));
-    Cmd := 'git -c core.quotepath=false -C ' + GitQuote(ARoot) + ' ' + AArgs;
-    UniqueString(Cmd);
-    if not CreateProcess(nil, PChar(Cmd), nil, nil, True, CREATE_NO_WINDOW, nil, nil, SI, PI) then
-      Exit;
-    CloseHandle(WrPipe);
-    WrPipe := 0;
-    try
-      Started := GetTickCount64;
-      Finished := False;
-      repeat
-        Drain;
-        Finished := WaitForSingleObject(PI.hProcess, 15) = WAIT_OBJECT_0;
-      until Finished or (GetTickCount64 - Started > UInt64(ATimeoutMs));
-      if not Finished then
-        TerminateProcess(PI.hProcess, 1);
-      Drain;
-      Code := 1;
-      GetExitCodeProcess(PI.hProcess, Code);
-      Result := Finished and (Code = 0);
-    finally
-      CloseHandle(PI.hProcess);
-      CloseHandle(PI.hThread);
-    end;
-  finally
-    if WrPipe <> 0 then
-      CloseHandle(WrPipe);
-    CloseHandle(RdPipe);
-    if NulIn <> INVALID_HANDLE_VALUE then
-      CloseHandle(NulIn);
-  end;
-  AOutput := TEncoding.UTF8.GetString(Data);
+  Result := RunProcess('git -c core.quotepath=false -C ' + GitQuote(ARoot) + ' ' + AArgs, '', AOutput, ATimeoutMs);
 end;
 
 function GitAvailable: Boolean;

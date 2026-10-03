@@ -12,7 +12,7 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math, System.Math.Vectors,
-  System.Generics.Collections, FMX.Types, FMX.Controls, FMX.Graphics, CM.Theme, CM.Controls, CM.Deps;
+  System.Generics.Collections, FMX.Types, FMX.Controls, FMX.Graphics, CM.Theme, CM.Controls, CM.Deps, CM.Clicks;
 
 type
   TCMGraphView = class(TCMControl)
@@ -34,6 +34,8 @@ type
     FPath: TPathData;
     FEmptyText: string;
     FOnSelect: TNotifyEvent;
+    FOnOpen: TNotifyEvent;
+    FDblClick: TDoubleClickTracker;
     procedure SetFilter(const Value: string);
     procedure SetEmptyText(const Value: string);
     procedure SetSimplify(const Value: Boolean);
@@ -77,6 +79,8 @@ type
     // esconde as ligacoes para as units muito usadas (reaparecem ao seleccionar ou apontar uma unit)
     property Simplify: Boolean read FSimplify write SetSimplify;
     property OnSelect: TNotifyEvent read FOnSelect write FOnSelect;
+    // duplo clique numa unit (fica seleccionada: Selected)
+    property OnOpen: TNotifyEvent read FOnOpen write FOnOpen;
   end;
 
 implementation
@@ -602,6 +606,16 @@ begin
   if not FMoved then
   begin
     Idx := NodeAt(X, Y);
+    if (Idx >= 0) and FDblClick.Click(IntToStr(Idx)) then
+    begin
+      // duplo clique: abre a unit (e deixa-a seleccionada, em vez de largar a selecao no segundo clique)
+      SelectNode(Idx);
+      if Assigned(FOnOpen) then
+        FOnOpen(Self);
+      Exit;
+    end;
+    if Idx < 0 then
+      FDblClick.Reset;
     if Idx = FSelected then
       Idx := -1;         // um segundo clique larga a selecao
     SelectNode(Idx);

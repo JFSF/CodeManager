@@ -10,7 +10,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math,
   System.Generics.Collections, System.Generics.Defaults, System.StrUtils, FMX.Types, FMX.Controls, FMX.Graphics,
-  CM.Analyzer, CM.Metrics, CM.Store, CM.Stats, CM.GitReview, CM.SonarModel, CM.Theme, CM.Controls;
+  CM.Analyzer, CM.Metrics, CM.Store, CM.Stats, CM.GitReview, CM.SonarModel, CM.Theme, CM.Controls, CM.Clicks;
 
 type
   TListMode = (lmMap, lmChecklist);
@@ -37,6 +37,8 @@ type
 
   TCMHintEvent = procedure(const AText: string) of object;
   TCMNoteEvent = procedure(AUnit: TUnitInfo) of object;
+  // duplo clique num ficheiro (AMethodIndex = -1) ou num metodo (indice em AUnit.Methods)
+  TCMOpenCodeEvent = procedure(AUnit: TUnitInfo; AMethodIndex: Integer) of object;
 
   TDirNode = class
   public
@@ -77,6 +79,8 @@ type
     FOnChanged: TNotifyEvent;
     FOnEditNote: TCMNoteEvent;
     FOnHint: TCMHintEvent;
+    FOnOpenCode: TCMOpenCodeEvent;
+    FDblClick: TDoubleClickTracker;
     FEmptyText: string;
     FFlash: TDictionary<string, UInt64>;   // chave -> instante (ms) em que o destaque termina
     FFlashTimer: TTimer;
@@ -123,6 +127,7 @@ type
     function ThumbRect: TRectF;
     procedure SetFont(ASize: Single; const AFamily: string; AStyle: TFontStyles = []);
     procedure ApplyClick(const ARow: TRow; AElem: TElem);
+    function CheckDoubleClick(const ARow: TRow): Boolean;
     procedure Changed;
     function HintFor(const ARow: TRow; AElem: TElem): string;
   protected
@@ -172,6 +177,7 @@ type
     property OnChanged: TNotifyEvent read FOnChanged write FOnChanged;
     property OnEditNote: TCMNoteEvent read FOnEditNote write FOnEditNote;
     property OnHint: TCMHintEvent read FOnHint write FOnHint;
+    property OnOpenCode: TCMOpenCodeEvent read FOnOpenCode write FOnOpenCode;
     property EmptyText: string read FEmptyText write FEmptyText;
   end;
 
@@ -1077,6 +1083,12 @@ begin
   Changed;
 end;
 
+// dois cliques na mesma linha em menos do tempo do duplo clique do Windows
+function TCMTreeList.CheckDoubleClick(const ARow: TRow): Boolean;
+begin
+  Result := FDblClick.Click(IntToStr(Ord(ARow.Kind)) + '|' + ARow.U.Path + '|' + IntToStr(ARow.M));
+end;
+
 procedure TCMTreeList.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Single);
 var
   Idx: Integer;
@@ -1105,7 +1117,18 @@ begin
   end;
   HitTestAt(X, Y, Idx, E);
   if Idx >= 0 then
+  begin
+    if (E = eRow) and (FRows[Idx].Kind <> rkDir) and CheckDoubleClick(FRows[Idx]) then
+    begin
+      if Assigned(FOnOpenCode) then
+        if FRows[Idx].Kind = rkMethod then
+          FOnOpenCode(FRows[Idx].U, FRows[Idx].M)
+        else
+          FOnOpenCode(FRows[Idx].U, -1);
+      Exit;
+    end;
     ApplyClick(FRows[Idx], E);
+  end;
 end;
 
 procedure TCMTreeList.MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Single);

@@ -163,6 +163,7 @@ $steps = @(
   'size:1344,3200;wait:2;shot:{IMG}\06-painel-completo.png'
   'size:1344,821;wait:1'
   'page:4;wait:4;click:1070,117;wait:1;shot:{IMG}\13-grafo.png'
+  'code:src/Core/CM.Highlight.pas#FindRoutineLine;wait:2;shot:{IMG}\14-codigo.png'
   'theme:dark;wait:2;shot:{IMG}\07-painel-escuro.png'
   'page:2;wait:1;shot:{IMG}\08-checklist-escuro.png'
   'page:1;wait:1;shot:{IMG}\09-mapa-escuro.png'

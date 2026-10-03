@@ -7,9 +7,11 @@ uses
   CM.Lang in 'src\Core\CM.Lang.pas',
   CM.Analyzer in 'src\Core\CM.Analyzer.pas',
   CM.Deps in 'src\Core\CM.Deps.pas',
+  CM.Highlight in 'src\Core\CM.Highlight.pas',
   CM.SafeFile in 'src\Core\CM.SafeFile.pas',
   CM.Metrics in 'src\Core\CM.Metrics.pas',
   CM.SonarModel in 'src\Core\CM.SonarModel.pas',
+  CM.Proc in 'src\Infrastructure\CM.Proc.pas',
   CM.Git in 'src\Infrastructure\CM.Git.pas',
   CM.GitHub in 'src\Infrastructure\CM.GitHub.pas',
   CM.Secrets in 'src\Infrastructure\CM.Secrets.pas',
@@ -27,6 +29,8 @@ uses
   CM.Controls in 'src\UI\CM.Controls.pas',
   CM.TreeList in 'src\UI\CM.TreeList.pas',
   CM.GraphView in 'src\UI\CM.GraphView.pas',
+  CM.Clicks in 'src\UI\CM.Clicks.pas',
+  CM.CodeView in 'src\UI\CM.CodeView.pas',
   CM.Layouts in 'src\UI\CM.Layouts.pas',
   CM.Pages.Host in 'src\UI\Pages\CM.Pages.Host.pas',
   CM.Pages.Project in 'src\UI\Pages\CM.Pages.Project.pas',
@@ -34,6 +38,7 @@ uses
   CM.Pages.Checklist in 'src\UI\Pages\CM.Pages.Checklist.pas',
   CM.Pages.Dashboard in 'src\UI\Pages\CM.Pages.Dashboard.pas',
   CM.Pages.Graph in 'src\UI\Pages\CM.Pages.Graph.pas',
+  CM.Pages.Code in 'src\UI\Pages\CM.Pages.Code.pas',
   CM.MainForm in 'src\UI\CM.MainForm.pas';
 
 {$R *.res}

@@ -24,7 +24,7 @@ type
 
   TIconKind = (icCheck, icStar, icStarOff, icChevronRight, icChevronDown, icSearch, icFolder,
     icFolderOpen, icEdit, icRefresh, icSun, icMoon, icMap, icChecklist, icDashboard, icPlus,
-    icTrash, icCopy, icDownload, icUpload, icFlag, icClose, icPlay, icFile, icBrowse, icExport, icBrackets, icChart, icMinus, icGraph);
+    icTrash, icCopy, icDownload, icUpload, icFlag, icClose, icPlay, icFile, icBrowse, icExport, icBrackets, icChart, icMinus, icGraph, icCode);
 
 const
   LightPalette: TPalette = (
@@ -51,6 +51,12 @@ procedure ApplyTitleBarTheme(AForm: TCommonCustomForm);
 function Pick(ACond: Boolean; AIfTrue, AIfFalse: TAlphaColor): TAlphaColor; inline;
 function UiFont: string;
 function MonoFont: string;
+// a fonte do codigo-fonte (pagina Codigo): uma fonte moderna com ligaduras (JetBrains Mono, Fira Code, Cascadia
+// Code...), a primeira instalada; '' em SetCodeFont volta a escolha automatica
+function CodeFont: string;
+procedure SetCodeFont(const AName: string);
+// as fontes de codigo modernas que estao instaladas, por ordem de preferencia
+function CodeFontChoices: TArray<string>;
 
 procedure DrawIcon(ACanvas: TCanvas; AKind: TIconKind; const ARect: TRectF; AColor: TAlphaColor;
   AOpacity: Single = 1);
@@ -71,7 +77,8 @@ var
   GPalette: TPalette;
   GListeners: TList<TProc>;
   GIcons: TObjectDictionary<TIconKind, TPathData>;
-  GUiFont, GMonoFont: string;
+  GUiFont, GMonoFont, GCodeFont: string;
+  GCodeChoices: TArray<string>;
 
 const
   IconPaths: array[TIconKind] of string = (
@@ -104,7 +111,8 @@ const
     { icBrackets } 'M15,4V6H18V18H15V20H20V4M4,4V20H9V18H6V6H9V4H4Z',
     { icChart } 'M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z',
     { icMinus } 'M19 13H5v-2h14v2z',
-    { icGraph } 'M22 11V3h-7v3H9V3H2v8h7V8h2v10h4v3h7v-8h-7v3h-2V8h2v3z'
+    { icGraph } 'M22 11V3h-7v3H9V3H2v8h7V8h2v10h4v3h7v-8h-7v3h-2V8h2v3z',
+    { icCode } 'M9.4 16.6 4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0 4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z'
   );
 
 function Pal: TPalette;
@@ -216,6 +224,33 @@ begin
   Result := GMonoFont;
 end;
 
+function CodeFont: string;
+begin
+  Result := GCodeFont;
+end;
+
+function CodeFontChoices: TArray<string>;
+begin
+  Result := GCodeChoices;
+end;
+
+procedure SetCodeFont(const AName: string);
+var
+  F: string;
+begin
+  if AName <> '' then
+    for F in GCodeChoices do
+      if SameText(F, AName) then
+      begin
+        GCodeFont := F;
+        Exit;
+      end;
+  if Length(GCodeChoices) > 0 then
+    GCodeFont := GCodeChoices[0]
+  else
+    GCodeFont := GMonoFont;
+end;
+
 procedure DrawIcon(ACanvas: TCanvas; AKind: TIconKind; const ARect: TRectF; AColor: TAlphaColor;
   AOpacity: Single);
 var
@@ -310,6 +345,7 @@ procedure InitTheme;
 var
   K: TIconKind;
   P: TPathData;
+  F: string;
 begin
   GListeners := TList<TProc>.Create;
   GIcons := TObjectDictionary<TIconKind, TPathData>.Create([doOwnsValues]);
@@ -327,6 +363,10 @@ begin
   else
     GMonoFont := 'Consolas';
   GPalette := LightPalette;
+  for F in ['JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Monaspace Neon NF', 'Source Code Pro', 'Consolas'] do
+    if FontInstalled(F) then
+      GCodeChoices := GCodeChoices + [F];
+  SetCodeFont('');
 end;
 
 initialization

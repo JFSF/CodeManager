@@ -11,7 +11,7 @@ uses
 
 type
   // a ordem do enumerado e a dos indices do guiao --dev; a ordem na barra lateral esta em BuildRail
-  TPage = (pgProject, pgMap, pgChecklist, pgDashboard, pgGraph);
+  TPage = (pgProject, pgMap, pgChecklist, pgDashboard, pgGraph, pgCode);
 
   IPageHost = interface
     ['{6F1D3A52-8C47-4B0E-9E21-5A7C3D90B4E8}']
@@ -36,6 +36,8 @@ type
     procedure MarkStateDirty;
     procedure MarkSettingsDirty;
     procedure ShowPage(APage: TPage);
+    // mostra o codigo de uma unit na pagina Codigo (so de leitura); AMethodIndex >= 0 salta para o metodo
+    procedure OpenCode(AUnit: TUnitInfo; AMethodIndex: Integer);
     // troca o projecto activo (guarda o anterior, carrega o progresso, actualiza as paginas)
     procedure SelectProject(AProfile: TProjectProfile);
     // o projecto activo foi removido da lista: larga-o sem guardar o progresso

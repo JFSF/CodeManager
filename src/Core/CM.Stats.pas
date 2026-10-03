@@ -21,6 +21,14 @@ type
     Time: Int64;
   end;
 
+  // um commit (ou revisao) tal como se mostra nas dicas; independente do sistema de controlo de versoes
+  TVcsCommit = record
+    Hash: string;       // abreviado
+    Author: string;
+    Date: string;       // aaaa-mm-dd
+    Subject: string;
+  end;
+
   TLayerStat = record
     Name: string;
     Done: Integer;

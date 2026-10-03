@@ -84,6 +84,14 @@ O **Grafo** desenha quem usa quem, a partir das cláusulas `uses`: colunas por n
 
 ![Grafo de dependências](docs/images/13-grafo.png)
 
+### Ler o código
+
+Um **duplo clique** numa unit do Grafo, ou num ficheiro ou método do Mapa e da Checklist, abre o código numa página
+de **leitura** com separadores, números de linha, realce Delphi e uma fonte moderna com **ligaduras**; num método, salta
+para a sua linha.
+
+![Leitura do código](docs/images/14-codigo.png)
+
 ### Rever com método
 
 A **Checklist** agrupa os ficheiros por pasta. Um ficheiro fica concluído quando **todos os métodos** estão revistos;

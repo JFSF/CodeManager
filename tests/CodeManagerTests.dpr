@@ -11,12 +11,16 @@ uses
   CM.Lang in '..\src\Core\CM.Lang.pas',
   CM.Analyzer in '..\src\Core\CM.Analyzer.pas',
   CM.Deps in '..\src\Core\CM.Deps.pas',
+  CM.Highlight in '..\src\Core\CM.Highlight.pas',
+  CM.Clicks in '..\src\UI\CM.Clicks.pas',
+  CM.Theme in '..\src\UI\CM.Theme.pas',
   CM.Store in '..\src\Core\CM.Store.pas',
   CM.Stats in '..\src\Core\CM.Stats.pas',
   CM.History in '..\src\Core\CM.History.pas',
   CM.SafeFile in '..\src\Core\CM.SafeFile.pas',
   CM.Metrics in '..\src\Core\CM.Metrics.pas',
   CM.SonarModel in '..\src\Core\CM.SonarModel.pas',
+  CM.Proc in '..\src\Infrastructure\CM.Proc.pas',
   CM.Git in '..\src\Infrastructure\CM.Git.pas',
   CM.GitHub in '..\src\Infrastructure\CM.GitHub.pas',
   CM.Secrets in '..\src\Infrastructure\CM.Secrets.pas',
@@ -53,7 +57,9 @@ uses
   Tests.Lang in 'Tests.Lang.pas',
   Tests.GitHub in 'Tests.GitHub.pas',
   Tests.Deps in 'Tests.Deps.pas',
-  Tests.DepsReport in 'Tests.DepsReport.pas';
+  Tests.DepsReport in 'Tests.DepsReport.pas',
+  Tests.Highlight in 'Tests.Highlight.pas',
+  Tests.Clicks in 'Tests.Clicks.pas';
 
 var
   Runner: ITestRunner;

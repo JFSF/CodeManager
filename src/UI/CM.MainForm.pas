@@ -12,7 +12,7 @@ uses
   System.Generics.Collections, System.StrUtils,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Edit, FMX.Printer,
   CM.Lang, CM.Deps, CM.DepsReport, CM.Theme, CM.Controls, CM.TreeList, CM.Analyzer, CM.Store, CM.SafeFile, CM.SonarModel, CM.Sonar, CM.Secrets, CM.Stats, CM.History, CM.Plan, CM.Export, CM.Print,
-  CM.GitHub, CM.Pages.Host, CM.Pages.Project, CM.Pages.Map, CM.Pages.Checklist, CM.Pages.Dashboard, CM.Pages.Graph;
+  CM.GitHub, CM.Pages.Host, CM.Pages.Project, CM.Pages.Map, CM.Pages.Checklist, CM.Pages.Dashboard, CM.Pages.Graph, CM.Pages.Code;
 
 type
   TMainForm = class(TForm, IPageHost)
@@ -64,6 +64,7 @@ type
     FCk: TChecklistPage;
     FDashboard: TDashboardPage;
     FGraph: TGraphPage;
+    FCode: TCodePage;
 
     procedure BuildUI;
     procedure BuildRail;
@@ -104,6 +105,7 @@ type
     procedure MarkSettingsDirty;
     procedure CaptureHistory(const St: TStats);
     procedure ShowPage(APage: TPage);
+    procedure OpenCode(AUnit: TUnitInfo; AMethodIndex: Integer);
     procedure SelectProject(AProfile: TProjectProfile);
     procedure DetachProfile;
     procedure BindScan(AScan, APlan: TProjectScan);
@@ -116,6 +118,7 @@ type
 {$IFDEF DEBUG}
     procedure DevTick(Sender: TObject);
     procedure DevExec(const ACmd: string);
+    procedure DevOpenCode(const AArg: string);
     procedure DevPrintPreview(APage, ADpi: Integer; ALandscape: Boolean; const AFile: string);
 {$ENDIF}
   protected
@@ -289,11 +292,15 @@ begin
   FCk := TChecklistPage.Create(Self, FPages, Self);
   FDashboard := TDashboardPage.Create(Self, FPages, Self);
   FGraph := TGraphPage.Create(Self, FPages, Self);
+  FCode := TCodePage.Create(Self, FPages, Self);
+  FMap.List.OnOpenCode := OpenCode;
+  FCk.List.OnOpenCode := OpenCode;
   FPageBox[pgProject] := FProject;
   FPageBox[pgMap] := FMap;
   FPageBox[pgChecklist] := FCk;
   FPageBox[pgDashboard] := FDashboard;
   FPageBox[pgGraph] := FGraph;
+  FPageBox[pgCode] := FCode;
 
   FToast := TCMToast.Create(Self);
   FToast.Parent := FContent;   // o toast posiciona-se em relacao a um TControl
@@ -301,8 +308,8 @@ end;
 
 procedure TMainForm.BuildRail;
 const
-  Icons: array[TPage] of TIconKind = (icDashboard, icMap, icChecklist, icChart, icGraph);
-  NavOrder: array[0..4] of TPage = (pgProject, pgMap, pgGraph, pgChecklist, pgDashboard);
+  Icons: array[TPage] of TIconKind = (icDashboard, icMap, icChecklist, icChart, icGraph, icCode);
+  NavOrder: array[0..5] of TPage = (pgProject, pgMap, pgGraph, pgCode, pgChecklist, pgDashboard);
 var
   P: TPage;
   K: Integer;
@@ -315,6 +322,7 @@ begin
   Names[pgChecklist] := Tr('Checklist');
   Names[pgDashboard] := Tr('Painel');
   Names[pgGraph] := Tr('Grafo');
+  Names[pgCode] := Tr('Código');
   Line := TCMPanel.Create(Self);
   Line.Parent := FRail;
   Line.Align := TAlignLayout.Right;
@@ -394,6 +402,7 @@ begin
   FCk.ApplyTheme;
   FDashboard.ApplyTheme;
   FGraph.ApplyTheme;
+  FCode.ApplyTheme;
   ApplyTitleBarTheme(Self);
   Invalidate;
 end;
@@ -451,7 +460,15 @@ begin
     FDashboard.Activate;
   if APage = pgGraph then
     FGraph.Activate;
+  if APage = pgCode then
+    FCode.Activate;
   UpdateHeader;
+end;
+
+procedure TMainForm.OpenCode(AUnit: TUnitInfo; AMethodIndex: Integer);
+begin
+  if FCode.OpenUnit(AUnit, AMethodIndex) then
+    ShowPage(pgCode);
 end;
 
 procedure TMainForm.Toast(const AText: string);
@@ -807,6 +824,8 @@ begin
   OldPlan := FPlan;
   FScan := AScan;
   FPlan := APlan;
+  if (Old = nil) or (AScan = nil) or not SameText(Old.Root, AScan.Root) then
+    FCode.Reset;                 // outro projecto: os separadores de codigo abertos deixam de valer
   // progresso guardado antes de os metodos passarem a ter chave qualificada (TFoo.Bar)
   if (FScan <> nil) and MigrateMethodKeys(FScan, FState) then
     MarkStateDirty;
@@ -889,12 +908,13 @@ begin
         FTitle.Text := Tr('Projeto');
         FSubtitle.Text := Tr('Configure o projeto, analise o código-fonte e exporte as páginas HTML.');
       end;
-    pgMap, pgChecklist, pgDashboard, pgGraph:
+    pgMap, pgChecklist, pgDashboard, pgGraph, pgCode:
       begin
         case FPage of
           pgMap: FTitle.Text := Tr('Mapa de código');
           pgChecklist: FTitle.Text := Tr('Checklist de código');
           pgGraph: FTitle.Text := Tr('Grafo de dependências');
+          pgCode: FTitle.Text := Tr('Código-fonte');
         else
           FTitle.Text := Tr('Painel');
         end;
@@ -931,6 +951,37 @@ begin
 end;
 
 {$IFDEF DEBUG}
+// code:caminho[#metodo] - abre o codigo de uma unit (e o metodo, pelo nome) na pagina Codigo
+procedure TMainForm.DevOpenCode(const AArg: string);
+var
+  Path, MethodName: string;
+  P, I: Integer;
+  U: TUnitInfo;
+begin
+  P := AArg.IndexOf('#');
+  if P >= 0 then
+  begin
+    Path := AArg.Substring(0, P);
+    MethodName := AArg.Substring(P + 1);
+  end
+  else
+    Path := AArg;
+  if FScan = nil then
+    Exit;
+  for U in FScan.Units do
+    if SameText(U.Path, Path) then
+    begin
+      I := -1;
+      if MethodName <> '' then
+        for P := 0 to High(U.Methods) do
+          if SameText(U.Methods[P].Name, MethodName) then
+            I := P;
+      OpenCode(U, I);
+      TFile.AppendAllText('dev.log', Format('codigo=%s tabs=%d linha=%d%s', [FCode.ActivePath, FCode.TabCount, FCode.MarkedLine, sLineBreak]));
+      Exit;
+    end;
+end;
+
 procedure TMainForm.DevRun(const AScript: string);
 var
   S: string;
@@ -1131,15 +1182,22 @@ begin
     FProject.FinalizeClick(nil)
   else if Cmd = 'select' then
     SelectProject(FSettings.Projects[StrToInt(Arg)])
-  else if (Cmd = 'click') or (Cmd = 'move') then
+  else if Cmd = 'code' then
+    DevOpenCode(Arg)
+  else if (Cmd = 'click') or (Cmd = 'dblclick') or (Cmd = 'move') then
   begin
     Parts := Arg.Split([',']);
     X := StrToFloat(Parts[0], TFormatSettings.Invariant);
     Y := StrToFloat(Parts[1], TFormatSettings.Invariant);
     MouseMove([], X, Y);
-    if Cmd = 'click' then
+    if (Cmd = 'click') or (Cmd = 'dblclick') then
     begin
       MouseDown(TMouseButton.mbLeft, [ssLeft], X, Y);
+      MouseUp(TMouseButton.mbLeft, [], X, Y);
+    end;
+    if Cmd = 'dblclick' then
+    begin
+      MouseDown(TMouseButton.mbLeft, [ssLeft, ssDouble], X, Y);
       MouseUp(TMouseButton.mbLeft, [], X, Y);
     end;
   end

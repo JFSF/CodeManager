@@ -430,6 +430,26 @@ sem parâmetros	no parameters	sans paramètres	keine Parameter
 1 parâmetro	1 parameter	1 paramètre	1 Parameter
 %d parâmetros	%d parameters	%d paramètres	%d Parameter
 aninhamento %d	nesting %d	imbrication %d	Verschachtelung %d
+# --- Pagina Codigo
+Código	Code	Code	Code
+Código-fonte	Source code	Code source	Quellcode
+Sem código para mostrar.	No code to show.	Aucun code à afficher.	Kein Code zum Anzeigen.
+Dê um duplo clique numa unit do Grafo, ou num ficheiro ou método do Mapa ou da Checklist, para ler o código aqui.	Double-click a unit in the Graph, or a file or method in the Map or the Checklist, to read its code here.	Double-cliquez sur une unité du graphe, ou sur un fichier ou une méthode de la carte ou de la checklist, pour lire son code ici.	Doppelklicken Sie im Graphen auf eine Unit oder in der Karte oder Checkliste auf eine Datei oder Methode, um den Code hier zu lesen.
+Copiar tudo	Copy all	Tout copier	Alles kopieren
+Fechar	Close	Fermer	Schließen
+Fechar todos	Close all	Tout fermer	Alle schließen
+Este ficheiro ainda não existe no código.	This file does not exist in the code yet.	Ce fichier n'existe pas encore dans le code.	Diese Datei existiert im Code noch nicht.
+Não foi possível ler o ficheiro: 	Could not read the file: 	Impossible de lire le fichier : 	Die Datei konnte nicht gelesen werden: 
+Não foi possível localizar o método no ficheiro.	Could not locate the method in the file.	Impossible de localiser la méthode dans le fichier.	Die Methode wurde in der Datei nicht gefunden.
+Nenhum ficheiro aberto.	No file open.	Aucun fichier ouvert.	Keine Datei geöffnet.
+Código copiado	Code copied	Code copié	Code kopiert
+só de leitura	read-only	lecture seule	nur lesen
+linha	line	ligne	Zeile
+linhas	lines	lignes	Zeilen
+Ligaduras	Ligatures	Ligatures	Ligaturen
+Muda a fonte do código (as fontes modernas instaladas).	Changes the code font (the modern fonts installed).	Change la police du code (les polices modernes installées).	Ändert die Codeschrift (die installierten modernen Schriften).
+Mostra os operadores como -> => <> := fundidos (ligaduras da fonte).	Shows operators such as -> => <> := joined together (font ligatures).	Affiche les opérateurs comme -> => <> := fusionnés (ligatures de la police).	Zeigt Operatoren wie -> => <> := verbunden an (Schriftligaturen).
+Só há uma fonte de código instalada.	Only one code font is installed.	Une seule police de code est installée.	Es ist nur eine Codeschrift installiert.
 #!html
 # Textos dos modelos HTML (res\templates): cada chave e um troco exacto do modelo; so se aplicam ao modelo, antes de
 # se preencherem os marcadores __XXX__. Nas traducoes nao se usam aspas ASCII duplas (estao em strings JS e atributos).

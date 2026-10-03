@@ -36,6 +36,7 @@ type
     procedure ZoomInClick(Sender: TObject);
     procedure ZoomOutClick(Sender: TObject);
     procedure ViewSelect(Sender: TObject);
+    procedure ViewOpen(Sender: TObject);
     procedure ExportHtmlClick(Sender: TObject);
     procedure ExportMdClick(Sender: TObject);
     procedure DoExport(const AExt: string; AHtml: Boolean);
@@ -147,6 +148,7 @@ begin
   FView.Parent := Holder;
   FView.Align := TAlignLayout.Client;
   FView.OnSelect := ViewSelect;
+  FView.OnOpen := ViewOpen;
   FView.EmptyText := Tr('Analise um projeto para ver o mapa de dependências.');
 
   // barra: pesquisa e controlos de zoom
@@ -394,6 +396,23 @@ end;
 procedure TGraphPage.ViewSelect(Sender: TObject);
 begin
   ShowSelection;
+end;
+
+// duplo clique numa unit: abre o seu codigo (a unit do grafo e a da analise com o mesmo caminho)
+procedure TGraphPage.ViewOpen(Sender: TObject);
+var
+  N: TDepNode;
+  U: TUnitInfo;
+begin
+  if (FGraph = nil) or (FView.Selected < 0) or (FHost.CurrentScan = nil) then
+    Exit;
+  N := FGraph.Nodes[FView.Selected];
+  for U in FHost.CurrentScan.Units do
+    if SameText(U.Path, N.Path) then
+    begin
+      FHost.OpenCode(U, -1);
+      Exit;
+    end;
 end;
 
 procedure TGraphPage.ShowSelection;

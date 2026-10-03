@@ -58,6 +58,8 @@ type
     [Test] procedure HistorySavesWithBackupAndRecovers;
     [Test] procedure SettingsSaveWithBackupAndRecover;
     [Test] procedure SettingsWithBothFilesCorruptRaise;
+    [Test] procedure CodeFontAndLigaturesRoundTrip;
+    [Test] procedure CodeLigaturesAreOnByDefault;
   end;
 
 implementation
@@ -368,6 +370,44 @@ begin
     L.Load;
     Assert.IsTrue(L.RecoveredFromBackup);
     Assert.AreEqual('dark', L.Theme, 'a copia tinha o tema anterior');
+  finally
+    L.Free;
+    S.Free;
+  end;
+end;
+
+procedure TStoredFilesTests.CodeFontAndLigaturesRoundTrip;
+var
+  S, L: TAppSettings;
+begin
+  S := TAppSettings.Create;
+  L := TAppSettings.Create;
+  try
+    S.CodeFont := 'Fira Code';
+    S.CodeLigatures := False;
+    S.Save;
+    L.Load;
+    Assert.AreEqual('Fira Code', L.CodeFont);
+    Assert.IsFalse(L.CodeLigatures);
+  finally
+    L.Free;
+    S.Free;
+  end;
+end;
+
+procedure TStoredFilesTests.CodeLigaturesAreOnByDefault;
+var
+  S, L: TAppSettings;
+begin
+  S := TAppSettings.Create;
+  L := TAppSettings.Create;
+  try
+    Assert.IsTrue(S.CodeLigatures);
+    Assert.AreEqual('', S.CodeFont);
+    TFile.WriteAllText(TPath.Combine(FIso.Path, 'settings.json'), '{"theme": "dark"}', TEncoding.UTF8);
+    L.Load;
+    Assert.IsTrue(L.CodeLigatures, 'definicoes antigas, sem o campo, mantem as ligaduras');
+    Assert.AreEqual('', L.CodeFont);
   finally
     L.Free;
     S.Free;

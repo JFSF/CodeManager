@@ -34,6 +34,8 @@ type
   public
     Theme: string;              // 'light' | 'dark' | '' (segue o Windows)
     Language: string;           // 'pt' | 'en' | 'fr' | 'de' | '' (segue o Windows)
+    CodeFont: string;           // fonte da pagina Codigo ('' = a primeira fonte moderna instalada)
+    CodeLigatures: Boolean;     // mostrar as ligaduras da fonte (-> => <> := ...)
     // SonarQube: opcional e por utilizador (estas definicoes ficam nos dados dele). O token nunca se guarda
     // em claro: SonarTokenCipher e o texto ja protegido por quem o guarda (CM.Secrets)
     SonarEnabled: Boolean;
@@ -161,6 +163,7 @@ begin
   inherited;
   FProjects := TObjectList<TProjectProfile>.Create(True);
   OpenAfterExport := True;
+  CodeLigatures := True;
 end;
 
 destructor TAppSettings.Destroy;
@@ -215,6 +218,8 @@ begin
     Obj := TJSONObject(Root);
     Theme := Obj.GetValue<string>('theme', '');
     Language := Obj.GetValue<string>('language', '');
+    CodeFont := Obj.GetValue<string>('codeFont', '');
+    CodeLigatures := JsonBool(Obj, 'codeLigatures', True);
     ActiveProjectId := Obj.GetValue<string>('activeProject', '');
     OpenAfterExport := JsonBool(Obj, 'openAfterExport', True);
     SonarEnabled := False;
@@ -265,6 +270,9 @@ begin
       Obj.AddPair('language', Language);
     Obj.AddPair('activeProject', ActiveProjectId);
     Obj.AddPair('openAfterExport', TJSONBool.Create(OpenAfterExport));
+    if CodeFont <> '' then
+      Obj.AddPair('codeFont', CodeFont);
+    Obj.AddPair('codeLigatures', TJSONBool.Create(CodeLigatures));
     if SonarEnabled or (SonarUrl <> '') or (SonarTokenCipher <> '') then
     begin
       SObj := TJSONObject.Create;

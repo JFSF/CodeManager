@@ -250,6 +250,26 @@ contadas como *units externas*.
 - O **relatório de dependências** exporta-se em **HTML** (autónomo, com o mapa em SVG, tabelas ordenáveis e filtro)
   ou em **Markdown**.
 
+## Código
+
+Lê o código-fonte de uma unit sem sair da aplicação, em **modo de leitura** (nunca edita nada).
+
+![Leitura do código](images/14-codigo.png)
+
+- **Abrir:** duplo clique numa unit do **Grafo**, ou num ficheiro ou método do **Mapa** e da **Checklist**. Num método,
+  a página salta para a linha onde ele começa e destaca-a. Um ficheiro que ainda só existe no plano avisa que não
+  existe no código.
+- **Separadores:** cada ficheiro aberto fica no seu separador (fecha-se no `×`, com o botão do meio do rato ou com
+  **Fechar** / **Fechar todos**). Cada separador lembra o seu scroll e a linha em destaque.
+- **Leitura:** números de linha, realce de sintaxe Delphi (palavras reservadas, textos, comentários, números e
+  directivas), scroll vertical e horizontal (rato, `Shift` + roda, teclas `↑ ↓ PgUp PgDn Home End`). Um clique numa
+  linha destaca-a. **Copiar tudo** põe o ficheiro na área de transferência.
+- **Fonte e ligaduras:** usa a primeira fonte moderna instalada (JetBrains Mono, Fira Code, Cascadia Code, Monaspace
+  Neon, Source Code Pro ou Consolas); o botão com o nome da fonte passa para a seguinte. **Ligaduras** liga ou desliga
+  a fusão dos operadores (`->`, `=>`, `<>`, `:=`, `>=` …). As duas escolhas ficam guardadas nas definições.
+- Se o ficheiro mudar no disco, volta a ser lido ao regressares à página. Ao trocar de projeto os separadores
+  fecham-se.
+
 ## Painel
 
 Uma vista de conjunto, com gráficos que seguem o tema.
