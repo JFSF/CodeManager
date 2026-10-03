@@ -18,7 +18,7 @@ O CodeManager lê as units de um projeto Delphi e dá-te uma forma simples de **
 foi visto** e **acompanhar o progresso ao longo do tempo** — sem alterar uma linha do teu código. Se tiveres um
 documento com o que o projeto *devia* ter, compara os dois.
 
-- 🗺️ **Mapa** — a árvore pastas → ficheiros → métodos, com pesquisa e estatísticas.
+- 🗺️ **Mapa** — a árvore pastas → ficheiros → métodos, com pesquisa, estatísticas e as **linhas e a complexidade** de cada método.
 - ✅ **Checklist** — marca o que reviste, o que compila, o que passou no Sonar, o que é prioritário; com notas.
 - 📊 **Painel** — números e gráficos do progresso e da distribuição do código, incluindo a evolução dia a dia.
 - 📝 **Plano em Markdown** — escreve a estrutura prevista num `.md` e vê o que está implementado, o que falta e o que sobra.
@@ -175,12 +175,11 @@ aplicação **só lê** os ficheiros do projeto analisado.
 
 ## Estado do projeto
 
-Em desenvolvimento ativo, desenvolvido e testado em **Windows / Win64** com **Delphi 13**. Mais de 350 testes
+Em desenvolvimento ativo, desenvolvido e testado em **Windows / Win64** com **Delphi 13**. Mais de 400 testes
 automáticos cobrem o motor, as exportações, o vigia e as regras de arquitetura; a interface é verificada com o
 [modo de desenvolvimento](docs/DESENVOLVIMENTO.md#modo-de-desenvolvimento---dev).
 
-Ideias para o futuro: linhas e complexidade por método, estados de
-revisão além de «feito», integração com Git e SonarQube. Sugestões são bem-vindas.
+Ideias para o futuro: estados de revisão além de «feito», integração com Git e SonarQube. Sugestões são bem-vindas.
 
 ## Contribuir
 

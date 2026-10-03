@@ -11,7 +11,7 @@ uses
   System.Generics.Collections, System.Generics.Defaults,
   FMX.Types, FMX.Controls, FMX.Layouts,
   Chart4D.Types, Chart4D.Style, Chart4D.Axis, Chart4D.FMX,
-  CM.Theme, CM.Controls, CM.Layouts, CM.Analyzer, CM.Store, CM.Stats, CM.History, CM.Plan, CM.Pages.Host;
+  CM.Theme, CM.Controls, CM.Layouts, CM.Analyzer, CM.Store, CM.Stats, CM.History, CM.Plan, CM.Metrics, CM.Pages.Host;
 
 type
   TDashboardPage = class(TCMControl)
@@ -23,9 +23,9 @@ type
     FKpiRow: TCMCardRow;
     FKpi: array[0..3] of TCMKpi;
     FEvoRow: TCMControl;
-    FRows: array[0..3] of TCMCardRow;           // a ultima so aparece quando ha plano
+    FRows: array[0..4] of TCMCardRow;           // a ultima so aparece quando ha plano
     FEvolution, FLayers, FStatus, FTop, FHist, FLayerMethods, FCompilaSonar: TChart4D;
-    FPlanLayers, FPlanOverview: TChart4D;
+    FPlanLayers, FPlanOverview, FComplexTop, FComplexDist: TChart4D;
     FStats: TStats;
     FHasStats: Boolean;
     FDirty: Boolean;
@@ -43,6 +43,7 @@ type
     procedure FillHistogram;
     procedure FillLayerMethods;
     procedure FillPlan;
+    procedure FillComplexity;
     procedure Reset(AChart: TChart4D; AKind: TChartKind; const ATitle, ASubtitle: string);
   protected
     procedure Resize; override;
@@ -132,8 +133,10 @@ begin
   FLayerMethods := AddChartCard(1);
   FHist := AddChartCard(2);
   FCompilaSonar := AddChartCard(2);
-  FPlanLayers := AddChartCard(3);
-  FPlanOverview := AddChartCard(3);
+  FComplexTop := AddChartCard(3);
+  FComplexDist := AddChartCard(3);
+  FPlanLayers := AddChartCard(4);
+  FPlanOverview := AddChartCard(4);
   StyleAll;
   Relayout;
 end;
@@ -163,10 +166,11 @@ begin
     if Narrow then FRows[I].Columns := 1 else FRows[I].Columns := 2;
     FRows[I].Height := FRows[I].HeightFor(Cell);
   end;
-  FRows[3].Visible := FHost.HasPlan;
+  FRows[4].Visible := FHost.HasPlan;
   FBody.Height := FKpiRow.Height + FEvoRow.Height + FRows[0].Height + FRows[1].Height + FRows[2].Height;
-  if FRows[3].Visible then
-    FBody.Height := FBody.Height + FRows[3].Height;
+  FBody.Height := FBody.Height + FRows[3].Height;
+  if FRows[4].Visible then
+    FBody.Height := FBody.Height + FRows[4].Height;
 end;
 
 function TDashboardPage.AddChartCard(ARow: Integer): TChart4D;
@@ -195,7 +199,7 @@ procedure TDashboardPage.StyleAll;
 var
   C: TChart4D;
 begin
-  for C in [FEvolution, FLayers, FStatus, FTop, FHist, FLayerMethods, FCompilaSonar, FPlanLayers, FPlanOverview] do
+  for C in [FEvolution, FLayers, FStatus, FTop, FHist, FLayerMethods, FCompilaSonar, FPlanLayers, FPlanOverview, FComplexTop, FComplexDist] do
     C.Plot.Style := ThemedStyle;
 end;
 
@@ -258,6 +262,7 @@ begin
   FillHistogram;
   FillLayerMethods;
   FillCompilaSonar;
+  FillComplexity;
   FillPlan;
   Relayout;                // a linha do plano aparece ou desaparece conforme ha plano
 end;
@@ -414,6 +419,72 @@ begin
   FCompilaSonar.Plot.AddSeries('Sonar', Sonar).Color := Pal.FlagSonar;
 end;
 
+// complexidade ciclomatica dos metodos com corpo: os mais complexos e quantos ha em cada nivel
+procedure TDashboardPage.FillComplexity;
+const
+  TopN = 10;
+type
+  TEntry = record
+    Name: string;
+    Lines, Complexity: Integer;
+  end;
+var
+  Items: TList<TEntry>;
+  U: TUnitInfo;
+  M: TMethodInfo;
+  E: TEntry;
+  Names: TArray<string>;
+  Values: TArray<Double>;
+  Levels: array[TComplexityLevel] of Integer;
+  I, N: Integer;
+begin
+  Items := TList<TEntry>.Create;
+  try
+    FillChar(Levels, SizeOf(Levels), 0);
+    if FHost.CurrentScan <> nil then
+      for U in FHost.CurrentScan.Units do
+        for M in U.Methods do
+          if M.Lines > 0 then
+          begin
+            E.Name := M.Name;
+            E.Lines := M.Lines;
+            E.Complexity := M.Complexity;
+            Items.Add(E);
+            Inc(Levels[ComplexityLevel(M.Complexity)]);
+          end;
+    Items.Sort(TComparer<TEntry>.Construct(
+      function(const A, B: TEntry): Integer
+      begin
+        Result := B.Complexity - A.Complexity;
+        if Result = 0 then
+          Result := B.Lines - A.Lines;
+        if Result = 0 then
+          Result := CompareText(A.Name, B.Name);
+      end));
+    N := Min(TopN, Items.Count);
+    SetLength(Names, N);
+    SetLength(Values, N);
+    for I := 0 to N - 1 do
+    begin
+      Names[I] := Items[I].Name;
+      Values[I] := Items[I].Complexity;
+    end;
+  finally
+    Items.Free;
+  end;
+  Reset(FComplexTop, TChartKind.Bar, 'Métodos mais complexos',
+    Format('Os %d com maior complexidade ciclomática', [N]));
+  FComplexTop.Plot.Orientation := TChartOrientation.Horizontal;
+  FComplexTop.Plot.Categories := Names;
+  FComplexTop.Plot.AddSeries('Complexidade', Values).Color := Pal.Pending;
+
+  Reset(FComplexDist, TChartKind.Bar, 'Complexidade dos métodos',
+    'Quantos métodos em cada nível (simples até 10, moderada até 20)');
+  FComplexDist.Plot.Categories := ['Simples', 'Moderada', 'Alta'];
+  FComplexDist.Plot.AddSeries('Métodos',
+    [Levels[cxLow], Levels[cxModerate], Levels[cxHigh]]).Color := Pal.Accent;
+end;
+
 // cobertura do plano: por camada (ficheiros) e o total de ficheiros e metodos; so com plano
 procedure TDashboardPage.FillPlan;
 var
@@ -448,7 +519,7 @@ begin
   FPlanLayers.Plot.AddSeries('Extra', Extra).Color := Pal.FlagCompila;
 
   Reset(FPlanOverview, TChartKind.GroupedBar, 'Plano e código',
-    Format('Métodos · %.0f%% do planeado já existe', [S.MethodsCoverage]));
+    Format('Cobertura: %.0f%% dos ficheiros · %.0f%% dos métodos', [S.FilesCoverage, S.MethodsCoverage]));
   FPlanOverview.Plot.LegendPosition := TLegendPosition.Top;
   FPlanOverview.Plot.Categories := ['Ficheiros', 'Métodos'];
   FPlanOverview.Plot.AddSeries('Implementados', [S.ImplementedFiles, S.ImplementedMethods]).Color := Pal.Accent;

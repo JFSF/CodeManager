@@ -55,8 +55,9 @@ type
   [TestFixture]
   TBuildCsvTests = class
   public
-    [Test] procedure HeaderHasEightColumnsWithoutProgress;
-    [Test] procedure HeaderHasThirteenColumnsWithProgress;
+    [Test] procedure HeaderHasTenColumnsWithoutProgress;
+    [Test] procedure HeaderHasFifteenColumnsWithProgress;
+    [Test] procedure MethodRowsCarryLinesAndComplexity;
     [Test] procedure FolderRowsAreSkipped;
     [Test] procedure FileRowFieldsWithoutProgress;
     [Test] procedure MethodRowFieldsWithoutProgress;
@@ -77,6 +78,7 @@ type
     [Test] procedure FileNodesHaveNoMethodsArrayWhenMethodsAreOmitted;
     [Test] procedure FileNodesNestTheirMethodsWhenRequested;
     [Test] procedure MethodNodesHaveNoStarOrNote;
+    [Test] procedure MethodNodesCarryMeasuresOnlyWhenMeasured;
     [Test] procedure FileNodesHaveStarAndNoteWhenProgressIsRequested;
     [Test] procedure RootLevelFilesAppearDirectlyUnderTheTree;
   end;
@@ -461,7 +463,7 @@ begin
   raise Exception.CreateFmt('linha nao encontrada com o valor %s nalgum campo', [AValue]);
 end;
 
-procedure TBuildCsvTests.HeaderHasEightColumnsWithoutProgress;
+procedure TBuildCsvTests.HeaderHasTenColumnsWithoutProgress;
 var
   Scan: TProjectScan;
   St: TProgressState;
@@ -473,8 +475,8 @@ begin
   try
     Opt := Default(TExportOptions);
     Rows := CsvRows(BuildCsv(Scan, St, Opt));
-    Assert.AreEqual<NativeInt>(8, Length(Rows[0]));
-    Assert.AreEqual('Nível;Pasta;Ficheiro;Camada;Classe;Método;Tipo;Assinatura',
+    Assert.AreEqual<NativeInt>(10, Length(Rows[0]));
+    Assert.AreEqual('Nível;Pasta;Ficheiro;Camada;Classe;Método;Tipo;Assinatura;Linhas;Complexidade',
       string.Join(';', Rows[0]));
   finally
     St.Free;
@@ -482,7 +484,7 @@ begin
   end;
 end;
 
-procedure TBuildCsvTests.HeaderHasThirteenColumnsWithProgress;
+procedure TBuildCsvTests.HeaderHasFifteenColumnsWithProgress;
 var
   Scan: TProjectScan;
   St: TProgressState;
@@ -495,8 +497,36 @@ begin
     Opt := Default(TExportOptions);
     Opt.IncludeProgress := True;
     Rows := CsvRows(BuildCsv(Scan, St, Opt));
-    Assert.AreEqual<NativeInt>(13, Length(Rows[0]));
-    Assert.AreEqual('Concluído;Compila;Sonar;Prioritário;Nota', string.Join(';', Copy(Rows[0], 8, 5)));
+    Assert.AreEqual<NativeInt>(15, Length(Rows[0]));
+    Assert.AreEqual('Concluído;Compila;Sonar;Prioritário;Nota', string.Join(';', Copy(Rows[0], 10, 5)));
+  finally
+    St.Free;
+    Scan.Free;
+  end;
+end;
+
+procedure TBuildCsvTests.MethodRowsCarryLinesAndComplexity;
+var
+  Scan: TProjectScan;
+  St: TProgressState;
+  Opt: TExportOptions;
+  Rows: TArray<TArray<string>>;
+  Row: TArray<string>;
+begin
+  Scan := BuildSampleScan;
+  St := TProgressState.Create;
+  try
+    Scan.Units[0].Methods[0].Lines := 12;
+    Scan.Units[0].Methods[0].Complexity := 3;
+    Opt := Default(TExportOptions);
+    Opt.IncludeMethods := True;
+    Rows := CsvRows(BuildCsv(Scan, St, Opt));
+    Row := FindCsvRow(Rows, 'TA.One');
+    Assert.AreEqual('12', Row[High(Row) - 1]);      // a assinatura tem ';' e o CsvRows divide por ele
+    Assert.AreEqual('3', Row[High(Row)]);
+    Row := FindCsvRow(Rows, 'TA.Two');
+    Assert.AreEqual('', Row[High(Row) - 1], 'sem corpo medido');
+    Assert.AreEqual('', Row[High(Row)]);
   finally
     St.Free;
     Scan.Free;
@@ -536,7 +566,7 @@ begin
   try
     Opt := Default(TExportOptions);
     Row := FindCsvRow(CsvRows(BuildCsv(Scan, St, Opt)), 'a.pas');
-    Assert.AreEqual('Ficheiro;Core;a.pas;Core;;;;', string.Join(';', Row));
+    Assert.AreEqual('Ficheiro;Core;a.pas;Core;;;;;;', string.Join(';', Row));
   finally
     St.Free;
     Scan.Free;
@@ -565,7 +595,7 @@ begin
     Opt := Default(TExportOptions);
     Opt.IncludeMethods := True;
     Row := FindCsvRow(CsvRows(BuildCsv(Scan, St, Opt)), 'TA.One');
-    Expected := CsvLine(['Método', 'Core', 'a.pas', 'Core', 'TA', 'TA.One', 'procedure', 'procedure TA.One;']);
+    Expected := CsvLine(['Método', 'Core', 'a.pas', 'Core', 'TA', 'TA.One', 'procedure', 'procedure TA.One;', '', '']);
     Assert.AreEqual(Expected.TrimRight([#13, #10]), RawLineOf(Row));
   finally
     St.Free;
@@ -589,7 +619,7 @@ begin
     Opt := Default(TExportOptions);
     Opt.IncludeProgress := True;
     Row := FindCsvRow(CsvRows(BuildCsv(Scan, St, Opt)), 'root.pas');
-    Assert.AreEqual('Ficheiro;;root.pas;Raiz;;;;;Sim;Não;Não;Sim;nota', string.Join(';', Row));
+    Assert.AreEqual('Ficheiro;;root.pas;Raiz;;;;;;;Sim;Não;Não;Sim;nota', string.Join(';', Row));
   finally
     St.Free;
     Scan.Free;
@@ -612,7 +642,7 @@ begin
     Opt.IncludeProgress := True;
     Row := FindCsvRow(CsvRows(BuildCsv(Scan, St, Opt)), 'TA.One');
     Assert.AreEqual(
-      CsvLine(['Método', 'Core', 'a.pas', 'Core', 'TA', 'TA.One', 'procedure', 'procedure TA.One;',
+      CsvLine(['Método', 'Core', 'a.pas', 'Core', 'TA', 'TA.One', 'procedure', 'procedure TA.One;', '', '',
         'Sim', 'Não', 'Não', '', '']).TrimRight([#13, #10]),
       RawLineOf(Row));
   finally
@@ -912,6 +942,42 @@ begin
       Assert.AreEqual('TA', TJSONObject(Methods.Items[0]).GetValue<string>('owner'));
       Assert.AreEqual('procedure', TJSONObject(Methods.Items[0]).GetValue<string>('kind'));
       Assert.AreEqual('procedure TA.One;', TJSONObject(Methods.Items[0]).GetValue<string>('signature'));
+    finally
+      Root.Free;
+    end;
+  finally
+    P.Free;
+    St.Free;
+    Scan.Free;
+  end;
+end;
+
+procedure TBuildJsonTests.MethodNodesCarryMeasuresOnlyWhenMeasured;
+var
+  Scan: TProjectScan;
+  St: TProgressState;
+  P: TProjectProfile;
+  Opt: TExportOptions;
+  Root, Core, AFile, M1, M2: TJSONObject;
+begin
+  Scan := BuildSampleScan;
+  St := TProgressState.Create;
+  P := NewProfile('X');
+  try
+    Scan.Units[0].Methods[0].Lines := 12;
+    Scan.Units[0].Methods[0].Complexity := 3;
+    Opt := Default(TExportOptions);
+    Opt.IncludeMethods := True;
+    Root := ParseObj(BuildJson(P, Scan, St, Opt));
+    try
+      Core := FindChildNode(Root.GetValue<TJSONArray>('tree'), 'Core');
+      AFile := FindChildNode(Core.GetValue<TJSONArray>('children'), 'a.pas');
+      M1 := TJSONObject(AFile.GetValue<TJSONArray>('methods').Items[0]);
+      M2 := TJSONObject(AFile.GetValue<TJSONArray>('methods').Items[1]);
+      Assert.AreEqual(12, M1.GetValue<Integer>('lines'));
+      Assert.AreEqual(3, M1.GetValue<Integer>('complexity'));
+      Assert.IsNull(M2.GetValue('lines'), 'sem corpo medido');
+      Assert.IsNull(M2.GetValue('complexity'));
     finally
       Root.Free;
     end;

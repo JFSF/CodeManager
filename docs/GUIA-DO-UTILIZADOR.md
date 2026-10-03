@@ -82,9 +82,25 @@ A árvore do projeto: **pastas → ficheiros → métodos**.
   **Expandir tudo**, **Colapsar tudo**, **Abrir métodos** e **Fechar métodos** fazem-no de uma vez.
 - As caixas **C** (*Compila*) e **S** (*Sonar*) assinalam, por ficheiro ou por método, que compila sem erros e que
   passou na análise do SonarQube.
+- À direita de cada método vês as **linhas de código** (`74 l`) e a **complexidade ciclomática** (`cx 18`); a dica
+  mostra-as por extenso. Ver [Linhas e complexidade](#linhas-e-complexidade-dos-métodos).
 - Passa o rato por cima de um nome ou assinatura cortado com «…» para ver o texto completo.
 - A coluna da direita mostra as **estatísticas** (e a cobertura do plano, se houver) e as ações de **exportar e
   imprimir** a estrutura.
+
+### Linhas e complexidade dos métodos
+
+![Linhas e complexidade no Mapa](images/10-mapa-metricas.png)
+
+Cada método com corpo mostra duas medidas, calculadas só a partir do código (nada é compilado):
+
+| Medida | O que conta |
+|---|---|
+| **Linhas** (`l`) | As linhas com código, do cabeçalho ao `end` final. Não conta linhas em branco nem de comentários; inclui as rotinas aninhadas. |
+| **Complexidade** (`cx`) | Complexidade ciclomática: 1 + o número de decisões do próprio corpo (`if`, `while`, `for`, `repeat`, `case`, handlers `on … do`, `and`, `or`). Os métodos anónimos contam para a rotina que os contém; as rotinas aninhadas têm a sua própria. |
+
+A cor da complexidade avisa: **até 10** é simples (cinzento), **11 a 20** é moderada (âmbar) e **mais de 20** é alta
+(vermelho). Métodos só declarados na interface, `forward` ou `external` não têm medida.
 
 ## Checklist
 
@@ -124,6 +140,8 @@ Uma vista de conjunto, com gráficos que seguem o tema.
   dia.
 - **Progresso por camada**, **Estado dos ficheiros**, **Maiores units** (as 10 com mais métodos), **Métodos por
   camada**, **Métodos por ficheiro** (histograma) e **Compila e Sonar por camada**.
+- **Métodos mais complexos** (os 10 com maior complexidade ciclomática) e **Complexidade dos métodos** (quantos há
+  em cada nível).
 - Passa o rato pelos gráficos para ver os valores.
 - Em janelas estreitas os cartões reorganizam-se em menos colunas.
 
@@ -162,7 +180,7 @@ O formato, as regras de correspondência e um exemplo estão em [FORMATO-DO-PLAN
 | **Papel / PDF** | Mapa › *Imprimir…* | Diálogo de impressão do Windows. Para PDF, escolhe a impressora «Microsoft Print to PDF». |
 
 Nas exportações da estrutura podes incluir os **métodos** e o **estado e notas** (concluído, Compila, Sonar,
-prioridade, nota). A impressão usa A4 (ou o papel da impressora), letra monoespaçada, quebra de linhas longas com
+prioridade, nota). O CSV e o JSON levam também as **linhas** e a **complexidade** de cada método. A impressão usa A4 (ou o papel da impressora), letra monoespaçada, quebra de linhas longas com
 guias, cabeçalho corrido e rodapé «Página X de N».
 
 ## Tema claro e escuro

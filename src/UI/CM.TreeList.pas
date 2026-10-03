@@ -10,7 +10,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math,
   System.Generics.Collections, System.Generics.Defaults, System.StrUtils, FMX.Types, FMX.Controls, FMX.Graphics,
-  CM.Analyzer, CM.Store, CM.Stats, CM.Theme, CM.Controls;
+  CM.Analyzer, CM.Metrics, CM.Store, CM.Stats, CM.Theme, CM.Controls;
 
 type
   TListMode = (lmMap, lmChecklist);
@@ -101,6 +101,8 @@ type
     procedure DrawMethodRow(const ARow: TRow; const L: TRowLayout);
     function OverflowHint(const ARow: TRow; X, Y: Single): string;
     function DrawPlanTag(ARight, ACenterY: Single; AStatus: TPlanStatus; AMoved: Boolean): Single;
+    // linhas e complexidade do metodo, encostadas a direita em ARight; devolve a largura ocupada
+    function DrawMetrics(ARight, ACenterY: Single; const AMethod: TMethodInfo): Single;
     procedure DrawFlag(const ARect: TRectF; const ALabel: string; AChecked: Boolean; AColor: TAlphaColor);
     procedure DrawCheckbox(const ARect: TRectF; AChecked, APending: Boolean; AColor: TAlphaColor);
     procedure DrawScrollbar;
@@ -782,6 +784,44 @@ begin
   end;
 end;
 
+// texto da dica de um metodo: as medidas e o estado face ao plano, uma por linha
+function MethodHintText(const AMethod: TMethodInfo; const APlanText: string): string;
+begin
+  Result := MetricsText(AMethod.Lines, AMethod.Complexity);
+  if (Result <> '') and (APlanText <> '') then
+    Result := Result + sLineBreak;
+  Result := Result + APlanText;
+end;
+
+function TCMTreeList.DrawMetrics(ARight, ACenterY: Single; const AMethod: TMethodInfo): Single;
+const
+  Gap = 6;
+var
+  LinesTxt, CxTxt: string;
+  CxColor: TAlphaColor;
+  CxW, LinesW: Single;
+  R: TRectF;
+begin
+  Result := 0;
+  if AMethod.Lines <= 0 then
+    Exit;
+  LinesTxt := IntToStr(AMethod.Lines) + ' l';
+  CxTxt := 'cx ' + IntToStr(AMethod.Complexity);
+  case ComplexityLevel(AMethod.Complexity) of
+    cxHigh: CxColor := Pal.Danger;
+    cxModerate: CxColor := Pal.Pending;
+  else
+    CxColor := Pal.TextFaint;
+  end;
+  CxW := MeasureText(CxTxt, 10.5, MonoFont);
+  LinesW := MeasureText(LinesTxt, 10.5, MonoFont);
+  R := TRectF.Create(ARight - CxW, ACenterY - 9, ARight, ACenterY + 9);
+  DrawTextRect(Canvas, R, CxTxt, CxColor, 10.5, MonoFont, [], TTextAlign.Trailing);
+  R := TRectF.Create(R.Left - Gap - LinesW, ACenterY - 9, R.Left - Gap, ACenterY + 9);
+  DrawTextRect(Canvas, R, LinesTxt, Pal.TextFaint, 10.5, MonoFont, [], TTextAlign.Trailing);
+  Result := CxW + Gap + LinesW;
+end;
+
 // etiqueta (contorno) encostada a direita em ARight; devolve a largura ocupada (0 = sem etiqueta)
 function TCMTreeList.DrawPlanTag(ARight, ACenterY: Single; AStatus: TPlanStatus; AMoved: Boolean): Single;
 var
@@ -825,7 +865,8 @@ begin
         Shown := ARow.U.Methods[ARow.M].Sig;
         Text := Shown;
         Size := 12;
-        Status := PlanStatusText(ARow.U.MethodStatus(ARow.M), '', True);
+        Status := MethodHintText(ARow.U.Methods[ARow.M],
+          PlanStatusText(ARow.U.MethodStatus(ARow.M), '', True));
       end;
   else
     Exit;
@@ -1306,6 +1347,9 @@ begin
     if TagW > 0 then
       NR.Right := NR.Right - TagW - 10;
   end;
+  TagW := DrawMetrics(NR.Right, NR.CenterPoint.Y, M);
+  if TagW > 0 then
+    NR.Right := NR.Right - TagW - 10;
   SetFont(12, MonoFont, SigStyle);
   Sig := FitText(Canvas, M.Sig, NR.Width);
   DrawTextRect(Canvas, NR, Sig, SigColor, 12, MonoFont, SigStyle);

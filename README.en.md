@@ -21,7 +21,7 @@ a document describing what the project *should* contain, it compares the two.
 
 ## Features
 
-- **Map** — the folder → file → method tree, with search and statistics.
+- **Map** — the folder → file → method tree, with search, statistics and the **lines and complexity** of each method.
 - **Checklist** — mark what you reviewed, what compiles, what passed Sonar, what is a priority; add notes.
   A file is *done* when **all its methods** are reviewed.
 - **Dashboard** — numbers and charts for progress and code distribution, including day-by-day evolution.

@@ -38,7 +38,7 @@ flowchart TB
     UI["<b>UI</b> — FireMonkey<br/>CM.MainForm · CM.Controls<br/>CM.TreeList · CM.Layouts · CM.Theme<br/>Pages: Project · Map · Checklist<br/>Dashboard · Host (IPageHost)"]
     SVC["<b>Services</b> — saídas<br/>CM.Export · CM.Html · CM.Print"]
     INFRA["<b>Infrastructure</b> — sistema<br/>CM.Watcher · CM.Resources"]
-    CORE["<b>Core</b> — motor, sem UI nem Windows<br/>CM.Analyzer · CM.Plan · CM.Stats<br/>CM.Store · CM.History"]
+    CORE["<b>Core</b> — motor, sem UI nem Windows<br/>CM.Analyzer · CM.Metrics · CM.Plan<br/>CM.Stats · CM.Store · CM.History"]
 
     UI --> SVC
     UI --> INFRA
@@ -59,7 +59,7 @@ flowchart TB
 
 | Camada | Units | Responsabilidade |
 |---|---|---|
-| **Core** | `CM.Analyzer`, `CM.Plan`, `CM.Stats`, `CM.Store`, `CM.History` | Analisar código e planos, calcular estatísticas, guardar/ler JSON. **Só usa a RTL** (`System.*`): nada de `FMX.*`, `Vcl.*` ou `Winapi.*`. |
+| **Core** | `CM.Analyzer`, `CM.Metrics`, `CM.Plan`, `CM.Stats`, `CM.Store`, `CM.History`, `CM.SafeFile` | Analisar código e planos, calcular estatísticas, guardar/ler JSON. **Só usa a RTL** (`System.*`): nada de `FMX.*`, `Vcl.*` ou `Winapi.*`. |
 | **Infrastructure** | `CM.Watcher`, `CM.Resources` | Tudo o que toca no sistema operativo: `ReadDirectoryChangesW` numa thread e leitura de recursos embutidos. |
 | **Services** | `CM.Export`, `CM.Html`, `CM.Print` | Produzem ficheiros e papel a partir de uma análise: Markdown, TXT, CSV, JSON, páginas HTML offline e impressão. |
 | **UI** | `CM.MainForm`, `CM.Controls`, `CM.TreeList`, `CM.Layouts`, `CM.Theme` e `Pages\*` | Janela, controlos pintados e páginas. |
@@ -167,6 +167,10 @@ Pontos a reter:
   perde marcas.
 - **O estado face ao plano** (`PlanStatus`, `MethodStatus`) só existe na *vista cruzada* que o Mapa mostra, nunca na
   análise do código. A vista é uma cópia das units; a análise original não é alterada.
+- **As medidas dos métodos** (`Lines`, `Complexity`) vêm de `CM.Metrics`, que percorre os corpos da secção
+  `implementation` (já sem comentários nem textos, mas com as mudanças de linha) e o `CM.Analyzer` associa ao método
+  pelo cabeçalho. Zero significa «sem corpo medido». Como entram na comparação de `RescanFile`, editar só o corpo de
+  um método atualiza as medidas.
 - **O histórico** guarda um `TSnapshot` por dia (o último do dia substitui o anterior).
 
 ## Analisar um projeto
@@ -375,7 +379,7 @@ Os testes são [DUnitX](https://github.com/VSoftTechnologies/DUnitX) (já vêm c
 
 | Área | Ficheiros | Cobre |
 |---|---|---|
-| Análise | `Tests.Analyzer.*` | Extração de métodos (comentários, strings, genéricos, overloads, tipos aninhados, codificações), `ScanProject`, `RescanFile`, `ReconcileScan`. |
+| Análise | `Tests.Analyzer.*`, `Tests.Metrics` | Extração de métodos (comentários, strings, genéricos, overloads, tipos aninhados, codificações), `ScanProject`, `RescanFile`, `ReconcileScan`; linhas e complexidade dos corpos. |
 | Estatísticas e dados | `Tests.Stats`, `Tests.Store`, `Tests.History` | Regras de conclusão, JSON de definições e progresso (incluindo o formato das páginas HTML), histórico diário. |
 | Saídas | `Tests.Export.*`, `Tests.Print.*`, `Tests.Html` | Cada formato de exportação, paginação da impressão, páginas HTML. |
 | Sistema | `Tests.Watcher` | O vigia numa pasta temporária. |

@@ -546,6 +546,12 @@ begin
   Result := Result + #13#10;
 end;
 
+// linhas / complexidade: vazio quando o metodo nao tem corpo medido
+function MeasureField(AValue: Integer): string;
+begin
+  if AValue > 0 then Result := IntToStr(AValue) else Result := '';
+end;
+
 function BuildCsv(AScan: TProjectScan; AState: TProgressState; const AOptions: TExportOptions): string;
 var
   SB: TStringBuilder;
@@ -557,7 +563,8 @@ begin
   SB := TStringBuilder.Create;
   Fields := TList<string>.Create;
   try
-    Fields.AddRange(['Nível', 'Pasta', 'Ficheiro', 'Camada', 'Classe', 'Método', 'Tipo', 'Assinatura']);
+    Fields.AddRange(['Nível', 'Pasta', 'Ficheiro', 'Camada', 'Classe', 'Método', 'Tipo', 'Assinatura', 'Linhas',
+      'Complexidade']);
     if AOptions.IncludeProgress then
       Fields.AddRange(['Concluído', 'Compila', 'Sonar', 'Prioritário', 'Nota']);
     SB.Append(CsvLine(Fields.ToArray));
@@ -568,11 +575,12 @@ begin
       P := RowProgress(R, AState);
       Fields.Clear;
       if R.Kind = xkFile then
-        Fields.AddRange(['Ficheiro', R.U.Dir, R.U.FileName, R.U.Layer, '', '', '', ''])
+        Fields.AddRange(['Ficheiro', R.U.Dir, R.U.FileName, R.U.Layer, '', '', '', '', '', ''])
       else
       begin
         M := R.U.Methods[R.MIndex];
-        Fields.AddRange(['Método', R.U.Dir, R.U.FileName, R.U.Layer, M.Owner, M.Name, M.Kind, M.Sig]);
+        Fields.AddRange(['Método', R.U.Dir, R.U.FileName, R.U.Layer, M.Owner, M.Name, M.Kind, M.Sig,
+          MeasureField(M.Lines), MeasureField(M.Complexity)]);
       end;
       if AOptions.IncludeProgress then
       begin
@@ -687,6 +695,11 @@ begin
             Obj.AddPair('owner', M.Owner);
             Obj.AddPair('kind', M.Kind);
             Obj.AddPair('signature', M.Sig);
+            if M.Lines > 0 then
+            begin
+              Obj.AddPair('lines', TJSONNumber.Create(M.Lines));
+              Obj.AddPair('complexity', TJSONNumber.Create(M.Complexity));
+            end;
             if AOptions.IncludeProgress then
               AddProgressJson(Obj, RowProgress(R, AState), False);
           end;

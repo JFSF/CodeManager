@@ -12,7 +12,8 @@ Primeira versão pública.
 
 - **Projeto:** vários projetos, cada um com o seu progresso; análise em segundo plano de `.pas`, `.dpr` e `.dpk`;
   pastas ignoradas configuráveis; fechar um projeto como finalizado.
-- **Mapa:** árvore pastas → ficheiros → métodos, pesquisa, estatísticas, caixas Compila/Sonar, dicas com o texto completo.
+- **Mapa:** árvore pastas → ficheiros → métodos, pesquisa, estatísticas, caixas Compila/Sonar, dicas com o texto completo;
+  **linhas de código e complexidade ciclomática** de cada método (`cx`, a âmbar acima de 10 e a vermelho acima de 20).
 - **Checklist:** conclusão automática por ficheiro quando todos os métodos estão revistos, prioridade, notas, filtros por
   camada, importar/exportar progresso (formato compatível com as páginas HTML), cópia em Markdown.
 - **Painel:** cartões de números e gráficos (Chart4D) — evolução do progresso, progresso por camada, estado dos
@@ -32,5 +33,5 @@ Primeira versão pública.
 
 - Código organizado em camadas (`Core`, `Infrastructure`, `Services`, `UI`) com a regra de dependência verificada por
   testes automáticos.
-- Mais de 350 testes DUnitX.
+- Mais de 400 testes DUnitX.
 - Contraste do texto com pelo menos 4,5:1 nos dois temas.

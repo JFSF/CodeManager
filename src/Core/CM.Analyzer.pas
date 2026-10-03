@@ -8,7 +8,7 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.Generics.Collections, System.Generics.Defaults,
-  System.RegularExpressions, System.IOUtils;
+  System.RegularExpressions, System.IOUtils, CM.Metrics;
 
 type
   TMethodInfo = record
@@ -18,6 +18,8 @@ type
     Sig: string;
     Owner: string;      // classe/record que declara o metodo ('' = rotina livre)
     Simple: string;     // nome sem qualificacao ('Bar')
+    Lines: Integer;     // linhas de codigo do corpo (0 = sem corpo nesta unit)
+    Complexity: Integer; // complexidade ciclomatica do corpo (0 = sem corpo)
   end;
 
   // estado de uma unit/metodo face ao plano (documento .md): so tem valor numa vista com plano
@@ -102,6 +104,7 @@ type
     Kind: string;
     Sig: string;
     Params: string;     // so os tipos dos parametros ('Integer, string'); '' = sem parametros
+    Lines, Complexity: Integer;   // medidas do corpo (0 = ainda sem medida)
   end;
 
 var
@@ -273,18 +276,26 @@ begin
       else if C = '{' then
       begin
         Inc(I);
-        while (I <= N) and (AText[I] <> '}') do
-          Inc(I);
-        Inc(I);
         SB.Append(' ');
+        while (I <= N) and (AText[I] <> '}') do
+        begin
+          if AText[I] = #10 then
+            SB.Append(#10);          // as linhas contam-se no texto limpo (medidas dos metodos)
+          Inc(I);
+        end;
+        Inc(I);
       end
       else if (C = '(') and (I < N) and (AText[I + 1] = '*') then
       begin
         Inc(I, 2);
-        while (I < N) and not ((AText[I] = '*') and (AText[I + 1] = ')')) do
-          Inc(I);
-        Inc(I, 2);
         SB.Append(' ');
+        while (I < N) and not ((AText[I] = '*') and (AText[I + 1] = ')')) do
+        begin
+          if AText[I] = #10 then
+            SB.Append(#10);
+          Inc(I);
+        end;
+        Inc(I, 2);
       end
       else if (C = '/') and (I < N) and (AText[I + 1] = '/') then
       begin
@@ -562,6 +573,7 @@ begin
         // 'TFoo = class procedure Bar' - o 'class' da declaracao do tipo nao e prefixo do metodo
         ClassPrefix := (GroupText(M, 1) <> '') and
           not (Head.Success and (M.Groups[1].Index = Head.Groups[2].Index));
+        R := Default(TRawMethod);
         R.Owner := Owner;
         R.Simple := Simple;
         R.Kind := LowerCase(GroupText(M, 2));
@@ -594,6 +606,23 @@ begin
     Stack.Free;
     Stmts.Free;
   end;
+end;
+
+// le um cabecalho de rotina ('procedure TFoo.Bar(A: Integer)') como a analise das declaracoes o faz
+function ParseHeader(const AHeader: string; out R: TRawMethod): Boolean;
+var
+  M: TMatch;
+  QOwner, Simple, Rest: string;
+begin
+  R := Default(TRawMethod);
+  Result := LastDeclMatch(AHeader, M);
+  if not Result then
+    Exit;
+  SplitQualified(GroupText(M, 3), QOwner, Simple);
+  R.Owner := QOwner;
+  R.Simple := Simple;
+  Rest := Copy(AHeader, M.Index + M.Length, MaxInt);
+  R.Params := ParamTypes(Rest);
 end;
 
 function SameParams(const A, B: string): Boolean;
@@ -677,6 +706,8 @@ begin
       Info.Sig := R.Sig;
       Info.Owner := R.Owner;
       Info.Simple := R.Simple;
+      Info.Lines := R.Lines;
+      Info.Complexity := R.Complexity;
       Items.Add(Info);
     end;
     Result := Items.ToArray;
@@ -685,6 +716,38 @@ begin
     Used.Free;
     Counts.Free;
     Merged.Free;
+  end;
+end;
+
+// mede os corpos da implementation e junta as medidas as declaracoes (a primeira ocorrencia de
+// cada metodo e a que passa a unit); uma rotina repetida (aninhada com o mesmo nome) fica com a primeira
+procedure ApplyMetrics(const AImpl: string; ARaw: TList<TRawMethod>);
+var
+  Measures: TList<TRoutineMetric>;
+  Metric: TRoutineMetric;
+  Key: TRawMethod;
+  Idx: Integer;
+  Target: TRawMethod;
+begin
+  Measures := TList<TRoutineMetric>.Create;
+  try
+    MeasureRoutines(AImpl, Measures);
+    for Metric in Measures do
+      if ParseHeader(Metric.Header, Key) then
+      begin
+        Idx := FindRaw(ARaw, Key);
+        if Idx < 0 then
+          Continue;
+        Target := ARaw[Idx];
+        if Target.Lines = 0 then
+        begin
+          Target.Lines := Metric.Lines;
+          Target.Complexity := Metric.Complexity;
+          ARaw[Idx] := Target;
+        end;
+      end;
+  finally
+    Measures.Free;
   end;
 end;
 
@@ -712,18 +775,26 @@ end;
 
 function ExtractMethodsFromText(const AText: string): TArray<TMethodInfo>;
 var
-  Clean, Iface, Impl: string;
+  Clean, Iface, Impl, Bodies: string;
   Raw: TList<TRawMethod>;
 begin
   Clean := CleanUnitText(AText);
+  Bodies := '';
   if not GReInterface.IsMatch(Clean) then
+  begin
+    Bodies := Clean;            // programas e fragmentos: os corpos estao no texto todo
     Clean := 'unit Plano;' + sLineBreak + 'interface' + sLineBreak + Clean + sLineBreak +
       'implementation' + sLineBreak + 'end.';
+  end;
   SplitSections(Clean, Iface, Impl);
   Raw := TList<TRawMethod>.Create;
   try
     CollectFromSection(Iface, Raw);
     CollectFromSection(Impl, Raw);
+    if Bodies <> '' then
+      ApplyMetrics(Bodies, Raw)
+    else
+      ApplyMetrics(Impl, Raw);
     Result := MergeMethods(Raw);
   finally
     Raw.Free;
@@ -915,7 +986,8 @@ begin
   if Length(A) <> Length(B) then
     Exit(False);
   for I := 0 to High(A) do
-    if (A[I].Name <> B[I].Name) or (A[I].Sig <> B[I].Sig) then
+    if (A[I].Name <> B[I].Name) or (A[I].Sig <> B[I].Sig) or (A[I].Lines <> B[I].Lines) or
+       (A[I].Complexity <> B[I].Complexity) then
       Exit(False);
   Result := True;
 end;
