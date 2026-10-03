@@ -486,6 +486,32 @@ Horas	Hours	Heures	Stunden
 Ficheiros com mais dívida técnica	Files with the most technical debt	Fichiers avec le plus de dette technique	Dateien mit den meisten technischen Schulden
 Os %d com mais horas de dívida	The %d with the most hours of debt	Les %d avec le plus d'heures de dette	Die %d mit den meisten Schuldenstunden
 Revisão atual	Current revision	Révision actuelle	Aktuelle Revision
+# --- Pagina Aspeto
+Aspeto	Appearance	Apparence	Aussehen
+Aspeto atualizado	Appearance updated	Apparence mise à jour	Aussehen aktualisiert
+Cor de destaque, fontes e tamanho do texto. As escolhas são só tuas.	Accent colour, fonts and text size. The choices are only yours.	Couleur d'accentuation, polices et taille du texte. Les choix ne sont qu'à vous.	Akzentfarbe, Schriften und Textgröße. Die Auswahl gilt nur für Sie.
+Repor aspeto padrão	Reset appearance	Rétablir l'apparence	Aussehen zurücksetzen
+Cor de destaque	Accent colour	Couleur d'accentuation	Akzentfarbe
+A cor dos botões, dos itens selecionados e dos gráficos. As variantes forte e suave, e o texto por cima, calculam-se sozinhas para se lerem bem nos dois temas.	The colour of buttons, selected items and charts. The strong and soft variants, and the text on top, are calculated automatically so they read well in both themes.	La couleur des boutons, des éléments sélectionnés et des graphiques. Les variantes forte et douce, et le texte dessus, se calculent seules pour rester lisibles dans les deux thèmes.	Die Farbe von Schaltflächen, ausgewählten Elementen und Diagrammen. Die kräftige und die sanfte Variante sowie der Text darauf werden automatisch berechnet, damit sie in beiden Designs gut lesbar sind.
+Ou uma cor livre (#RRGGBB)	Or a free colour (#RRGGBB)	Ou une couleur libre (#RRGGBB)	Oder eine freie Farbe (#RRGGBB)
+Fontes	Fonts	Polices	Schriften
+Interface	Interface	Interface	Oberfläche
+Texto técnico (nomes, números, etiquetas)	Technical text (names, numbers, labels)	Texte technique (noms, nombres, étiquettes)	Technischer Text (Namen, Zahlen, Etiketten)
+Código (página Código)	Code (Code page)	Code (page Code)	Code (Seite Code)
+Tamanho	Size	Taille	Größe
+Texto da aplicação	Application text	Texte de l'application	Anwendungstext
+Código (em pontos)	Code (in points)	Code (en points)	Code (in Punkt)
+Pré-visualização	Preview	Aperçu	Vorschau
+Automática	Automatic	Automatique	Automatisch
+Automático	Automatic	Automatique	Automatisch
+Verde	Green	Vert	Grün
+Azul	Blue	Bleu	Blau
+Indigo	Indigo	Indigo	Indigo
+Violeta	Violet	Violet	Violett
+Rosa	Pink	Rose	Rosa
+Vermelho	Red	Rouge	Rot
+Laranja	Orange	Orange	Orange
+Grafite	Graphite	Graphite	Graphit
 #!html
 # Textos dos modelos HTML (res\templates): cada chave e um troco exacto do modelo; so se aplicam ao modelo, antes de
 # se preencherem os marcadores __XXX__. Nas traducoes nao se usam aspas ASCII duplas (estao em strings JS e atributos).

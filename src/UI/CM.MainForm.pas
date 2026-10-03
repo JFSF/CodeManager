@@ -12,7 +12,7 @@ uses
   System.Generics.Collections, System.StrUtils,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Edit, FMX.Printer,
   CM.Lang, CM.Deps, CM.DepsReport, CM.Theme, CM.Controls, CM.TreeList, CM.Analyzer, CM.Store, CM.SafeFile, CM.SonarModel, CM.Sonar, CM.Secrets, CM.Stats, CM.History, CM.Plan, CM.Export, CM.Print,
-  CM.GitHub, CM.Pages.Host, CM.Pages.Project, CM.Pages.Map, CM.Pages.Checklist, CM.Pages.Dashboard, CM.Pages.Graph, CM.Pages.Code;
+  CM.GitHub, CM.Pages.Host, CM.Pages.Project, CM.Pages.Map, CM.Pages.Checklist, CM.Pages.Dashboard, CM.Pages.Graph, CM.Pages.Code, CM.Pages.Appearance;
 
 type
   TMainForm = class(TForm, IPageHost)
@@ -65,6 +65,7 @@ type
     FDashboard: TDashboardPage;
     FGraph: TGraphPage;
     FCode: TCodePage;
+    FAppearance: TAppearancePage;
 
     procedure BuildUI;
     procedure BuildRail;
@@ -100,11 +101,12 @@ type
     function SwapPlanView: TProjectScan;
     procedure Toast(const AText: string);
     procedure SetLanguage(ALang: TLang);
-    procedure RebuildUI;
+    procedure RebuildUI(const AMessage: string);
     procedure MarkStateDirty;
     procedure MarkSettingsDirty;
     procedure CaptureHistory(const St: TStats);
     procedure ShowPage(APage: TPage);
+    procedure AppearanceChanged(ARebuild: Boolean);
     procedure OpenCode(AUnit: TUnitInfo; AMethodIndex: Integer);
     procedure SelectProject(AProfile: TProjectProfile);
     procedure DetachProfile;
@@ -202,6 +204,7 @@ begin
     SetThemeMode(tmDark)
   else
     SetThemeMode(tmLight);
+  ApplyAppearance(AppearanceFromSettings(FSettings));
 
   FSaveTimer := TTimer.Create(Self);
   FSaveTimer.Enabled := False;
@@ -294,6 +297,7 @@ begin
   FDashboard := TDashboardPage.Create(Self, FPages, Self);
   FGraph := TGraphPage.Create(Self, FPages, Self);
   FCode := TCodePage.Create(Self, FPages, Self);
+  FAppearance := TAppearancePage.Create(Self, FPages, Self);
   FMap.List.OnOpenCode := OpenCode;
   FCk.List.OnOpenCode := OpenCode;
   FPageBox[pgProject] := FProject;
@@ -302,6 +306,7 @@ begin
   FPageBox[pgDashboard] := FDashboard;
   FPageBox[pgGraph] := FGraph;
   FPageBox[pgCode] := FCode;
+  FPageBox[pgAppearance] := FAppearance;
 
   FToast := TCMToast.Create(Self);
   FToast.Parent := FContent;   // o toast posiciona-se em relacao a um TControl
@@ -309,8 +314,8 @@ end;
 
 procedure TMainForm.BuildRail;
 const
-  Icons: array[TPage] of TIconKind = (icDashboard, icMap, icChecklist, icChart, icGraph, icCode);
-  NavOrder: array[0..5] of TPage = (pgProject, pgMap, pgGraph, pgCode, pgChecklist, pgDashboard);
+  Icons: array[TPage] of TIconKind = (icDashboard, icMap, icChecklist, icChart, icGraph, icCode, icPalette);
+  NavOrder: array[0..6] of TPage = (pgProject, pgMap, pgGraph, pgCode, pgChecklist, pgDashboard, pgAppearance);
 var
   P: TPage;
   K: Integer;
@@ -324,6 +329,7 @@ begin
   Names[pgDashboard] := Tr('Painel');
   Names[pgGraph] := Tr('Grafo');
   Names[pgCode] := Tr('Código');
+  Names[pgAppearance] := Tr('Aspeto');
   Line := TCMPanel.Create(Self);
   Line.Parent := FRail;
   Line.Align := TAlignLayout.Right;
@@ -404,6 +410,7 @@ begin
   FDashboard.ApplyTheme;
   FGraph.ApplyTheme;
   FCode.ApplyTheme;
+  FAppearance.ApplyTheme;
   ApplyTitleBarTheme(Self);
   Invalidate;
 end;
@@ -463,7 +470,25 @@ begin
     FGraph.Activate;
   if APage = pgCode then
     FCode.Activate;
+  if APage = pgAppearance then
+    FAppearance.Activate;
   UpdateHeader;
+end;
+
+procedure TMainForm.AppearanceChanged(ARebuild: Boolean);
+begin
+  if ARebuild then
+    TThread.ForceQueue(nil,
+      procedure
+      begin
+        if not FShuttingDown then
+          RebuildUI(Tr('Aspeto atualizado'));
+      end)
+  else
+  begin
+    ApplyAppearance(AppearanceFromSettings(FSettings));
+    ApplyTheme;
+  end;
 end;
 
 procedure TMainForm.OpenCode(AUnit: TUnitInfo; AMethodIndex: Integer);
@@ -496,12 +521,12 @@ begin
     procedure
     begin
       if not FShuttingDown then
-        RebuildUI;
+        RebuildUI(TrF('Idioma: %s', [LangNames[CurrentLang]]));
     end);
 end;
 
 // refaz a interface no idioma activo; o projeto aberto volta a ser carregado e analisado
-procedure TMainForm.RebuildUI;
+procedure TMainForm.RebuildUI(const AMessage: string);
 var
   Page: TPage;
   Profile: TProjectProfile;
@@ -526,7 +551,7 @@ begin
     SelectProject(Profile)
   else if FSettings.Projects.Count = 0 then
     FProject.NewProject;
-  Toast(TrF('Idioma: %s', [LangNames[CurrentLang]]));
+  Toast(AMessage);
 end;
 
 procedure TMainForm.ToastTick(Sender: TObject);
@@ -911,6 +936,11 @@ begin
       begin
         FTitle.Text := Tr('Projeto');
         FSubtitle.Text := Tr('Configure o projeto, analise o código-fonte e exporte as páginas HTML.');
+      end;
+    pgAppearance:
+      begin
+        FTitle.Text := Tr('Aspeto');
+        FSubtitle.Text := Tr('Cor de destaque, fontes e tamanho do texto. As escolhas são só tuas.');
       end;
     pgMap, pgChecklist, pgDashboard, pgGraph, pgCode:
       begin

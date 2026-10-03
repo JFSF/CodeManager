@@ -121,6 +121,13 @@ distribuição de métodos, Compila e Sonar — e segue o tema da aplicação.
 
 <sub>O histórico da evolução nas imagens é de demonstração; o resto são dados reais da análise do próprio CodeManager.</sub>
 
+### Aspeto à tua maneira
+
+A página **Aspeto** muda a **cor de destaque** (cores prontas ou qualquer `#RRGGBB`, com contraste garantido nos dois
+temas), as **fontes** da interface e do código, a **escala do texto** e o **tamanho do código**.
+
+![Aspeto](docs/images/18-aspeto-escuro.png)
+
 ### Idiomas e repositórios do GitHub
 
 A aplicação fala **português, inglês, francês e alemão** (muda-se na página Projeto, e os relatórios exportados

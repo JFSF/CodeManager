@@ -543,7 +543,7 @@ begin
   if FMono then Family := MonoFont else Family := UiFont;
   if FBold then Style := [TFontStyle.fsBold] else Style := [];
   Canvas.Font.Family := Family;
-  Canvas.Font.Size := FSize;
+  Canvas.Font.Size := ScaledSize(FSize);
   Canvas.Font.Style := Style;
   if FWrap then
   begin
@@ -849,7 +849,7 @@ end;
 procedure TCMInput.ApplyTheme;
 begin
   FEdit.TextSettings.Font.Family := UiFont;
-  FEdit.TextSettings.Font.Size := 13.5;
+  FEdit.TextSettings.Font.Size := ScaledSize(13.5);
   FEdit.TextSettings.FontColor := Pal.Text;
   FEdit.Repaint;
   Repaint;
@@ -1104,7 +1104,7 @@ begin
     Y := I * 24;
     R := TRectF.Create(0, Y, TrackL - 8, Y + 24);
     Canvas.Font.Family := MonoFont;
-    Canvas.Font.Size := 11.5;
+    Canvas.Font.Size := ScaledSize(11.5);
     DrawTextRect(Canvas, R, FitText(Canvas, FRows[I].Name, R.Width), Pal.TextDim, 11.5, MonoFont);
     Track := TRectF.Create(TrackL, Y + 10, TrackR, Y + 15);
     FillRound(Canvas, Track, 2.5, Pal.Surface2);
@@ -1210,7 +1210,7 @@ begin
       FillRound(Canvas, R, 10, P.Surface2);
     TR := TRectF.Create(R.Left + 14, R.Top + 8, R.Right - 14, R.Top + 30);
     Canvas.Font.Family := UiFont;
-    Canvas.Font.Size := 13.5;
+    Canvas.Font.Size := ScaledSize(13.5);
     Canvas.Font.Style := [TFontStyle.fsBold];
     if FItems[I].Badge <> '' then
     begin
@@ -1224,7 +1224,7 @@ begin
       Pick(I = FIndex, P.AccentStrong, P.Text), 13.5, UiFont, [TFontStyle.fsBold]);
     TR := TRectF.Create(R.Left + 14, R.Top + 30, R.Right - 14, R.Bottom - 6);
     Canvas.Font.Family := MonoFont;
-    Canvas.Font.Size := 11;
+    Canvas.Font.Size := ScaledSize(11);
     Canvas.Font.Style := [];
     DrawTextRect(Canvas, TR, FitText(Canvas, FItems[I].Sub, TR.Width), P.TextFaint, 11, MonoFont);
   end;

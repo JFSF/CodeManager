@@ -148,7 +148,6 @@ uses
   CM.Lang;
 
 const
-  CodeFontSize = 12.5;
   BarW = 10;                   // espessura das barras de scroll
   TabH = 36;
   MaxTabW = 230;
@@ -164,7 +163,7 @@ begin
   CanFocus := True;
   ClipChildren := True;
   FMarkLine := -1;
-  FLineH := 20;
+  FLineH := Round(ScaledSize(CodeFontSize) * 1.6);
   FLigatures := True;
   MeasureFont;
   FEmptyText := Tr('Sem código para mostrar.');
@@ -172,6 +171,7 @@ end;
 
 procedure TCMCodeView.MeasureFont;
 begin
+  FLineH := Round(ScaledSize(CodeFontSize) * 1.6);
   FCharW := MeasureText('0', CodeFontSize, CodeFont);
   if FCharW < 4 then
     FCharW := 7.5;
@@ -440,6 +440,7 @@ begin
   State := Canvas.SaveState;
   try
     Canvas.IntersectClipRect(LocalRect);
+    FillRound(Canvas, LocalRect, 0, Pal.Surface);          // o fundo: a vista tambem serve fora de um painel
     if (FDoc = nil) or (FDoc.Count = 0) then
     begin
       DrawTextRect(Canvas, LocalRect, FEmptyText, Pal.TextFaint, 13, CodeFont, [], TTextAlign.Center);

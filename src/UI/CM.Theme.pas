@@ -9,7 +9,7 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math,
-  System.Math.Vectors, System.Generics.Collections, FMX.Types, FMX.Graphics, FMX.Forms, FMX.Platform.Win,
+  System.Math.Vectors, System.Generics.Collections, CM.Colors, CM.Store, FMX.Types, FMX.Graphics, FMX.Forms, FMX.Platform.Win,
   Winapi.Windows, Winapi.Dwmapi, System.Win.Registry;
 
 type
@@ -24,7 +24,7 @@ type
 
   TIconKind = (icCheck, icStar, icStarOff, icChevronRight, icChevronDown, icSearch, icFolder,
     icFolderOpen, icEdit, icRefresh, icSun, icMoon, icMap, icChecklist, icDashboard, icPlus,
-    icTrash, icCopy, icDownload, icUpload, icFlag, icClose, icPlay, icFile, icBrowse, icExport, icBrackets, icChart, icMinus, icGraph, icCode);
+    icTrash, icCopy, icDownload, icUpload, icFlag, icClose, icPlay, icFile, icBrowse, icExport, icBrackets, icChart, icMinus, icGraph, icCode, icPalette);
 
 const
   LightPalette: TPalette = (
@@ -40,6 +40,39 @@ const
     Accent: $FF4FB89B; AccentStrong: $FF7FD6BC; AccentSoft: $FF1E2F2B; OnAccent: $FF0E1513;
     Star: $FFE0B23C; Pending: $FFD7A53A; DoneStrike: $FF858B86; FlagCompila: $FF6FA8FF;
     FlagSonar: $FFC9A6FF; Danger: $FFE0705A; Hover: $FF202426);
+
+// o que o utilizador escolhe no aspecto (as escolhas vazias / a zero usam as da aplicacao)
+type
+  TAppearance = record
+    Accent: Cardinal;         // $FFRRGGBB; 0 = a cor original
+    UiFont: string;           // '' = Segoe UI
+    MonoFont: string;         // fonte "tecnica" da interface (nomes, numeros); '' = automatica
+    CodeFont: string;         // fonte da pagina Codigo; '' = a primeira moderna instalada
+    CodeSize: Integer;        // tamanho do codigo em pontos; 0 = 12,5
+    TextScale: Integer;       // escala do texto em %; 0 = 100
+  end;
+
+const
+  MinTextScale = 85;
+  MaxTextScale = 125;
+  MinCodeSize = 9;
+  MaxCodeSize = 22;
+  DefaultCodeSize = 12.5;
+
+function DefaultAppearance: TAppearance;
+// o aspecto guardado nas definicoes ('#RRGGBB' invalido = a cor original)
+function AppearanceFromSettings(ASettings: TAppSettings): TAppearance;
+function CurrentAppearance: TAppearance;
+// aplica o aspecto: as cores recalculam-se e os ouvintes do tema repintam tudo; as fontes e a escala valem para o
+// que se desenhar a seguir (os controlos que medem texto ao nascer so se ajustam depois de a interface ser reconstruida)
+procedure ApplyAppearance(const A: TAppearance);
+function UiFontChoices: TArray<string>;
+function MonoFontChoices: TArray<string>;
+function TextScale: Single;
+// o tamanho em pontos multiplicado pela escala do texto
+function ScaledSize(ASize: Single): Single;
+// o tamanho do codigo em pontos (sem a escala: DrawTextRect e MeasureText aplicam-na)
+function CodeFontSize: Single;
 
 function Pal: TPalette;
 function ThemeMode: TThemeMode;
@@ -78,7 +111,11 @@ var
   GListeners: TList<TProc>;
   GIcons: TObjectDictionary<TIconKind, TPathData>;
   GUiFont, GMonoFont, GCodeFont: string;
-  GCodeChoices: TArray<string>;
+  GAutoMono: string;                       // a fonte tecnica automatica (quando o utilizador nao escolhe)
+  GCodeChoices, GMonoChoices, GUiChoices: TArray<string>;
+  GAppearance: TAppearance;
+  GScale: Single = 1;
+  GLight, GDark: TPalette;                 // as paletas com a cor de destaque aplicada
 
 const
   IconPaths: array[TIconKind] of string = (
@@ -112,7 +149,8 @@ const
     { icChart } 'M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z',
     { icMinus } 'M19 13H5v-2h14v2z',
     { icGraph } 'M22 11V3h-7v3H9V3H2v8h7V8h2v10h4v3h7v-8h-7v3h-2V8h2v3z',
-    { icCode } 'M9.4 16.6 4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0 4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z'
+    { icCode } 'M9.4 16.6 4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0 4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z',
+    { icPalette } 'M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.2-.64-1.67-.08-.1-.13-.21-.13-.33 0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 8 6.5 8 8 8.67 8 9.5 7.33 11 6.5 11zm3-4C8.67 7 8 6.33 8 5.5S8.67 4 9.5 4s1.5.67 1.5 1.5S10.33 7 9.5 7zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 4 14.5 4s1.5.67 1.5 1.5S15.33 7 14.5 7zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 8 17.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'
   );
 
 function Pal: TPalette;
@@ -131,9 +169,9 @@ var
 begin
   GMode := AMode;
   if AMode = tmDark then
-    GPalette := DarkPalette
+    GPalette := GDark
   else
-    GPalette := LightPalette;
+    GPalette := GLight;
   for H in GListeners do
     H();
 end;
@@ -224,6 +262,111 @@ begin
   Result := GMonoFont;
 end;
 
+function DefaultAppearance: TAppearance;
+begin
+  Result := Default(TAppearance);
+end;
+
+function AppearanceFromSettings(ASettings: TAppSettings): TAppearance;
+var
+  C: Cardinal;
+begin
+  Result := DefaultAppearance;
+  if ASettings = nil then
+    Exit;
+  if ParseHexColor(ASettings.Accent, C) then
+    Result.Accent := C;
+  Result.UiFont := ASettings.UiFont;
+  Result.MonoFont := ASettings.MonoFont;
+  Result.CodeFont := ASettings.CodeFont;
+  Result.CodeSize := ASettings.CodeSize;
+  Result.TextScale := ASettings.TextScale;
+end;
+
+function CurrentAppearance: TAppearance;
+begin
+  Result := GAppearance;
+end;
+
+function TextScale: Single;
+begin
+  Result := GScale;
+end;
+
+function ScaledSize(ASize: Single): Single;
+begin
+  Result := ASize * GScale;
+end;
+
+function CodeFontSize: Single;
+begin
+  if GAppearance.CodeSize > 0 then
+    Result := GAppearance.CodeSize
+  else
+    Result := DefaultCodeSize;
+end;
+
+function UiFontChoices: TArray<string>;
+begin
+  Result := GUiChoices;
+end;
+
+function MonoFontChoices: TArray<string>;
+begin
+  Result := GMonoChoices;
+end;
+
+// escolhe da lista a fonte pedida (sem distinguir maiusculas); ADefault se nao esta instalada
+function PickFont(const AChoices: TArray<string>; const AName, ADefault: string): string;
+var
+  F: string;
+begin
+  if AName <> '' then
+    for F in AChoices do
+      if SameText(F, AName) then
+        Exit(F);
+  Result := ADefault;
+end;
+
+procedure RebuildPalettes;
+var
+  D: TAccentSet;
+begin
+  GLight := LightPalette;
+  GDark := DarkPalette;
+  if GAppearance.Accent = 0 then
+    Exit;
+  D := DeriveAccent(GAppearance.Accent, False, LightPalette.Surface);
+  GLight.Accent := D.Accent;
+  GLight.AccentStrong := D.Strong;
+  GLight.AccentSoft := D.Soft;
+  GLight.OnAccent := D.OnAccent;
+  D := DeriveAccent(GAppearance.Accent, True, DarkPalette.Surface);
+  GDark.Accent := D.Accent;
+  GDark.AccentStrong := D.Strong;
+  GDark.AccentSoft := D.Soft;
+  GDark.OnAccent := D.OnAccent;
+end;
+
+procedure ApplyAppearance(const A: TAppearance);
+var
+  Fixed: TAppearance;
+begin
+  Fixed := A;
+  Fixed.TextScale := EnsureRange(IfThen(A.TextScale = 0, 100, A.TextScale), MinTextScale, MaxTextScale);
+  if A.CodeSize > 0 then
+    Fixed.CodeSize := EnsureRange(A.CodeSize, MinCodeSize, MaxCodeSize);
+  if (Fixed.Accent <> 0) then
+    Fixed.Accent := Fixed.Accent or $FF000000;
+  GAppearance := Fixed;
+  GScale := Fixed.TextScale / 100;
+  GUiFont := PickFont(GUiChoices, Fixed.UiFont, 'Segoe UI');
+  GMonoFont := PickFont(GMonoChoices, Fixed.MonoFont, GAutoMono);
+  SetCodeFont(Fixed.CodeFont);
+  RebuildPalettes;
+  SetThemeMode(GMode);          // repinta: os ouvintes leem a paleta nova
+end;
+
 function CodeFont: string;
 begin
   Result := GCodeFont;
@@ -302,7 +445,7 @@ begin
   ACanvas.Fill.Kind := TBrushKind.Solid;
   ACanvas.Fill.Color := AColor;
   ACanvas.Font.Family := AFamily;
-  ACanvas.Font.Size := ASize;
+  ACanvas.Font.Size := ASize * GScale;
   ACanvas.Font.Style := AStyle;
   ACanvas.FillText(ARect, AText, False, 1, [], AHAlign, AVAlign);
 end;
@@ -314,7 +457,7 @@ var
 begin
   C := TCanvasManager.MeasureCanvas;
   C.Font.Family := AFamily;
-  C.Font.Size := ASize;
+  C.Font.Size := ASize * GScale;
   C.Font.Style := AStyle;
   Result := C.TextWidth(AText);
 end;
@@ -366,6 +509,16 @@ begin
   for F in ['JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Monaspace Neon NF', 'Source Code Pro', 'Consolas'] do
     if FontInstalled(F) then
       GCodeChoices := GCodeChoices + [F];
+  GMonoChoices := GCodeChoices;
+  if FontInstalled('Cascadia Mono') then
+    GMonoChoices := GMonoChoices + ['Cascadia Mono'];
+  GAutoMono := GMonoFont;
+  GUiChoices := ['Segoe UI'];
+  for F in ['Segoe UI Variable Text', 'Inter', 'Roboto', 'Open Sans', 'Noto Sans', 'Source Sans 3', 'Calibri', 'Verdana'] do
+    if FontInstalled(F) then
+      GUiChoices := GUiChoices + [F];
+  GLight := LightPalette;
+  GDark := DarkPalette;
   SetCodeFont('');
 end;
 

@@ -36,6 +36,7 @@ a document describing what the project *should* contain, it compares the two.
 - **Safe saving** — progress is written atomically with a `.bak` copy and restored automatically if a file is damaged.
 - **Four languages** — Portuguese, English, French and German (exported reports follow the language).
 - **GitHub repositories** — analyse a repository instead of a folder: only the latest version is cloned into a private cache, read-only.
+- **Appearance** — pick the accent colour (presets or any `#RRGGBB`, with contrast kept readable in both themes), the fonts, the text scale and the code size.
 - **Light and dark themes.**
 
 ![Code map](docs/images/02-mapa.png)

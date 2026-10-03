@@ -12,6 +12,7 @@ uses
   CM.Analyzer in '..\src\Core\CM.Analyzer.pas',
   CM.Deps in '..\src\Core\CM.Deps.pas',
   CM.Highlight in '..\src\Core\CM.Highlight.pas',
+  CM.Colors in '..\src\Core\CM.Colors.pas',
   CM.Clicks in '..\src\UI\CM.Clicks.pas',
   CM.Theme in '..\src\UI\CM.Theme.pas',
   CM.Store in '..\src\Core\CM.Store.pas',
@@ -63,7 +64,9 @@ uses
   Tests.Highlight in 'Tests.Highlight.pas',
   Tests.Clicks in 'Tests.Clicks.pas',
   Tests.SonarMeasures in 'Tests.SonarMeasures.pas',
-  Tests.Svn in 'Tests.Svn.pas';
+  Tests.Svn in 'Tests.Svn.pas',
+  Tests.Colors in 'Tests.Colors.pas',
+  Tests.Appearance in 'Tests.Appearance.pas';
 
 var
   Runner: ITestRunner;

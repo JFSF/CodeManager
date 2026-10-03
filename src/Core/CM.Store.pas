@@ -36,6 +36,12 @@ type
     Language: string;           // 'pt' | 'en' | 'fr' | 'de' | '' (segue o Windows)
     CodeFont: string;           // fonte da pagina Codigo ('' = a primeira fonte moderna instalada)
     CodeLigatures: Boolean;     // mostrar as ligaduras da fonte (-> => <> := ...)
+    // aspecto (pagina Aspeto); os valores vazios / a zero usam os da aplicacao
+    Accent: string;             // '#RRGGBB' ('' = a cor original)
+    UiFont: string;
+    MonoFont: string;
+    CodeSize: Integer;          // tamanho do codigo em pontos (0 = o da aplicacao)
+    TextScale: Integer;         // escala do texto em % (0 = 100)
     // SonarQube: opcional e por utilizador (estas definicoes ficam nos dados dele). O token nunca se guarda
     // em claro: SonarTokenCipher e o texto ja protegido por quem o guarda (CM.Secrets)
     SonarEnabled: Boolean;
@@ -220,6 +226,11 @@ begin
     Language := Obj.GetValue<string>('language', '');
     CodeFont := Obj.GetValue<string>('codeFont', '');
     CodeLigatures := JsonBool(Obj, 'codeLigatures', True);
+    Accent := Obj.GetValue<string>('accent', '');
+    UiFont := Obj.GetValue<string>('uiFont', '');
+    MonoFont := Obj.GetValue<string>('monoFont', '');
+    CodeSize := Obj.GetValue<Integer>('codeSize', 0);
+    TextScale := Obj.GetValue<Integer>('textScale', 0);
     ActiveProjectId := Obj.GetValue<string>('activeProject', '');
     OpenAfterExport := JsonBool(Obj, 'openAfterExport', True);
     SonarEnabled := False;
@@ -273,6 +284,16 @@ begin
     if CodeFont <> '' then
       Obj.AddPair('codeFont', CodeFont);
     Obj.AddPair('codeLigatures', TJSONBool.Create(CodeLigatures));
+    if Accent <> '' then
+      Obj.AddPair('accent', Accent);
+    if UiFont <> '' then
+      Obj.AddPair('uiFont', UiFont);
+    if MonoFont <> '' then
+      Obj.AddPair('monoFont', MonoFont);
+    if CodeSize > 0 then
+      Obj.AddPair('codeSize', TJSONNumber.Create(CodeSize));
+    if TextScale > 0 then
+      Obj.AddPair('textScale', TJSONNumber.Create(TextScale));
     if SonarEnabled or (SonarUrl <> '') or (SonarTokenCipher <> '') then
     begin
       SObj := TJSONObject.Create;

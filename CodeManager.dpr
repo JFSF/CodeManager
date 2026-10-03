@@ -8,6 +8,7 @@ uses
   CM.Analyzer in 'src\Core\CM.Analyzer.pas',
   CM.Deps in 'src\Core\CM.Deps.pas',
   CM.Highlight in 'src\Core\CM.Highlight.pas',
+  CM.Colors in 'src\Core\CM.Colors.pas',
   CM.SafeFile in 'src\Core\CM.SafeFile.pas',
   CM.Metrics in 'src\Core\CM.Metrics.pas',
   CM.SonarModel in 'src\Core\CM.SonarModel.pas',
@@ -41,6 +42,7 @@ uses
   CM.Pages.Dashboard in 'src\UI\Pages\CM.Pages.Dashboard.pas',
   CM.Pages.Graph in 'src\UI\Pages\CM.Pages.Graph.pas',
   CM.Pages.Code in 'src\UI\Pages\CM.Pages.Code.pas',
+  CM.Pages.Appearance in 'src\UI\Pages\CM.Pages.Appearance.pas',
   CM.MainForm in 'src\UI\CM.MainForm.pas';
 
 {$R *.res}

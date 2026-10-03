@@ -687,7 +687,7 @@ end;
 procedure TCMTreeList.SetFont(ASize: Single; const AFamily: string; AStyle: TFontStyles);
 begin
   Canvas.Font.Family := AFamily;
-  Canvas.Font.Size := ASize;
+  Canvas.Font.Size := ScaledSize(ASize);
   Canvas.Font.Style := AStyle;
 end;
 

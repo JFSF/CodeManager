@@ -60,6 +60,8 @@ type
     [Test] procedure SettingsWithBothFilesCorruptRaise;
     [Test] procedure CodeFontAndLigaturesRoundTrip;
     [Test] procedure CodeLigaturesAreOnByDefault;
+    [Test] procedure AppearanceSettingsRoundTrip;
+    [Test] procedure AppearanceDefaultsStayOutOfTheFile;
   end;
 
 implementation
@@ -391,6 +393,49 @@ begin
     Assert.IsFalse(L.CodeLigatures);
   finally
     L.Free;
+    S.Free;
+  end;
+end;
+
+procedure TStoredFilesTests.AppearanceSettingsRoundTrip;
+var
+  S, L: TAppSettings;
+begin
+  S := TAppSettings.Create;
+  L := TAppSettings.Create;
+  try
+    S.Accent := '#7C4DCB';
+    S.UiFont := 'Inter';
+    S.MonoFont := 'Fira Code';
+    S.CodeSize := 14;
+    S.TextScale := 110;
+    S.Save;
+    L.Load;
+    Assert.AreEqual('#7C4DCB', L.Accent);
+    Assert.AreEqual('Inter', L.UiFont);
+    Assert.AreEqual('Fira Code', L.MonoFont);
+    Assert.AreEqual(14, L.CodeSize);
+    Assert.AreEqual(110, L.TextScale);
+  finally
+    L.Free;
+    S.Free;
+  end;
+end;
+
+procedure TStoredFilesTests.AppearanceDefaultsStayOutOfTheFile;
+var
+  S: TAppSettings;
+  Text: string;
+begin
+  S := TAppSettings.Create;
+  try
+    S.Save;
+    Text := TFile.ReadAllText(TPath.Combine(FIso.Path, 'settings.json'), TEncoding.UTF8);
+    Assert.IsFalse(Text.Contains('accent'));
+    Assert.IsFalse(Text.Contains('uiFont'));
+    Assert.IsFalse(Text.Contains('textScale'));
+    Assert.IsFalse(Text.Contains('codeSize'));
+  finally
     S.Free;
   end;
 end;

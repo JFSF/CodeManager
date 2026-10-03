@@ -290,7 +290,7 @@ Lê o código-fonte de uma unit sem sair da aplicação, em **modo de leitura** 
   linha destaca-a. **Copiar tudo** põe o ficheiro na área de transferência.
 - **SonarQube:** com o Sonar ligado, os problemas e *hotspots* do ficheiro aparecem na margem e numa lista por baixo
   (ver [SonarQube](#sonarqube-opcional)).
-- **Fonte e ligaduras:** usa a primeira fonte moderna instalada (JetBrains Mono, Fira Code, Cascadia Code, Monaspace
+- **Fonte e ligaduras:** usa a primeira fonte moderna instalada (a fonte, o tamanho e a cor também se escolhem na página [Aspeto](#aspeto)) (JetBrains Mono, Fira Code, Cascadia Code, Monaspace
   Neon, Source Code Pro ou Consolas); o botão com o nome da fonte passa para a seguinte. **Ligaduras** liga ou desliga
   a fusão dos operadores (`->`, `=>`, `<>`, `:=`, `>=` …). As duas escolhas ficam guardadas nas definições.
 - Se o ficheiro mudar no disco, volta a ser lido ao regressares à página. Ao trocar de projeto os separadores
@@ -351,6 +351,28 @@ O formato, as regras de correspondência e um exemplo estão em [FORMATO-DO-PLAN
 Nas exportações da estrutura podes incluir os **métodos** e o **estado e notas** (concluído, Compila, Sonar,
 prioridade, nota). O CSV e o JSON levam também as **linhas** e a **complexidade** de cada método. A impressão usa A4 (ou o papel da impressora), letra monoespaçada, quebra de linhas longas com
 guias, cabeçalho corrido e rodapé «Página X de N».
+
+## Aspeto
+
+A página **Aspeto** (o pincel, no fim da barra lateral) muda o aspeto da aplicação. As escolhas são **só tuas**: ficam
+nas tuas definições (`settings.json`), não nos projetos.
+
+![Página Aspeto](images/17-aspeto.png)
+
+- **Cor de destaque:** a cor dos botões, dos itens selecionados e dos gráficos. Escolhe uma das cores prontas (a
+  primeira é a original) ou escreve uma cor livre em `#RRGGBB`. As variantes forte e suave e a cor do texto por cima
+  calculam-se sozinhas: no tema claro a cor escurece até o texto branco por cima se ler bem, e no escuro clareia até
+  se ler bem sobre os cartões. Aplica-se logo, nos dois temas.
+- **Fontes:** a da **interface**, a do **texto técnico** (nomes de ficheiros, números, etiquetas) e a do **código** (a
+  página Código). Cada ficha está escrita na própria fonte; só aparecem as instaladas.
+- **Tamanho:** a escala do texto da aplicação (90 % a 125 %) e o tamanho do código (9 a 22 pontos, ou «Automático»).
+- **Pré-visualização** do código com a fonte, o tamanho e a cor escolhidos, e **Repor aspeto padrão**.
+
+As fontes e a escala repintam logo e, passado um instante sem mexeres, a interface reconstrói-se (como ao mudar de
+idioma) para os controlos medirem o texto de novo; o projeto é analisado outra vez. As páginas HTML exportadas e o
+papel mantêm o aspeto original.
+
+![Aspeto, no tema escuro, com outra cor](images/18-aspeto-escuro.png)
 
 ## Tema claro e escuro
 
