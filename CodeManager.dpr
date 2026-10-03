@@ -13,6 +13,8 @@ uses
   CM.SonarModel in 'src\Core\CM.SonarModel.pas',
   CM.Proc in 'src\Infrastructure\CM.Proc.pas',
   CM.Git in 'src\Infrastructure\CM.Git.pas',
+  CM.Svn in 'src\Infrastructure\CM.Svn.pas',
+  CM.Vcs in 'src\Infrastructure\CM.Vcs.pas',
   CM.GitHub in 'src\Infrastructure\CM.GitHub.pas',
   CM.Secrets in 'src\Infrastructure\CM.Secrets.pas',
   CM.Sonar in 'src\Infrastructure\CM.Sonar.pas',

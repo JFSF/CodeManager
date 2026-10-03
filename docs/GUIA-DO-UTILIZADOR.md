@@ -182,22 +182,27 @@ esquerda para passar ao seguinte; a caixa continua a marcar «concluído».
 - As **páginas HTML offline** continuam a conhecer só o «concluído»: mostram o resto como por concluir, mas não o
   perdem ao exportar o progresso.
 
-### Alterações desde a revisão (Git)
+### Alterações desde a revisão (Git e Subversion)
 
-Se a pasta do projeto está num repositório **Git** (e o `git` está no `PATH`), a Checklist avisa quando um ficheiro
-que já revistes mudou depois disso:
+Se a pasta do projeto está num repositório **Git** (com o `git` no `PATH`) ou numa cópia de trabalho do
+**Subversion** (com o `svn` da linha de comandos no `PATH`; o TortoiseSVN só o instala se escolheres «command line
+client tools»), a Checklist avisa quando um ficheiro que já revistes mudou depois disso. O sistema é descoberto
+pela pasta (procura-se `.git` ou `.svn` do projeto para cima; ganha o mais próximo) e o resto funciona igual:
 
-- Cada ficheiro guarda o **commit** em que o revistes (muda sempre que alteras o seu estado). Os ficheiros revistos
+- Cada ficheiro guarda o **commit** (Git) ou a **revisão** (Subversion, um número como `r1234`, a da cópia de
+  trabalho) em que o revistes; muda sempre que alteras o seu estado. Os ficheiros revistos
   antes desta funcionalidade ganham o commit que era o atual na hora em que os concluístes.
 - Um ficheiro revisto cujo conteúdo é diferente desse commit — seja por commits novos ou por alterações ainda por
   gravar no Git — leva a etiqueta **ALTERADO**. Passa o rato pelo nome para ver os últimos commits que lhe tocaram.
-- O cartão **Git** mostra o commit atual e quantos ficheiros mudaram. **Só alterados** filtra a lista;
+- O cartão **Git** (ou **Subversion**) mostra o commit (ou a revisão) atual e quantos ficheiros mudaram. **Só alterados** filtra a lista;
   **Atualizar** volta a perguntar ao Git (também acontece sozinho depois de analisar, e quando o vigia deteta
   alterações); **Voltar a «por rever»** repõe esses ficheiros, depois de confirmares. Compila, Sonar, prioridade e
   notas mantêm-se.
 - Voltas a rever um ficheiro (mudas-lhe o estado) e a etiqueta desaparece: a revisão passa a ser do commit atual.
 
-O CodeManager **só lê** o repositório (`git rev-parse`, `log`, `diff`): nunca faz commits nem altera nada. Sem Git,
+O CodeManager **só lê** o repositório (`git rev-parse`, `log`, `diff`; `svn info`, `log`, `status`): nunca faz
+commits nem altera nada. No Subversion, «o que mudou» junta as revisões que já estão na tua cópia, depois daquela em
+que reviste o ficheiro, com o que ainda não enviaste; faz `svn update` para ver o que os outros enviaram. Sem Git nem Subversion,
 ou fora de um repositório, o cartão e as etiquetas simplesmente não aparecem.
 
 ### SonarQube (opcional)

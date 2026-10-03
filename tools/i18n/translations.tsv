@@ -158,7 +158,7 @@ Os ficheiros que o SonarQube não conhece ficam como estão.	Files unknown to So
 Sonar: %d ficheiros marcados, %d desmarcados	Sonar: %d files marked, %d unmarked	Sonar : %d fichiers cochés, %d décochés	Sonar: %d Dateien markiert, %d Markierungen entfernt
 Commit atual	Current commit	Commit actuel	Aktueller Commit
 Mudaram desde a revisão	Changed since review	Modifiés depuis la revue	Seit der Prüfung geändert
-Git: %d ficheiros revistos mudaram desde a revisão	Git: %d reviewed files changed since review	Git : %d fichiers revus ont changé depuis la revue	Git: %d geprüfte Dateien wurden seit der Prüfung geändert
+%s: %d ficheiros revistos mudaram desde a revisão	%s: %d reviewed files changed since review	%s : %d fichiers revus ont changé depuis la revue	%s: %d geprüfte Dateien seit der Prüfung geändert
 Nenhum ficheiro revisto mudou desde a revisão	No reviewed file has changed since review	Aucun fichier revu n'a changé depuis la revue	Keine geprüfte Datei wurde seit der Prüfung geändert
 Voltar a «por rever» os %d ficheiros que mudaram desde a revisão? 	Set the %d files that changed since review back to “to review”? 	Remettre « à revoir » les %d fichiers modifiés depuis la revue ? 	Die %d seit der Prüfung geänderten Dateien wieder auf „zu prüfen“ setzen?
 Ficam sem estado de revisão; Compila, Sonar, prioridade e notas mantêm-se.	They lose their review status; Builds, Sonar, priority and notes are kept.	Ils perdent leur état de revue ; Compile, Sonar, priorité et notes sont conservés.	Sie verlieren ihren Prüfstatus; Kompiliert, Sonar, Priorität und Notizen bleiben erhalten.
@@ -285,7 +285,7 @@ informativa	info	informative	informativ
 1 linha · complexidade %d	1 line · complexity %d	1 ligne · complexité %d	1 Zeile · Komplexität %d
 %d linhas · complexidade %d	%d lines · complexity %d	%d lignes · complexité %d	%d Zeilen · Komplexität %d
 # --- Git
-Mudou desde a revisão (alterações ainda por gravar no Git)	Changed since review (changes not yet committed to Git)	Modifié depuis la revue (modifications pas encore validées dans Git)	Seit der Prüfung geändert (Änderungen noch nicht in Git übernommen)
+Mudou desde a revisão (alterações ainda por gravar no %s)	Changed since review (changes not yet committed to %s)	Modifié depuis la revue (modifications pas encore enregistrées dans %s)	Seit der Prüfung geändert (noch nicht in %s gespeicherte Änderungen)
 Mudou desde a revisão:	Changed since review:	Modifié depuis la revue :	Seit der Prüfung geändert:
 # --- Exportacao (Markdown, TXT, CSV) e impressao
 Texto (árvore)	Text (tree)	Texte (arborescence)	Text (Baum)
@@ -485,6 +485,7 @@ Horas estimadas pelo SonarQube	Hours estimated by SonarQube	Heures estimées par
 Horas	Hours	Heures	Stunden
 Ficheiros com mais dívida técnica	Files with the most technical debt	Fichiers avec le plus de dette technique	Dateien mit den meisten technischen Schulden
 Os %d com mais horas de dívida	The %d with the most hours of debt	Les %d avec le plus d'heures de dette	Die %d mit den meisten Schuldenstunden
+Revisão atual	Current revision	Révision actuelle	Aktuelle Revision
 #!html
 # Textos dos modelos HTML (res\templates): cada chave e um troco exacto do modelo; so se aplicam ao modelo, antes de
 # se preencherem os marcadores __XXX__. Nas traducoes nao se usam aspas ASCII duplas (estao em strings JS e atributos).

@@ -22,7 +22,7 @@ a document describing what the project *should* contain, it compares the two.
 ## Features
 
 - **Map** — the folder → file → method tree, with search, statistics and the **lines, complexity, parameters and nesting** of each method.
-- **Checklist** — mark what you reviewed, what is under review or needs changes, what compiles, what passed Sonar, what is a priority; add notes. In a Git repository it flags the files that changed since you reviewed them; SonarQube is optional and per user.
+- **Checklist** — mark what you reviewed, what is under review or needs changes, what compiles, what passed Sonar, what is a priority; add notes. In a Git repository or a Subversion working copy it flags the files that changed since you reviewed them; SonarQube is optional and per user.
   A file is *done* when **all its methods** are reviewed.
 - **Graph** — a visual map of the dependencies between units (from the `uses` clauses): levels, layer colours, coupling, **cycles**, and an HTML (SVG map) or Markdown report.
 - **Code** — double-click a unit in the Graph, or a file or method in the Map or the Checklist, to read its code in a read-only tab (line numbers, Delphi syntax colouring, a modern font with ligatures; a method jumps to its line).

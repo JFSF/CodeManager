@@ -11,6 +11,9 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
 - **Grafo de dependências:** nova página com o mapa visual de quem usa quem (cláusulas `uses` da *interface* e da
   *implementation*), acoplamento, instabilidade, **ciclos**, filtro, simplificação e relatório em HTML (mapa em SVG)
   ou Markdown.
+- **Subversion:** a deteção de «alterado desde a revisão» funciona também numa cópia de trabalho do Subversion
+  (com o `svn` da linha de comandos): guarda o número da revisão, junta as revisões seguintes com as alterações
+  ainda por enviar, e a dica mostra as revisões (`r1234`) que tocaram no ficheiro. O Git continua como antes.
 - **Mais do SonarQube:** cada consulta traz agora as medidas do projeto e de cada ficheiro (linhas, cobertura,
   duplicação, dívida técnica, complexidade, bugs, vulnerabilidades, *code smells*, *hotspots*, classificações A–E), o
   detalhe dos problemas (linha, tipo, regra, mensagem) e os *security hotspots* por rever. Mostram-se no cartão do Mapa,

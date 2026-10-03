@@ -9,7 +9,7 @@ uses
   System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math, System.IOUtils,
   System.Rtti, System.StrUtils,
   FMX.Types, FMX.Controls, FMX.Layouts, FMX.Dialogs, FMX.Platform, FMX.DialogService.Sync,
-  CM.Theme, CM.Controls, CM.Layouts, CM.TreeList, CM.Analyzer, CM.Store, CM.Stats, CM.Plan, CM.GitReview, CM.SonarModel, CM.Pages.Host;
+  CM.Theme, CM.Controls, CM.Layouts, CM.TreeList, CM.Analyzer, CM.Store, CM.Stats, CM.Plan, CM.GitReview, CM.Vcs, CM.SonarModel, CM.Pages.Host;
 
 type
   TChecklistPage = class(TCMControl)
@@ -22,7 +22,8 @@ type
     FSonarCard: TCMPanel;          // so aparece se o utilizador activou o SonarQube e o projecto tem chave
     FSonarInfo: TCMKeyValue;
     FSonarNote: TCMLabel;
-    FGitCard: TCMPanel;            // so aparece num repositorio Git
+    FGitCard: TCMPanel;            // so aparece num repositorio Git ou numa copia de trabalho Subversion
+    FGitTitle: TCMLabel;
     FGitInfo: TCMKeyValue;
     FGitShowBtn: TCMButton;
     FGitTimer: TTimer;             // adia a consulta ao git: o IDE grava varias vezes seguidas
@@ -155,7 +156,8 @@ begin
 
   FGitCard := SideCard(Self, Side, 200);
   FGitCard.Visible := False;
-  TCMLabel.Make(FGitCard, 'Git', 15, True).Align := TAlignLayout.Top;
+  FGitTitle := TCMLabel.Make(FGitCard, 'Git', 15, True);
+  FGitTitle.Align := TAlignLayout.Top;
   FGitInfo := TCMKeyValue.Create(Self);
   FGitInfo.Parent := FGitCard;
   FGitInfo.Align := TAlignLayout.Top;
@@ -530,6 +532,9 @@ end;
 
 // o cartao so existe num repositorio; mostra o commit actual e quantos ficheiros revistos mudaram
 procedure TChecklistPage.ShowGitCard(const AHead: string);
+var
+  Kind: TVcsKind;
+  Current: TKeyValue;
 begin
   FGitCard.Visible := AHead <> '';
   if AHead = '' then
@@ -541,8 +546,16 @@ begin
     end;
     Exit;
   end;
+  Kind := vkGit;
+  if FHost.CurrentScan <> nil then
+    Kind := DetectVcs(FHost.CurrentScan.Root);
+  FGitTitle.Text := VcsName(Kind);
+  if Kind = vkSvn then
+    Current := KV(Tr('Revisão atual'), 'r' + AHead)
+  else
+    Current := KV(Tr('Commit atual'), Copy(AHead, 1, 8));
   FGitInfo.SetRows([
-    KV(Tr('Commit atual'), Copy(AHead, 1, 8)),
+    Current,
     KV(Tr('Mudaram desde a revisão'), IntToStr(Length(FStalePaths)), Length(FStalePaths) > 0)]);
   FGitCard.Height := 16 + 16 + 28 + 8 + FGitInfo.Height + 10 + 36 + 8 + 36;
 end;
@@ -556,7 +569,8 @@ end;
 procedure TChecklistPage.GitRefreshClick(Sender: TObject);
 begin
   RefreshGit;
-  FHost.Toast(Format(Tr('Git: %d ficheiros revistos mudaram desde a revisão'), [Length(FStalePaths)]));
+  FHost.Toast(Format(Tr('%s: %d ficheiros revistos mudaram desde a revisão'),
+    [VcsName(DetectVcs(FHost.CurrentScan.Root)), Length(FStalePaths)]));
 end;
 
 procedure TChecklistPage.GitResetClick(Sender: TObject);

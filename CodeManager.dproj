@@ -103,6 +103,8 @@
         <DCCReference Include="src\Core\CM.SonarModel.pas"/>
         <DCCReference Include="src\Infrastructure\CM.Proc.pas"/>
         <DCCReference Include="src\Infrastructure\CM.Git.pas"/>
+        <DCCReference Include="src\Infrastructure\CM.Svn.pas"/>
+        <DCCReference Include="src\Infrastructure\CM.Vcs.pas"/>
         <DCCReference Include="src\Infrastructure\CM.GitHub.pas"/>
         <DCCReference Include="src\Infrastructure\CM.Secrets.pas"/>
         <DCCReference Include="src\Infrastructure\CM.Sonar.pas"/>

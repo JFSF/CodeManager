@@ -22,6 +22,8 @@ uses
   CM.SonarModel in '..\src\Core\CM.SonarModel.pas',
   CM.Proc in '..\src\Infrastructure\CM.Proc.pas',
   CM.Git in '..\src\Infrastructure\CM.Git.pas',
+  CM.Svn in '..\src\Infrastructure\CM.Svn.pas',
+  CM.Vcs in '..\src\Infrastructure\CM.Vcs.pas',
   CM.GitHub in '..\src\Infrastructure\CM.GitHub.pas',
   CM.Secrets in '..\src\Infrastructure\CM.Secrets.pas',
   CM.Sonar in '..\src\Infrastructure\CM.Sonar.pas',
@@ -60,7 +62,8 @@ uses
   Tests.DepsReport in 'Tests.DepsReport.pas',
   Tests.Highlight in 'Tests.Highlight.pas',
   Tests.Clicks in 'Tests.Clicks.pas',
-  Tests.SonarMeasures in 'Tests.SonarMeasures.pas';
+  Tests.SonarMeasures in 'Tests.SonarMeasures.pas',
+  Tests.Svn in 'Tests.Svn.pas';
 
 var
   Runner: ITestRunner;

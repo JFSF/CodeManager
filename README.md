@@ -105,7 +105,7 @@ Painel ganham as medidas do servidor: cobertura, duplicação, dívida técnica,
 
 A **Checklist** agrupa os ficheiros por pasta. Um ficheiro fica concluído quando **todos os métodos** estão revistos;
 podes marcar prioridades ★, escrever notas, filtrar por camada e dar a cada método um **estado de revisão**
-(por rever, em revisão, precisa de alteração, concluído). Num repositório **Git**, vês que ficheiros mudaram desde
+(por rever, em revisão, precisa de alteração, concluído). Num repositório **Git** ou numa cópia de trabalho **Subversion**, vês que ficheiros mudaram desde
 a revisão e podes voltar a pô-los «por rever». Se quiseres, ligas o **SonarQube** (opcional, por utilizador)
 para veres os problemas abertos por ficheiro. O progresso exporta-se em JSON, no mesmo formato
 das páginas HTML offline.
@@ -212,7 +212,7 @@ Versão **1.0.0**. Em desenvolvimento ativo, desenvolvido e testado em **Windows
 automáticos cobrem o motor, as exportações, o vigia e as regras de arquitetura; a interface é verificada com o
 [modo de desenvolvimento](docs/DESENVOLVIMENTO.md#modo-de-desenvolvimento---dev).
 
-Ideias para o futuro: mais métricas por método e outros sistemas de controlo de versões. Sugestões são bem-vindas.
+Ideias para o futuro: o Mercurial como sistema de controlo de versões. Sugestões são bem-vindas.
 
 ## Contribuir
 

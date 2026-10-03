@@ -10,7 +10,7 @@
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Math, System.Generics.Collections, CM.Analyzer, CM.Store, CM.Stats, CM.Git;
+  System.SysUtils, System.Classes, System.Math, System.Generics.Collections, CM.Analyzer, CM.Store, CM.Stats, CM.Vcs;
 
 type
   TGitReviewResult = record
@@ -43,11 +43,11 @@ begin
   Result.Stale := THashSet<string>.Create;
   if (AScan = nil) or (AState = nil) or (ARoot = '') then
     Exit;
-  Result.Head := GitHead(ARoot);
+  Result.Head := VcsHead(ARoot);
   if Result.Head = '' then
     Exit;
 
-  Timeline := GitTimeline(ARoot);
+  Timeline := VcsTimeline(ARoot);
   Result.Backfilled := BackfillRevisions(AScan, AState, Timeline);
 
   // agrupa por commit de revisao: uma consulta ao Git por commit, nao por ficheiro
@@ -69,7 +69,7 @@ begin
     begin
       Changed := THashSet<string>.Create;
       try
-        if GitChangedSince(ARoot, Pair.Key, Changed) then
+        if VcsChangedSince(ARoot, Pair.Key, Changed) then
           for U in Pair.Value do
             if Changed.Contains(U.Path) then
               Result.Stale.Add(U.Path);
@@ -86,12 +86,12 @@ function StaleHint(const ARoot, ARev, ARelPath: string): string;
 const
   Shown = 3;
 var
-  Commits: TArray<TGitCommit>;
+  Commits: TArray<TVcsCommit>;
   I: Integer;
 begin
-  Commits := GitCommitsSince(ARoot, ARev, ARelPath, Shown + 1);
+  Commits := VcsCommitsSince(ARoot, ARev, ARelPath, Shown + 1);
   if Length(Commits) = 0 then
-    Exit(Tr('Mudou desde a revisão (alterações ainda por gravar no Git)'));
+    Exit(TrF('Mudou desde a revisão (alterações ainda por gravar no %s)', [VcsName(DetectVcs(ARoot))]));
   Result := Tr('Mudou desde a revisão:');
   for I := 0 to Min(Shown, Length(Commits)) - 1 do
     Result := Result + sLineBreak + Commits[I].Date + ' · ' + Commits[I].Author + ' · ' + Commits[I].Subject;
