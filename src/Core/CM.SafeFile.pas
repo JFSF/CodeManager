@@ -36,6 +36,9 @@ procedure DeleteDataFile(const AFileName: string);
 
 implementation
 
+
+uses
+  CM.Lang;
 function IsJsonObject(const AText: string): Boolean;
 var
   V: TJSONValue;
@@ -107,10 +110,10 @@ begin
       on Exception do ;
     end;
     raise EDataFileCorrupt.CreateFmt(
-      'O ficheiro "%s" esta danificado e nao ha uma copia de seguranca valida.',
+      Tr('O ficheiro "%s" esta danificado e nao ha uma copia de seguranca valida.'),
       [TPath.GetFileName(AFileName)]);
   end;
-  raise EFileNotFoundException.CreateFmt('O ficheiro "%s" nao existe.', [TPath.GetFileName(AFileName)]);
+  raise EFileNotFoundException.CreateFmt(Tr('O ficheiro "%s" nao existe.'), [TPath.GetFileName(AFileName)]);
 end;
 
 procedure DeleteDataFile(const AFileName: string);

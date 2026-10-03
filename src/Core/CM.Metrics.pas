@@ -34,7 +34,10 @@ function MetricsText(ALines, AComplexity: Integer): string;
 procedure MeasureRoutines(const ACleanImpl: string; AResult: TList<TRoutineMetric>);
 
 implementation
+
 
+uses
+  CM.Lang;
 type
   TToken = record
     Text: string;          // minusculas; '' para um texto entre apostrofos
@@ -71,9 +74,9 @@ begin
   if ALines <= 0 then
     Result := ''
   else if ALines = 1 then
-    Result := Format('1 linha · complexidade %d', [AComplexity])
+    Result := Format(Tr('1 linha · complexidade %d'), [AComplexity])
   else
-    Result := Format('%d linhas · complexidade %d', [ALines, AComplexity]);
+    Result := Format(Tr('%d linhas · complexidade %d'), [ALines, AComplexity]);
 end;
 
 constructor TRoutine.Create;

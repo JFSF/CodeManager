@@ -93,11 +93,15 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
+        <DCCReference Include="src\Core\CM.Lang.Table.pas"/>
+        <DCCReference Include="src\Core\CM.Lang.pas"/>
         <DCCReference Include="src\Core\CM.Analyzer.pas"/>
+        <DCCReference Include="src\Core\CM.Deps.pas"/>
         <DCCReference Include="src\Core\CM.SafeFile.pas"/>
         <DCCReference Include="src\Core\CM.Metrics.pas"/>
         <DCCReference Include="src\Core\CM.SonarModel.pas"/>
         <DCCReference Include="src\Infrastructure\CM.Git.pas"/>
+        <DCCReference Include="src\Infrastructure\CM.GitHub.pas"/>
         <DCCReference Include="src\Infrastructure\CM.Secrets.pas"/>
         <DCCReference Include="src\Infrastructure\CM.Sonar.pas"/>
         <DCCReference Include="src\Services\CM.GitReview.pas"/>
@@ -105,18 +109,21 @@
         <DCCReference Include="src\Core\CM.Stats.pas"/>
         <DCCReference Include="src\Services\CM.Html.pas"/>
         <DCCReference Include="src\Services\CM.Export.pas"/>
+        <DCCReference Include="src\Services\CM.DepsReport.pas"/>
         <DCCReference Include="src\Services\CM.Print.pas"/>
         <DCCReference Include="src\Infrastructure\CM.Watcher.pas"/>
         <DCCReference Include="src\Infrastructure\CM.Resources.pas"/>
         <DCCReference Include="src\UI\CM.Theme.pas"/>
         <DCCReference Include="src\UI\CM.Controls.pas"/>
         <DCCReference Include="src\UI\CM.TreeList.pas"/>
+        <DCCReference Include="src\UI\CM.GraphView.pas"/>
         <DCCReference Include="src\UI\CM.Layouts.pas"/>
         <DCCReference Include="src\UI\Pages\CM.Pages.Host.pas"/>
         <DCCReference Include="src\UI\Pages\CM.Pages.Project.pas"/>
         <DCCReference Include="src\UI\Pages\CM.Pages.Map.pas"/>
         <DCCReference Include="src\UI\Pages\CM.Pages.Checklist.pas"/>
         <DCCReference Include="src\UI\Pages\CM.Pages.Dashboard.pas"/>
+        <DCCReference Include="src\UI\Pages\CM.Pages.Graph.pas"/>
         <DCCReference Include="src\UI\CM.MainForm.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>

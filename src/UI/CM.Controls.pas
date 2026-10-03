@@ -287,6 +287,9 @@ function LabelColor(ARole: TLabelColor): TAlphaColor;
 
 implementation
 
+
+uses
+  CM.Lang;
 const
   RowHeightList = 62;
 
@@ -1055,12 +1058,12 @@ begin
   TR := TRectF.Create(84, 8, Width, 40);
   DrawTextRect(Canvas, TR, FCaption, P.Text, 26, MonoFont, [TFontStyle.fsBold]);
   TR := TRectF.Create(84, 38, Width, 56);
-  DrawTextRect(Canvas, TR, 'concluído', P.TextDim, 12, UiFont);
+  DrawTextRect(Canvas, TR, CM.Lang.Tr('concluído'), P.TextDim, 12, UiFont);
   TR := TRectF.Create(84, 54, Width, 72);
   DrawTextRect(Canvas, TR, FSub, P.TextFaint, 11.5, MonoFont);
 
   TR := TRectF.Create(0, 78, Width, 96);
-  DrawTextRect(Canvas, TR, 'Métodos revistos', P.TextDim, 11.5, MonoFont);
+  DrawTextRect(Canvas, TR, CM.Lang.Tr('Métodos revistos'), P.TextDim, 11.5, MonoFont);
   DrawTextRect(Canvas, TR, FMethodsCaption, P.Pending, 11.5, MonoFont, [TFontStyle.fsBold],
     TTextAlign.Trailing);
   BarR := TRectF.Create(0, 100, Width, 105);

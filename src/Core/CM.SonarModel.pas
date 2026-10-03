@@ -54,7 +54,10 @@ function SeverityText(ASeverity: TSonarSeverity): string;
 function SyncSonarFlags(AScan: TProjectScan; AState: TProgressState; ASnapshot: TSonarSnapshot): TSonarSync;
 
 implementation
+
 
+uses
+  CM.Lang;
 function SeverityFromText(const AText: string): TSonarSeverity;
 begin
   if SameText(AText, 'BLOCKER') then Result := ssBlocker
@@ -67,12 +70,12 @@ end;
 function SeverityText(ASeverity: TSonarSeverity): string;
 begin
   case ASeverity of
-    ssBlocker: Result := 'bloqueante';
-    ssCritical: Result := 'crítica';
-    ssMajor: Result := 'maior';
-    ssMinor: Result := 'menor';
+    ssBlocker: Result := Tr('bloqueante');
+    ssCritical: Result := Tr('crítica');
+    ssMajor: Result := Tr('maior');
+    ssMinor: Result := Tr('menor');
   else
-    Result := 'informativa';
+    Result := Tr('informativa');
   end;
 end;
 

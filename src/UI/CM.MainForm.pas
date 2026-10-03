@@ -11,8 +11,8 @@ uses
   System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math, System.IOUtils,
   System.Generics.Collections, System.StrUtils,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Edit, FMX.Printer,
-  CM.Theme, CM.Controls, CM.TreeList, CM.Analyzer, CM.Store, CM.SafeFile, CM.SonarModel, CM.Sonar, CM.Secrets, CM.Stats, CM.History, CM.Plan, CM.Export, CM.Print,
-  CM.Pages.Host, CM.Pages.Project, CM.Pages.Map, CM.Pages.Checklist, CM.Pages.Dashboard;
+  CM.Lang, CM.Deps, CM.DepsReport, CM.Theme, CM.Controls, CM.TreeList, CM.Analyzer, CM.Store, CM.SafeFile, CM.SonarModel, CM.Sonar, CM.Secrets, CM.Stats, CM.History, CM.Plan, CM.Export, CM.Print,
+  CM.GitHub, CM.Pages.Host, CM.Pages.Project, CM.Pages.Map, CM.Pages.Checklist, CM.Pages.Dashboard, CM.Pages.Graph;
 
 type
   TMainForm = class(TForm, IPageHost)
@@ -63,6 +63,7 @@ type
     FMap: TMapPage;
     FCk: TChecklistPage;
     FDashboard: TDashboardPage;
+    FGraph: TGraphPage;
 
     procedure BuildUI;
     procedure BuildRail;
@@ -97,6 +98,8 @@ type
     function MapScan: TProjectScan;
     function SwapPlanView: TProjectScan;
     procedure Toast(const AText: string);
+    procedure SetLanguage(ALang: TLang);
+    procedure RebuildUI;
     procedure MarkStateDirty;
     procedure MarkSettingsDirty;
     procedure CaptureHistory(const St: TStats);
@@ -133,17 +136,34 @@ var
 
 implementation
 
+uses
+  Winapi.Windows;
+
+// idioma do Windows: pt, fr e de tem traducao; qualquer outro usa o ingles
+function SystemLang: TLang;
+begin
+  case GetUserDefaultUILanguage and $3FF of
+    LANG_PORTUGUESE: Result := lgPt;
+    LANG_FRENCH: Result := lgFr;
+    LANG_GERMAN: Result := lgDe;
+  else
+    Result := lgEn;
+  end;
+end;
+
 // texto do aviso quando um ficheiro de dados não pôde ser lido
 function ReadFailure(const AWhat: string; E: Exception): string;
 begin
   if E is EDataFileCorrupt then
-    Result := 'Não foi possível ler ' + AWhat + ': o ficheiro está danificado e não há cópia de segurança.'
+    Result := TrF('Não foi possível ler %s: o ficheiro está danificado e não há cópia de segurança.', [AWhat])
   else
-    Result := 'Não foi possível ler ' + AWhat + ' (' + E.Message + ').';
+    Result := TrF('Não foi possível ler %s (%s).', [AWhat, E.Message]);
 end;
 
-const
-  ProjectFinalizedTitle = 'PROJETO FINALIZADO';
+function ProjectFinalizedTitle: string;
+begin
+  Result := Tr('PROJETO FINALIZADO');
+end;
 
 { TMainForm }
 
@@ -164,11 +184,12 @@ begin
   try
     FSettings.Load;
     if FSettings.RecoveredFromBackup then
-      FStartupNote := 'As definições estavam danificadas: foram recuperadas da cópia de segurança.';
+      FStartupNote := Tr('As definições estavam danificadas: foram recuperadas da cópia de segurança.');
   except
     on E: Exception do   // definicoes ilegiveis: recomecar com os valores por omissao
-      FStartupNote := ReadFailure('as definições', E) + ' A recomeçar.';
+      FStartupNote := ReadFailure(Tr('as definições'), E) + Tr(' A recomeçar.');
   end;
+  SetLang(LangFromCode(FSettings.Language, SystemLang));
   if FSettings.Theme = 'dark' then
     SetThemeMode(tmDark)
   else if FSettings.Theme = 'light' then
@@ -267,10 +288,12 @@ begin
   FMap := TMapPage.Create(Self, FPages, Self);
   FCk := TChecklistPage.Create(Self, FPages, Self);
   FDashboard := TDashboardPage.Create(Self, FPages, Self);
+  FGraph := TGraphPage.Create(Self, FPages, Self);
   FPageBox[pgProject] := FProject;
   FPageBox[pgMap] := FMap;
   FPageBox[pgChecklist] := FCk;
   FPageBox[pgDashboard] := FDashboard;
+  FPageBox[pgGraph] := FGraph;
 
   FToast := TCMToast.Create(Self);
   FToast.Parent := FContent;   // o toast posiciona-se em relacao a um TControl
@@ -278,13 +301,20 @@ end;
 
 procedure TMainForm.BuildRail;
 const
-  Names: array[TPage] of string = ('Projeto', 'Mapa', 'Checklist', 'Painel');
-  Icons: array[TPage] of TIconKind = (icDashboard, icMap, icChecklist, icChart);
+  Icons: array[TPage] of TIconKind = (icDashboard, icMap, icChecklist, icChart, icGraph);
+  NavOrder: array[0..4] of TPage = (pgProject, pgMap, pgGraph, pgChecklist, pgDashboard);
 var
   P: TPage;
+  K: Integer;
   Logo: TCMLogo;
   Line: TCMPanel;
+  Names: array[TPage] of string;
 begin
+  Names[pgProject] := Tr('Projeto');
+  Names[pgMap] := Tr('Mapa');
+  Names[pgChecklist] := Tr('Checklist');
+  Names[pgDashboard] := Tr('Painel');
+  Names[pgGraph] := Tr('Grafo');
   Line := TCMPanel.Create(Self);
   Line.Parent := FRail;
   Line.Align := TAlignLayout.Right;
@@ -300,8 +330,9 @@ begin
   Logo.Margins.Top := 20;
   Logo.Margins.Bottom := 14;
 
-  for P := Low(TPage) to High(TPage) do
+  for K := Low(NavOrder) to High(NavOrder) do
   begin
+    P := NavOrder[K];
     FNav[P] := TCMNavButton.Create(Self);
     FNav[P].Parent := FRail;
     FNav[P].Align := TAlignLayout.Top;
@@ -312,7 +343,7 @@ begin
     FNav[P].Margins.Rect := TRectF.Create(8, 0, 8, 6);
   end;
 
-  FThemeBtn := TCMButton.MakeIcon(FRail, icMoon, ThemeClick, 'Alternar entre tema claro e escuro');
+  FThemeBtn := TCMButton.MakeIcon(FRail, icMoon, ThemeClick, Tr('Alternar entre tema claro e escuro'));
   FThemeBtn.Align := TAlignLayout.Bottom;
   FThemeBtn.Height := 44;
   FThemeBtn.Margins.Rect := TRectF.Create(20, 0, 20, 20);
@@ -339,7 +370,7 @@ begin
   FBadgeLabel.Align := TAlignLayout.Client;
   FBadgeLabel.HAlign := TTextAlign.Center;
 
-  FTitle := TCMLabel.Make(FHeader, 'Projeto', 26, True);
+  FTitle := TCMLabel.Make(FHeader, Tr('Projeto'), 26, True);
   FTitle.Align := TAlignLayout.Top;
   FTitle.Height := 38;
   FTitle.Margins.Top := 26;
@@ -362,6 +393,7 @@ begin
   FMap.ApplyTheme;
   FCk.ApplyTheme;
   FDashboard.ApplyTheme;
+  FGraph.ApplyTheme;
   ApplyTitleBarTheme(Self);
   Invalidate;
 end;
@@ -417,6 +449,8 @@ begin
     ActiveList.Refresh;      // as duas vistas partilham o progresso (Compila/Sonar)
   if APage = pgDashboard then
     FDashboard.Activate;
+  if APage = pgGraph then
+    FGraph.Activate;
   UpdateHeader;
 end;
 
@@ -430,6 +464,51 @@ begin
     FPendingToast := AText;
     FToastTimer.Enabled := True;
   end;
+end;
+
+procedure TMainForm.SetLanguage(ALang: TLang);
+begin
+  if ALang = CurrentLang then
+    Exit;
+  SetLang(ALang);
+  FSettings.Language := LangCodes[ALang];
+  MarkSettingsDirty;
+  // o botao que pediu a troca vive na interface que vai ser reconstruida: adia para depois do seu evento
+  TThread.ForceQueue(nil,
+    procedure
+    begin
+      if not FShuttingDown then
+        RebuildUI;
+    end);
+end;
+
+// refaz a interface no idioma activo; o projeto aberto volta a ser carregado e analisado
+procedure TMainForm.RebuildUI;
+var
+  Page: TPage;
+  Profile: TProjectProfile;
+begin
+  Page := FPage;
+  Profile := FProfile;
+  SaveAll;
+  FProject.CancelScan;
+  FProject.StopWatch;
+  FSonarJob := nil;
+  FSonarTimer.Enabled := False;
+  FMap.List.SetSonar(nil);
+  FCk.List.SetSonar(nil);
+  FToast.Free;
+  FRail.Free;
+  FContent.Free;
+  BuildUI;
+  ApplyTheme;
+  ShowPage(Page);
+  FProject.RefreshProjectList;
+  if Profile <> nil then
+    SelectProject(Profile)
+  else if FSettings.Projects.Count = 0 then
+    FProject.NewProject;
+  Toast(TrF('Idioma: %s', [LangNames[CurrentLang]]));
 end;
 
 procedure TMainForm.ToastTick(Sender: TObject);
@@ -534,7 +613,7 @@ begin
     SetSonar(nil, '');
     Exit;
   end;
-  FSonarMessage := 'A consultar o SonarQube…';
+  FSonarMessage := Tr('A consultar o SonarQube…');
   FSonarJob := StartSonarFetch(Config);
   FSonarTimer.Enabled := True;
   FCk.ShowSonar;
@@ -640,7 +719,7 @@ begin
     end;
   except
     on E: Exception do
-      Toast('Não foi possível guardar: ' + E.Message);
+      Toast(Tr('Não foi possível guardar: ') + E.Message);
   end;
 end;
 
@@ -663,12 +742,12 @@ begin
     try
       FState.LoadStored(F);
       if FState.RecoveredFromBackup then
-        Warn := 'O progresso estava danificado: foi recuperado da cópia de segurança.';
+        Warn := Tr('O progresso estava danificado: foi recuperado da cópia de segurança.');
     except
       on E: Exception do
       begin
         FState.Clear;
-        Warn := ReadFailure('o progresso guardado', E);
+        Warn := ReadFailure(Tr('o progresso guardado'), E);
       end;
     end;
 
@@ -679,13 +758,13 @@ begin
     try
       FHistory.LoadFromFile(F);
       if FHistory.RecoveredFromBackup and (Warn = '') then
-        Warn := 'O histórico estava danificado: foi recuperado da cópia de segurança.';
+        Warn := Tr('O histórico estava danificado: foi recuperado da cópia de segurança.');
     except
       on E: Exception do
       begin
         FHistory.Clear;
         if Warn = '' then
-          Warn := ReadFailure('o histórico guardado', E);
+          Warn := ReadFailure(Tr('o histórico guardado'), E);
       end;
     end;
 
@@ -696,8 +775,10 @@ begin
   FProject.RefreshProjectList;
   UpdateHeader;
 
-  // analisa ao abrir: a pasta de codigo, ou so o documento do plano quando nao ha pasta
-  if ((AProfile.RootPath <> '') and TDirectory.Exists(AProfile.RootPath)) or
+  // analisa ao abrir: a pasta de codigo, a cache do repositorio do GitHub (sem ir a rede), ou so o
+  // documento do plano quando nao ha pasta
+  if ((AProfile.RepoUrl <> '') and TDirectory.Exists(TPath.Combine(RepoCacheDir(AProfile.Id), '.git'))) or
+     ((AProfile.RootPath <> '') and TDirectory.Exists(AProfile.RootPath)) or
      ((AProfile.RootPath = '') and (AProfile.PlanPath <> '') and TFile.Exists(AProfile.PlanPath)) then
     FProject.StartScan;
   if FStartupNote <> '' then
@@ -738,6 +819,9 @@ begin
   FCk.RebuildChips;
   FCk.RequestGitRefresh;
   RequestSonarRefresh;
+  FGraph.Invalidate;
+  if FPage = pgGraph then
+    FGraph.Activate;
   UpdateAll;
   UpdateHeader;
   if FScan <> nil then
@@ -766,6 +850,9 @@ begin
   OldView.Free;
   FCk.RebuildChips;
   FCk.RequestGitRefresh;
+  FGraph.Invalidate;
+  if FPage = pgGraph then
+    FGraph.Activate;
   UpdateAll;
   UpdateHeader;
 end;
@@ -799,21 +886,22 @@ begin
   case FPage of
     pgProject:
       begin
-        FTitle.Text := 'Projeto';
-        FSubtitle.Text := 'Configure o projeto, analise o código-fonte e exporte as páginas HTML.';
+        FTitle.Text := Tr('Projeto');
+        FSubtitle.Text := Tr('Configure o projeto, analise o código-fonte e exporte as páginas HTML.');
       end;
-    pgMap, pgChecklist, pgDashboard:
+    pgMap, pgChecklist, pgDashboard, pgGraph:
       begin
         case FPage of
-          pgMap: FTitle.Text := 'Mapa de código';
-          pgChecklist: FTitle.Text := 'Checklist de código';
+          pgMap: FTitle.Text := Tr('Mapa de código');
+          pgChecklist: FTitle.Text := Tr('Checklist de código');
+          pgGraph: FTitle.Text := Tr('Grafo de dependências');
         else
-          FTitle.Text := 'Painel';
+          FTitle.Text := Tr('Painel');
         end;
         if (FProfile <> nil) and (FScan <> nil) then
-          Info := Format('%s  ·  %d ficheiros  ·  %d métodos', [FProfile.Name, FScan.Units.Count, FScan.TotalMethods])
+          Info := Format(Tr('%s  ·  %d ficheiros  ·  %d métodos'), [FProfile.Name, FScan.Units.Count, FScan.TotalMethods])
         else if FProfile <> nil then
-          Info := FProfile.Name + '  ·  ainda sem análise (separador Projeto)'
+          Info := FProfile.Name + Tr('  ·  ainda sem análise (separador Projeto)')
         else
           Info := '';
         FSubtitle.Text := Info;
@@ -923,6 +1011,7 @@ var
   Parts: TArray<string>;
   X, Y: Single;
   Handled: Boolean;
+  G: TDepGraph;
   Bmp: FMX.Graphics.TBitmap;
 begin
   P := ACmd.IndexOf(':');
@@ -1022,6 +1111,22 @@ begin
   end
   else if Cmd = 'exportck' then
     ExportChecklistHtml
+  else if (Cmd = 'exportdeps') or (Cmd = 'exportdepsmd') then
+  begin
+    if FScan = nil then
+      raise Exception.Create('sem analise');
+    G := LoadDepGraph(FScan);
+    try
+      if Cmd = 'exportdeps' then
+        SaveDepsReport(Arg, DepsHtml(G, FProfile.Name, FScan.Root))
+      else
+        SaveDepsReport(Arg, DepsMarkdown(G, FProfile.Name));
+    finally
+      G.Free;
+    end;
+  end
+  else if Cmd = 'scan' then
+    FProject.StartScan(Arg = 'sync')
   else if Cmd = 'finalize' then
     FProject.FinalizeClick(nil)
   else if Cmd = 'select' then
@@ -1085,6 +1190,7 @@ begin
   case FPage of
     pgMap: Target := FMap.Search;
     pgChecklist: Target := FCk.Search;
+    pgGraph: Target := FGraph.Search;
   else
     Target := nil;
   end;

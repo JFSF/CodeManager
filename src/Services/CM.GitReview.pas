@@ -25,7 +25,10 @@ function FindStaleReviews(const ARoot: string; AScan: TProjectScan; AState: TPro
 function StaleHint(const ARoot, ARev, ARelPath: string): string;
 
 implementation
+
 
+uses
+  CM.Lang;
 function FindStaleReviews(const ARoot: string; AScan: TProjectScan; AState: TProgressState): TGitReviewResult;
 var
   Groups: TObjectDictionary<string, TList<TUnitInfo>>;
@@ -88,8 +91,8 @@ var
 begin
   Commits := GitCommitsSince(ARoot, ARev, ARelPath, Shown + 1);
   if Length(Commits) = 0 then
-    Exit('Mudou desde a revisão (alterações ainda por gravar no Git)');
-  Result := 'Mudou desde a revisão:';
+    Exit(Tr('Mudou desde a revisão (alterações ainda por gravar no Git)'));
+  Result := Tr('Mudou desde a revisão:');
   for I := 0 to Min(Shown, Length(Commits)) - 1 do
     Result := Result + sLineBreak + Commits[I].Date + ' · ' + Commits[I].Author + ' · ' + Commits[I].Subject;
   if Length(Commits) > Shown then

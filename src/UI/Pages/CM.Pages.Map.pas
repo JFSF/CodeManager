@@ -52,6 +52,9 @@ type
 
 implementation
 
+
+uses
+  CM.Lang;
 function KV(const ACaption, AValue: string; AHighlight: Boolean = False): TKeyValue;
 begin
   Result.Caption := ACaption;
@@ -83,48 +86,48 @@ begin
   Side := SideBox(Self, Self, 320);
 
   Card := SideCard(Self, Side, 292);
-  TCMLabel.Make(Card, 'Estatísticas', 15, True).Align := TAlignLayout.Top;
+  TCMLabel.Make(Card, Tr('Estatísticas'), 15, True).Align := TAlignLayout.Top;
   FStats := TCMKeyValue.Create(Self);
   FStats.Parent := Card;
   FStats.Align := TAlignLayout.Top;
   FStats.Margins.Top := 8;
 
   Card := SideCard(Self, Side, 176);
-  TCMLabel.Make(Card, 'Vista', 15, True).Align := TAlignLayout.Top;
+  TCMLabel.Make(Card, Tr('Vista'), 15, True).Align := TAlignLayout.Top;
   Row := NewButtonRow(Self, Card);
   Row.Margins.Top := 12;
-  TCMButton.Make(Row, 'Expandir tudo', icChevronDown, bkSecondary, ExpandAllClick);
-  TCMButton.Make(Row, 'Colapsar tudo', icChevronRight, bkSecondary, CollapseAllClick);
+  TCMButton.Make(Row, Tr('Expandir tudo'), icChevronDown, bkSecondary, ExpandAllClick);
+  TCMButton.Make(Row, Tr('Colapsar tudo'), icChevronRight, bkSecondary, CollapseAllClick);
   Row := NewButtonRow(Self, Card);
-  TCMButton.Make(Row, 'Abrir métodos', icChevronDown, bkSecondary, ExpandMethodsClick);
-  TCMButton.Make(Row, 'Fechar métodos', icChevronRight, bkSecondary, CollapseMethodsClick);
+  TCMButton.Make(Row, Tr('Abrir métodos'), icChevronDown, bkSecondary, ExpandMethodsClick);
+  TCMButton.Make(Row, Tr('Fechar métodos'), icChevronRight, bkSecondary, CollapseMethodsClick);
   Row := NewButtonRow(Self, Card);
-  TCMButton.Make(Row, 'Exportar mapa (HTML)', icExport, bkPrimary, ExportMapClick);
+  TCMButton.Make(Row, Tr('Exportar mapa (HTML)'), icExport, bkPrimary, ExportMapClick);
 
   Card := SideCard(Self, Side, 290);
-  TCMLabel.Make(Card, 'Exportar e imprimir estrutura', 15, True).Align := TAlignLayout.Top;
+  TCMLabel.Make(Card, Tr('Exportar e imprimir estrutura'), 15, True).Align := TAlignLayout.Top;
   FExpMethods := TCMSwitch.Create(Self);
   FExpMethods.Parent := Card;
   FExpMethods.Align := TAlignLayout.Top;
   FExpMethods.Margins.Top := 12;
-  FExpMethods.Text := 'Incluir métodos';
+  FExpMethods.Text := Tr('Incluir métodos');
   FExpMethods.Checked := True;
   FExpProgress := TCMSwitch.Create(Self);
   FExpProgress.Parent := Card;
   FExpProgress.Align := TAlignLayout.Top;
   FExpProgress.Margins.Top := 6;
-  FExpProgress.Text := 'Incluir estado e notas';
+  FExpProgress.Text := Tr('Incluir estado e notas');
   Row := NewButtonRow(Self, Card);
   Row.Margins.Top := 12;
-  TCMButton.Make(Row, 'Markdown', icExport, bkSecondary, ExportMdClick);
-  TCMButton.Make(Row, 'TXT', icExport, bkSecondary, ExportTxtClick);
+  TCMButton.Make(Row, Tr('Markdown'), icExport, bkSecondary, ExportMdClick);
+  TCMButton.Make(Row, Tr('TXT'), icExport, bkSecondary, ExportTxtClick);
   Row := NewButtonRow(Self, Card);
-  TCMButton.Make(Row, 'CSV (Excel)', icExport, bkSecondary, ExportCsvClick);
-  TCMButton.Make(Row, 'JSON', icExport, bkSecondary, ExportJsonClick);
+  TCMButton.Make(Row, Tr('CSV (Excel)'), icExport, bkSecondary, ExportCsvClick);
+  TCMButton.Make(Row, Tr('JSON'), icExport, bkSecondary, ExportJsonClick);
   Row := NewButtonRow(Self, Card);
-  TCMButton.Make(Row, 'Imprimir…', icExport, bkPrimary, PrintClick);
+  TCMButton.Make(Row, Tr('Imprimir…'), icExport, bkPrimary, PrintClick);
 
-  Note := TCMLabel.Make(Side, 'As checkboxes C (Compila) e S (Sonar) ficam guardadas com o progresso do projeto.',
+  Note := TCMLabel.Make(Side, Tr('As checkboxes C (Compila) e S (Sonar) ficam guardadas com o progresso do projeto.'),
     11.5, False, lcFaint);
   Note.Align := TAlignLayout.Top;
   Note.Wrap := True;
@@ -140,13 +143,13 @@ begin
   FList.Mode := lmMap;
   FList.OnChanged := ListChanged;
   FList.OnHint := Hint;
-  FList.EmptyText := 'Analise um projeto para ver o mapa de código.';
+  FList.EmptyText := Tr('Analise um projeto para ver o mapa de código.');
 
   FSearch := TCMInput.Create(Self);
   FSearch.Parent := Bar;
   FSearch.Align := TAlignLayout.Client;
   FSearch.SetLeadingIcon(icSearch);
-  FSearch.Placeholder := 'Filtrar por pasta, ficheiro ou método…   ( / )';
+  FSearch.Placeholder := Tr('Filtrar por pasta, ficheiro ou método…   ( / )');
   FSearch.OnChangeText := SearchChanged;
 end;
 
@@ -179,9 +182,9 @@ end;
 
 procedure TMapPage.ClearStats;
 begin
-  FStats.SetRows([KV('Pastas', '—'), KV('Ficheiros', '—'), KV('Métodos', '—'),
-    KV('Units com métodos', '—'), KV('Ficheiros · Compila', '—'), KV('Ficheiros · Sonar', '—'),
-    KV('Métodos · Compila', '—'), KV('Métodos · Sonar', '—')]);
+  FStats.SetRows([KV(Tr('Pastas'), '—'), KV(Tr('Ficheiros'), '—'), KV(Tr('Métodos'), '—'),
+    KV(Tr('Units com métodos'), '—'), KV(Tr('Ficheiros · Compila'), '—'), KV(Tr('Ficheiros · Sonar'), '—'),
+    KV(Tr('Métodos · Compila'), '—'), KV(Tr('Métodos · Sonar'), '—')]);
   FitStatsCard;
 end;
 
@@ -192,24 +195,24 @@ var
 begin
   Rows := TList<TKeyValue>.Create;
   try
-    Rows.Add(KV('Pastas', St.Folders.ToString));
-    Rows.Add(KV('Ficheiros', St.Files.ToString));
-    Rows.Add(KV('Métodos', St.Methods.ToString));
-    Rows.Add(KV('Units com métodos', St.UnitsWithMethods.ToString));
-    Rows.Add(KV('Ficheiros · Compila', Format('%d / %d', [St.FilesCompila, St.Files])));
-    Rows.Add(KV('Ficheiros · Sonar', Format('%d / %d', [St.FilesSonar, St.Files])));
-    Rows.Add(KV('Métodos · Compila', Format('%d / %d', [St.MethodsCompila, St.Methods])));
-    Rows.Add(KV('Métodos · Sonar', Format('%d / %d', [St.MethodsSonar, St.Methods])));
+    Rows.Add(KV(Tr('Pastas'), St.Folders.ToString));
+    Rows.Add(KV(Tr('Ficheiros'), St.Files.ToString));
+    Rows.Add(KV(Tr('Métodos'), St.Methods.ToString));
+    Rows.Add(KV(Tr('Units com métodos'), St.UnitsWithMethods.ToString));
+    Rows.Add(KV(Tr('Ficheiros · Compila'), Format('%d / %d', [St.FilesCompila, St.Files])));
+    Rows.Add(KV(Tr('Ficheiros · Sonar'), Format('%d / %d', [St.FilesSonar, St.Files])));
+    Rows.Add(KV(Tr('Métodos · Compila'), Format('%d / %d', [St.MethodsCompila, St.Methods])));
+    Rows.Add(KV(Tr('Métodos · Sonar'), Format('%d / %d', [St.MethodsSonar, St.Methods])));
     if FHost.HasPlan then
     begin
       // plano x codigo: o que ja existe do que estava previsto, o que falta e o que sobra
       S := FHost.PlanSummary;
-      Rows.Add(KV('Plano · ficheiros', Format('%d / %d (%.0f%%)', [S.ImplementedFiles, S.PlannedFiles,
+      Rows.Add(KV(Tr('Plano · ficheiros'), Format('%d / %d (%.0f%%)', [S.ImplementedFiles, S.PlannedFiles,
         S.FilesCoverage]), True));
-      Rows.Add(KV('Plano · métodos', Format('%d / %d (%.0f%%)', [S.ImplementedMethods, S.PlannedMethods,
+      Rows.Add(KV(Tr('Plano · métodos'), Format('%d / %d (%.0f%%)', [S.ImplementedMethods, S.PlannedMethods,
         S.MethodsCoverage]), True));
-      Rows.Add(KV('Por implementar', Format('%d fich. · %d mét.', [S.MissingFiles, S.MissingMethods])));
-      Rows.Add(KV('Extra no código', Format('%d fich. · %d mét.', [S.ExtraFiles, S.ExtraMethods])));
+      Rows.Add(KV(Tr('Por implementar'), Format(Tr('%d fich. · %d mét.'), [S.MissingFiles, S.MissingMethods])));
+      Rows.Add(KV(Tr('Extra no código'), Format(Tr('%d fich. · %d mét.'), [S.ExtraFiles, S.ExtraMethods])));
     end;
     FStats.SetRows(Rows.ToArray);
   finally
@@ -255,11 +258,11 @@ begin
   try
     ExportToFile(AFormat, FHost.CurrentProfile, FHost.CurrentScan, FHost.CurrentState,
       ExportOptionsNow, AFileName);
-    FHost.Toast('Exportado: ' + TPath.GetFileName(AFileName));
+    FHost.Toast(Tr('Exportado: ') + TPath.GetFileName(AFileName));
     Result := True;
   except
     on E: Exception do
-      FHost.Toast('Falhou a exportação: ' + E.Message);
+      FHost.Toast(Tr('Falhou a exportação: ') + E.Message);
   end;
 end;
 
@@ -272,7 +275,7 @@ begin
   Profile := FHost.CurrentProfile;
   if (Profile = nil) or (FHost.CurrentScan = nil) then
   begin
-    FHost.Toast('Analise o projeto primeiro.');
+    FHost.Toast(Tr('Analise o projeto primeiro.'));
     Exit;
   end;
   Ext := ExportFormatExt(AFormat);
@@ -297,12 +300,12 @@ begin
   try
     Pages := PrintStructure(FHost.CurrentProfile, FHost.CurrentScan, FHost.CurrentState, ExportOptionsNow);
     if Pages = 1 then
-      FHost.Toast('Enviada para a impressora: 1 página')
+      FHost.Toast(Tr('Enviada para a impressora: 1 página'))
     else
-      FHost.Toast(Format('Enviada para a impressora: %d páginas', [Pages]));
+      FHost.Toast(Format(Tr('Enviada para a impressora: %d páginas'), [Pages]));
   except
     on E: Exception do
-      FHost.Toast('Falhou a impressão: ' + E.Message);
+      FHost.Toast(Tr('Falhou a impressão: ') + E.Message);
   end;
 end;
 
@@ -313,13 +316,13 @@ var
 begin
   if (FHost.CurrentProfile = nil) or (FHost.CurrentScan = nil) then
   begin
-    FHost.Toast('Analise o projeto primeiro.');
+    FHost.Toast(Tr('Analise o projeto primeiro.'));
     Exit;
   end;
   try
     if Printer.Count = 0 then
     begin
-      FHost.Toast('Não há impressoras instaladas.');
+      FHost.Toast(Tr('Não há impressoras instaladas.'));
       Exit;
     end;
     D := TPrintDialog.Create(nil);
@@ -332,7 +335,7 @@ begin
   except
     on E: Exception do
     begin
-      FHost.Toast('Impressora indisponível: ' + E.Message);
+      FHost.Toast(Tr('Impressora indisponível: ') + E.Message);
       Exit;
     end;
   end;

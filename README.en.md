@@ -24,6 +24,7 @@ a document describing what the project *should* contain, it compares the two.
 - **Map** — the folder → file → method tree, with search, statistics and the **lines and complexity** of each method.
 - **Checklist** — mark what you reviewed, what is under review or needs changes, what compiles, what passed Sonar, what is a priority; add notes. In a Git repository it flags the files that changed since you reviewed them; SonarQube is optional and per user.
   A file is *done* when **all its methods** are reviewed.
+- **Graph** — a visual map of the dependencies between units (from the `uses` clauses): levels, layer colours, coupling, **cycles**, and an HTML (SVG map) or Markdown report.
 - **Dashboard** — numbers and charts for progress and code distribution, including day-by-day evolution, the most
   complex methods and the plan coverage.
 - **Plan in Markdown** — write the intended structure (and code) in a `.md` file and see what is implemented,
@@ -32,6 +33,8 @@ a document describing what the project *should* contain, it compares the two.
 - **Follows your IDE** — re-analyses what you change as you save.
 - **Exports** to Markdown, TXT, CSV, JSON, offline HTML pages and paper/PDF.
 - **Safe saving** — progress is written atomically with a `.bak` copy and restored automatically if a file is damaged.
+- **Four languages** — Portuguese, English, French and German (exported reports follow the language).
+- **GitHub repositories** — analyse a repository instead of a folder: only the latest version is cloned into a private cache, read-only.
 - **Light and dark themes.**
 
 ![Code map](docs/images/02-mapa.png)
@@ -39,6 +42,8 @@ a document describing what the project *should* contain, it compares the two.
 ![Plan × code comparison](docs/images/03-mapa-plano.png)
 
 ![Dashboard](docs/images/05-painel.png)
+
+![Dependency graph](docs/images/13-grafo.png)
 
 <sub>The evolution history in the screenshots is demo data; everything else is a real analysis of CodeManager's own source.</sub>
 

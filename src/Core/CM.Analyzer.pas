@@ -93,9 +93,15 @@ procedure SetUnitPath(U: TUnitInfo; const ARel: string);
 // recalcula Folders/TotalMethods/UnitsWithMethods
 procedure RecountScan(AScan: TProjectScan);
 function SlugOf(const AText: string): string;
+// le um ficheiro de codigo (UTF-8 com ou sem BOM, ou ANSI) e tira-lhe comentarios e o conteudo das strings
+function ReadSourceText(const AFilePath: string): string;
+function CleanUnitText(const AText: string): string;
 
 implementation
 
+
+uses
+  CM.Lang;
 type
   // declaracao encontrada, antes de fundir interface/implementation e de atribuir o nome unico
   TRawMethod = record
@@ -882,7 +888,7 @@ begin
   begin
     U.Dir := '';
     U.FileName := ARel;
-    U.Layer := 'Raiz';
+    U.Layer := Tr('Raiz');
   end
   else
   begin
@@ -935,7 +941,7 @@ var
 begin
   Root := ExcludeTrailingPathDelimiter(TPath.GetFullPath(ARoot));
   if not TDirectory.Exists(Root) then
-    raise Exception.CreateFmt('A pasta do projecto nao existe: %s', [Root]);
+    raise Exception.CreateFmt(Tr('A pasta do projecto nao existe: %s'), [Root]);
 
   Result := TProjectScan.Create;
   Rels := TStringList.Create;
@@ -947,12 +953,12 @@ begin
       else
         Result.ExcludeDirs := AExclude;
       if Assigned(AProgress) then
-        AProgress('A procurar unidades .pas/.dpr/.dpk...', 0, 0);
+        AProgress(Tr('A procurar unidades .pas/.dpr/.dpk...'), 0, 0);
       CollectFiles(Root, '', Result.ExcludeDirs, Rels);
       Rels.CustomSort(CompareRelPaths);
       if Rels.Count = 0 then
         raise Exception.CreateFmt(
-          'Nao foi encontrada nenhuma unidade .pas/.dpr/.dpk em "%s" (fora das pastas ignoradas).', [Root]);
+          Tr('Nao foi encontrada nenhuma unidade .pas/.dpr/.dpk em "%s" (fora das pastas ignoradas).'), [Root]);
 
       for I := 0 to Rels.Count - 1 do
       begin
@@ -967,7 +973,7 @@ begin
             U.Methods := nil;   // unit ilegivel: fica sem metodos, como nos scripts originais
         end;
         if Assigned(AProgress) then
-          AProgress('A analisar metodos... ' + Rel, I + 1, Rels.Count);
+          AProgress(Tr('A analisar metodos... ') + Rel, I + 1, Rels.Count);
       end;
       RecountScan(Result);
     except

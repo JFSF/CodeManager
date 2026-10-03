@@ -71,7 +71,7 @@ function WrapLine(const APrefix, AContPrefix, AText: string; AMaxChars: Integer)
 implementation
 
 uses
-  Winapi.Windows, FMX.Printer, FMX.Printer.Win;
+  CM.Lang, Winapi.Windows, FMX.Printer, FMX.Printer.Win;
 
 const
   MonoFamily = 'Courier New';
@@ -221,7 +221,7 @@ begin
   FMaxChars := Max(20, Floor((FSpec.Width - 2 * FMargin) / FCharW));
   FPageCount := 1;
 
-  AddItem(dkTitle, 'Estrutura do código — ' + AProfile.Name, FTitlePx * 1.5, False);
+  AddItem(dkTitle, Tr('Estrutura do código — ') + AProfile.Name, FTitlePx * 1.5, False);
   for Line in ExportHeaderLines(AScan, AState, AOptions) do
     for S in WrapLine('', '  ', Line, FMaxChars) do
       AddItem(dkMeta, S, FLineH, False);
@@ -257,7 +257,7 @@ begin
   begin
     SetFont(ACanvas, FSmallPx, False, ColorMeta);
     PutText(ACanvas, FProfileName, RectF(Left, FMargin, Right, FMargin + FSmallPx * 1.6), TTextAlign.Leading);
-    PutText(ACanvas, 'Estrutura do código', RectF(Left, FMargin, Right, FMargin + FSmallPx * 1.6), TTextAlign.Trailing);
+    PutText(ACanvas, Tr('Estrutura do código'), RectF(Left, FMargin, Right, FMargin + FSmallPx * 1.6), TTextAlign.Trailing);
     ACanvas.Stroke.Kind := TBrushKind.Solid;
     ACanvas.Stroke.Color := ColorRule;
     ACanvas.Stroke.Thickness := Max(1, FSpec.DPI / 200);
@@ -295,7 +295,7 @@ begin
   ACanvas.DrawLine(PointF(Left, Y + FSmallPx * 0.4), PointF(Right, Y + FSmallPx * 0.4), 1);
   SetFont(ACanvas, FSmallPx, False, ColorMeta);
   PutText(ACanvas, FStamp, RectF(Left, Y + FSmallPx * 0.7, Right, Y + FFooterH), TTextAlign.Leading);
-  PutText(ACanvas, Format('Página %d de %d', [APageIndex + 1, FPageCount]),
+  PutText(ACanvas, Format(Tr('Página %d de %d'), [APageIndex + 1, FPageCount]),
     RectF(Left, Y + FSmallPx * 0.7, Right, Y + FFooterH), TTextAlign.Trailing);
 end;
 
@@ -311,8 +311,8 @@ var
 begin
   Prn := Printer;
   if Prn.Count = 0 then
-    raise Exception.Create('Não há impressoras instaladas.');
-  Prn.Title := 'Estrutura do código — ' + AProfile.Name;
+    raise Exception.Create(Tr('Não há impressoras instaladas.'));
+  Prn.Title := Tr('Estrutura do código — ') + AProfile.Name;
   Prn.BeginDoc;
   try
     DPI := 0;

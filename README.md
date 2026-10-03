@@ -77,6 +77,13 @@ caixas **C** (compila) e **S** (Sonar).
 
 ![Mapa de código](docs/images/02-mapa.png)
 
+### Ver as dependências
+
+O **Grafo** desenha quem usa quem, a partir das cláusulas `uses`: colunas por nível, cores por camada, acoplamento
+(usa / usada por), **ciclos** assinalados e um relatório em HTML (com o mapa em SVG) ou Markdown.
+
+![Grafo de dependências](docs/images/13-grafo.png)
+
 ### Rever com método
 
 A **Checklist** agrupa os ficheiros por pasta. Um ficheiro fica concluído quando **todos os métodos** estão revistos;
@@ -96,6 +103,12 @@ distribuição de métodos, Compila e Sonar — e segue o tema da aplicação.
 ![Painel](docs/images/05-painel.png)
 
 <sub>O histórico da evolução nas imagens é de demonstração; o resto são dados reais da análise do próprio CodeManager.</sub>
+
+### Idiomas e repositórios do GitHub
+
+A aplicação fala **português, inglês, francês e alemão** (muda-se na página Projeto, e os relatórios exportados
+seguem o idioma). Em vez de uma pasta, podes analisar um **repositório do GitHub**: clona-se só a última versão para
+uma cache própria, em modo só leitura.
 
 ### Tema claro e escuro
 

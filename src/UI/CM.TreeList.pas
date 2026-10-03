@@ -177,6 +177,9 @@ type
 
 implementation
 
+
+uses
+  CM.Lang;
 const
   DirH = 42;
   FileH = 38;
@@ -218,7 +221,7 @@ begin
   FGroups := TObjectDictionary<string, TList<TUnitInfo>>.Create([doOwnsValues]);
   FGroupKeys := TList<string>.Create;
   FHoverRow := -1;
-  FEmptyText := 'Sem dados para mostrar.';
+  FEmptyText := Tr('Sem dados para mostrar.');
   FFlash := TDictionary<string, UInt64>.Create;
   FFlashTimer := TTimer.Create(Self);
   FFlashTimer.Enabled := False;
@@ -603,7 +606,7 @@ begin
       for U in Group do
         if UnitDone(U, FState) then
           Inc(DoneCount);
-      if Key = '' then Caption := '(raiz)' else Caption := Key;
+      if Key = '' then Caption := Tr('(raiz)') else Caption := Key;
       AddRow(rkDir, 0, Caption, Key, nil, -1, DoneCount, Group.Count);
       if not FCollapsed.Contains(Key) then
         for U in Passing do
@@ -689,7 +692,7 @@ begin
   N := Length(ARow.U.Methods);
   if FMode = lmMap then
   begin
-    if N = 1 then Result := '1 método' else Result := N.ToString + ' métodos';
+    Result := TrCount(N, 'método', 'métodos');
   end
   else
     Result := Format('%d/%d', [MethodsDoneCount(ARow.U, FState), N]);
@@ -813,30 +816,30 @@ begin
   case AElem of
     eCheck:
       if (ARow.Kind = rkFile) and (Length(ARow.U.Methods) > 0) then
-        Result := 'Concluída automaticamente quando todos os métodos estiverem marcados'
+        Result := Tr('Concluída automaticamente quando todos os métodos estiverem marcados')
       else if ARow.Kind = rkMethod then
-        Result := 'Método revisto'
+        Result := Tr('Método revisto')
       else
-        Result := 'Marcar como concluída';
+        Result := Tr('Marcar como concluída');
     eState:
       if (ARow.Kind = rkFile) and (Length(ARow.U.Methods) > 0) then
-        Result := 'Estado: ' + ReviewText(RowReview(ARow)) + ' (vem dos métodos)'
+        Result := Tr('Estado: ') + ReviewText(RowReview(ARow)) + Tr(' (vem dos métodos)')
       else
-        Result := 'Estado: ' + ReviewText(RowReview(ARow)) + ' — clica para mudar';
-    eStar: Result := 'Marcar prioridade';
-    eCompila: if ARow.Kind = rkMethod then Result := 'Método compila sem erros' else Result := 'Compila sem erros';
-    eSonar: if ARow.Kind = rkMethod then Result := 'Método aprovado no SonarQube' else Result := 'SonarQube aprovado';
-    ePill: Result := 'Mostrar/ocultar os métodos desta unit';
-    eNote: Result := 'Nota';
+        Result := Tr('Estado: ') + ReviewText(RowReview(ARow)) + Tr(' — clica para mudar');
+    eStar: Result := Tr('Marcar prioridade');
+    eCompila: if ARow.Kind = rkMethod then Result := Tr('Método compila sem erros') else Result := Tr('Compila sem erros');
+    eSonar: if ARow.Kind = rkMethod then Result := Tr('Método aprovado no SonarQube') else Result := Tr('SonarQube aprovado');
+    ePill: Result := Tr('Mostrar/ocultar os métodos desta unit');
+    eNote: Result := Tr('Nota');
   end;
 end;
 
 function PlanTagText(AStatus: TPlanStatus; AMoved: Boolean): string;
 begin
   case AStatus of
-    psPlanned: Result := 'PLANEADO';
-    psExtra: Result := 'EXTRA';
-    psImplemented: if AMoved then Result := 'MOVIDO' else Result := '';
+    psPlanned: Result := Tr('PLANEADO');
+    psExtra: Result := Tr('EXTRA');
+    psImplemented: if AMoved then Result := Tr('MOVIDO') else Result := '';
   else
     Result := '';
   end;
@@ -847,10 +850,10 @@ begin
   Result := '';
   case AStatus of
     psPlanned:
-      if AIsMethod then Result := 'Planeado: ainda não está implementado'
-      else Result := 'Planeado: ainda não existe no código';
-    psExtra: Result := 'Extra: existe no código mas não está no plano';
-    psImplemented: if APlannedPath <> '' then Result := 'Planeado em ' + APlannedPath;
+      if AIsMethod then Result := Tr('Planeado: ainda não está implementado')
+      else Result := Tr('Planeado: ainda não existe no código');
+    psExtra: Result := Tr('Extra: existe no código mas não está no plano');
+    psImplemented: if APlannedPath <> '' then Result := Tr('Planeado em ') + APlannedPath;
   end;
 end;
 
@@ -958,7 +961,7 @@ begin
         begin
           if Status <> '' then
             Status := Status + sLineBreak;
-          Status := Status + Format('SonarQube: %d problemas abertos (a pior: %s)',
+          Status := Status + Format(Tr('SonarQube: %d problemas abertos (a pior: %s)'),
             [SonarInfo.Issues, SeverityText(SonarInfo.Worst)]);
         end;
       end;
@@ -1281,7 +1284,7 @@ begin
     DrawTextRect(Canvas, R, FitText(Canvas, ARow.Caption, R.Width), P.AccentStrong, 13, MonoFont,
       [TFontStyle.fsBold]);
     R := TRectF.Create(AWidth - 150, ATop, AWidth - 14, ATop + ARow.Height);
-    DrawTextRect(Canvas, R, Format('%d ficheiro%s', [ARow.CountA, IfThen(ARow.CountA = 1, '', 's')]),
+    DrawTextRect(Canvas, R, TrCount(ARow.CountA, 'ficheiro', 'ficheiros'),
       P.TextFaint, 11, MonoFont, [], TTextAlign.Trailing);
   end
   else
@@ -1377,7 +1380,7 @@ begin
     NR.Right := NR.Right - TagW - 10;
   if (FMode = lmChecklist) and FStale.Contains(U.Path) then
   begin
-    TagW := DrawTag(NR.Right, NR.CenterPoint.Y, 'ALTERADO', P.Pending);
+    TagW := DrawTag(NR.Right, NR.CenterPoint.Y, CM.Lang.Tr('ALTERADO'), P.Pending);
     NR.Right := NR.Right - TagW - 10;
   end;
   if (FSonar <> nil) and FSonar.Find(U.Path, SonarInfo) and (SonarInfo.Issues > 0) then
@@ -1711,17 +1714,17 @@ var
 begin
   SB := TStringBuilder.Create;
   try
-    SB.Append('# Checklist de Código-Fonte — ').Append(AProjectName).AppendLine.AppendLine;
+    SB.Append('# ').Append(Tr('Checklist de Código-Fonte — ')).Append(AProjectName).AppendLine.AppendLine;
     for Key in FGroupKeys do
     begin
-      SB.Append('### ').Append(IfThen(Key = '', '(raiz)', Key)).AppendLine;
+      SB.Append('### ').Append(IfThen(Key = '', Tr('(raiz)'), Key)).AppendLine;
       for U in FGroups[Key] do
       begin
         S := FState.Find(U.Path);
         Mark := IfThen(UnitDone(U, FState), 'x', ' ');
         Line := '- [' + Mark + '] ' + U.Path;
-        if (S <> nil) and S.Compila then Line := Line + ' [Compila]';
-        if (S <> nil) and S.Sonar then Line := Line + ' [Sonar]';
+        if (S <> nil) and S.Compila then Line := Line + Tr(' [Compila]');
+        if (S <> nil) and S.Sonar then Line := Line + Tr(' [Sonar]');
         Line := Line + ReviewTag(ReviewOfUnit(U, FState));
         if (S <> nil) and S.Star then Line := Line + ' ★';
         if (S <> nil) and (S.Note <> '') then
@@ -1731,8 +1734,8 @@ begin
         begin
           Mark := IfThen((S <> nil) and S.MDone.Contains(M.Name), 'x', ' ');
           Line := '  - [' + Mark + '] `' + M.Sig + '`';
-          if (S <> nil) and S.MCompila.Contains(M.Name) then Line := Line + ' [Compila]';
-          if (S <> nil) and S.MSonar.Contains(M.Name) then Line := Line + ' [Sonar]';
+          if (S <> nil) and S.MCompila.Contains(M.Name) then Line := Line + Tr(' [Compila]');
+          if (S <> nil) and S.MSonar.Contains(M.Name) then Line := Line + Tr(' [Sonar]');
           Line := Line + ReviewTag(ReviewOfMethod(S, M.Name));
           SB.AppendLine(Line);
         end;

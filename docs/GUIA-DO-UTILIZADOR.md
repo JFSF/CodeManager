@@ -50,16 +50,32 @@ cada um com o seu progresso.
 | **Nome do projeto** | Aparece nos títulos, nos ficheiros exportados e na lista. |
 | **Localização do projeto** | A pasta raiz a analisar (inclui subpastas). |
 | **Pasta onde guardar as páginas HTML** | Destino do «Exportar mapa/checklist (HTML)». |
+| **Ou um repositório do GitHub** | Opcional, só leitura. Ver [Repositório do GitHub](#repositório-do-github). |
 | **Documento do plano (.md)** | Opcional. Ver [Plano](#plano-documento-md). |
 | **Pastas a ignorar** | Nomes de pastas separados por vírgulas. Em branco usa as predefinidas: `.git`, `.svn`, `.hg`, `modules`, `bin`, `out`, `__history`, `__recovery`, `node_modules`. |
 | **Abrir a página no navegador depois de exportar** | Abre o HTML assim que é gerado. |
 | **Acompanhar alterações na pasta do projeto** | Reanálise automática quando gravas ficheiros. Ver [abaixo](#acompanhar-alterações). |
+| **Atualizar do GitHub** | Volta a obter a última versão do repositório e reanalisa. |
 | **Analisar projeto** | Lê a pasta (e o plano, se houver). Corre em segundo plano. |
 | **Exportar mapa / checklist (HTML)** | Gera as páginas offline. |
 | **Fechar projeto como finalizado** | Marca o projeto como terminado: aparece um selo na janela e no mapa exportado. Volta a abrir com **Reabrir projeto**. |
 | **Remover projeto** | Tira-o da lista e apaga o progresso e o histórico guardados. Os ficheiros do projeto não são tocados. |
 
 Enquanto o projeto não tem análise, a lista mostra os **Primeiros passos**.
+
+### Idioma
+
+O cartão **Idioma**, no topo da página, muda a aplicação entre **Português**, **English**, **Français** e
+**Deutsch**; a interface reconstrói-se logo, e os relatórios exportados passam a seguir o idioma escolhido. Na
+primeira execução usa o idioma do Windows (português, francês ou alemão; qualquer outro usa o inglês).
+
+### Repositório do GitHub
+
+Em vez de uma pasta, podes indicar um repositório do GitHub (`https://github.com/dono/repo`, `dono/repo`,
+`git@github.com:dono/repo` ou um endereço `…/tree/ramo/pasta`). O CodeManager clona só a **última versão**
+(`--depth 1`) para uma cache própria em `%APPDATA%\CodeManagerepos` e analisa-a como qualquer outra pasta. Só
+clona de `github.com`, **nunca escreve** no repositório remoto nem nas tuas pastas, e a cache é apagada quando
+removes o projeto. **Atualizar do GitHub** traz a versão mais recente. Precisas do Git instalado.
 
 ### Acompanhar alterações
 
@@ -203,6 +219,25 @@ Com tudo configurado, a Checklist e o Mapa passam a mostrar:
 Os ficheiros associam-se pelo fim do caminho, por isso funciona quer o Sonar analise a raiz do repositório
 (`src/Core/a.pas`) quer o CodeManager analise só uma subpasta (`Core/a.pas`). O CodeManager **só lê** o Sonar. As
 consultas correm em segundo plano e, se o servidor estiver em baixo, o cartão diz porquê sem incomodar o resto.
+
+## Grafo
+
+O mapa visual das **dependências entre as units**: lê as cláusulas `uses` (da *interface* e da *implementation*) e
+desenha «quem usa quem». Só contam as units do próprio projeto; as outras (`System.*`, `FMX.*`, de terceiros) ficam
+contadas como *units externas*.
+
+![Grafo de dependências](images/13-grafo.png)
+
+- A **coluna da esquerda** tem o que ninguém usa (o programa); cada coluna seguinte fica um passo mais «por baixo».
+  As cores são as camadas.
+- Clica numa unit para ver os **detalhes** à direita: camada, métodos, linhas, complexidade, **usa** / **usada por**
+  e a **instabilidade** (0 = muito estável, 1 = muito dependente dos outros).
+- **Simplificar** esconde as ligações para as units usadas por muitas outras (voltam a aparecer ao selecionar uma
+  unit); **Ajustar** enquadra o mapa todo; **− / +** afastam e aproximam. O filtro aceita nomes de unit ou de camada
+  (atalho: `/`).
+- O cartão **Ciclos** avisa quando há units que se usam em círculo.
+- O **relatório de dependências** exporta-se em **HTML** (autónomo, com o mapa em SVG, tabelas ordenáveis e filtro)
+  ou em **Markdown**.
 
 ## Painel
 

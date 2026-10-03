@@ -24,7 +24,7 @@ type
 
   TIconKind = (icCheck, icStar, icStarOff, icChevronRight, icChevronDown, icSearch, icFolder,
     icFolderOpen, icEdit, icRefresh, icSun, icMoon, icMap, icChecklist, icDashboard, icPlus,
-    icTrash, icCopy, icDownload, icUpload, icFlag, icClose, icPlay, icFile, icBrowse, icExport, icBrackets, icChart);
+    icTrash, icCopy, icDownload, icUpload, icFlag, icClose, icPlay, icFile, icBrowse, icExport, icBrackets, icChart, icMinus, icGraph);
 
 const
   LightPalette: TPalette = (
@@ -102,7 +102,9 @@ const
     { icBrowse } 'M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z',
     { icExport } 'M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z',
     { icBrackets } 'M15,4V6H18V18H15V20H20V4M4,4V20H9V18H6V6H9V4H4Z',
-    { icChart } 'M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z'
+    { icChart } 'M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z',
+    { icMinus } 'M19 13H5v-2h14v2z',
+    { icGraph } 'M22 11V3h-7v3H9V3H2v8h7V8h2v10h4v3h7v-8h-7v3h-2V8h2v3z'
   );
 
 function Pal: TPalette;

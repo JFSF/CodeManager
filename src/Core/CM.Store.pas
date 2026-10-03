@@ -23,6 +23,7 @@ type
     Finalized: Boolean;
     FinalizedAt: string;
     SonarKey: string;         // chave do projecto no SonarQube; vazio = este projecto nao usa o Sonar
+    RepoUrl: string;          // repositorio do GitHub a ler (clonado para uma cache); vazio = pasta local
     constructor Create;
   end;
 
@@ -32,6 +33,7 @@ type
     FRecovered: Boolean;
   public
     Theme: string;              // 'light' | 'dark' | '' (segue o Windows)
+    Language: string;           // 'pt' | 'en' | 'fr' | 'de' | '' (segue o Windows)
     // SonarQube: opcional e por utilizador (estas definicoes ficam nos dados dele). O token nunca se guarda
     // em claro: SonarTokenCipher e o texto ja protegido por quem o guarda (CM.Secrets)
     SonarEnabled: Boolean;
@@ -212,6 +214,7 @@ begin
   try
     Obj := TJSONObject(Root);
     Theme := Obj.GetValue<string>('theme', '');
+    Language := Obj.GetValue<string>('language', '');
     ActiveProjectId := Obj.GetValue<string>('activeProject', '');
     OpenAfterExport := JsonBool(Obj, 'openAfterExport', True);
     SonarEnabled := False;
@@ -241,6 +244,7 @@ begin
         P.Finalized := JsonBool(PObj, 'finalized', False);
         P.FinalizedAt := PObj.GetValue<string>('finalizedAt', '');
         P.SonarKey := PObj.GetValue<string>('sonarKey', '');
+        P.RepoUrl := PObj.GetValue<string>('repo', '');
         FProjects.Add(P);
       end;
   finally
@@ -257,6 +261,8 @@ begin
   Obj := TJSONObject.Create;
   try
     Obj.AddPair('theme', Theme);
+    if Language <> '' then
+      Obj.AddPair('language', Language);
     Obj.AddPair('activeProject', ActiveProjectId);
     Obj.AddPair('openAfterExport', TJSONBool.Create(OpenAfterExport));
     if SonarEnabled or (SonarUrl <> '') or (SonarTokenCipher <> '') then
@@ -282,6 +288,8 @@ begin
       PObj.AddPair('finalizedAt', P.FinalizedAt);
       if P.SonarKey <> '' then
         PObj.AddPair('sonarKey', P.SonarKey);
+      if P.RepoUrl <> '' then
+        PObj.AddPair('repo', P.RepoUrl);
       Arr.AddElement(PObj);
     end;
     Obj.AddPair('projects', Arr);

@@ -341,6 +341,7 @@ classDiagram
     TMapPage ..> IPageHost
     TChecklistPage ..> IPageHost
     TDashboardPage ..> IPageHost
+    TGraphPage ..> IPageHost
 ```
 
 | Página | Faz |
@@ -348,6 +349,7 @@ classDiagram
 | `Pages.Project` | Lista e configura projetos, lança a análise (numa thread), liga o vigia, exporta as páginas HTML. |
 | `Pages.Map` | Árvore pastas → ficheiros → métodos, estatísticas (e cobertura do plano), exportar/imprimir a estrutura. |
 | `Pages.Checklist` | Conclusão por ficheiro e método, prioridade, notas, filtros por camada, cobertura do plano, importar/exportar progresso. |
+| `Pages.Graph` | Mapa de dependências entre units (`Core.Deps` + `UI.GraphView`), resumo, ciclos, detalhes e relatório HTML/Markdown (`Services.DepsReport`). O grafo calcula-se em segundo plano. |
 | `Pages.Dashboard` | Cartões de números e gráficos [Chart4D](https://github.com/GDKsoftware/Chart4D) que seguem o tema; com plano, uma linha de cobertura. |
 
 O que cada página **não** faz (por exemplo, trocar de projeto) pede-o ao anfitrião. Quando uma ação mexe em várias

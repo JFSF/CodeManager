@@ -57,7 +57,10 @@ function SonarTest(const AConfig: TSonarConfig; out AMessage: string): Boolean;
 function SonarFetch(const AConfig: TSonarConfig; out ASnapshot: TSonarSnapshot; out AError: string): Boolean;
 
 implementation
+
 
+uses
+  CM.Lang;
 const
   PageSize = 500;
   MaxPages = 20;               // a API do Sonar nao devolve mais de 10 000 resultados por pesquisa
@@ -259,13 +262,13 @@ end;
 function StatusMessage(AStatus: Integer; const AFail: string; const AConfig: TSonarConfig): string;
 begin
   case AStatus of
-    0: Result := 'Não foi possível ligar a ' + NormalizeSonarUrl(AConfig.Url) + '. ' + AFail;
-    401: Result := 'O servidor recusou o token (ou exige um token). Confirma-o nas definições.';
-    403: Result := 'O token não tem permissão para ler este projeto. Usa um token de utilizador (My Account › Security › ' +
-      'User Token), não o de análise do sonar-scanner, de uma conta com a permissão «Browse» no projeto.';
-    404: Result := 'Não encontrei o projeto «' + AConfig.ProjectKey + '» neste servidor.';
+    0: Result := Tr('Não foi possível ligar a ') + NormalizeSonarUrl(AConfig.Url) + '. ' + AFail;
+    401: Result := Tr('O servidor recusou o token (ou exige um token). Confirma-o nas definições.');
+    403: Result := Tr('O token não tem permissão para ler este projeto. Usa um token de utilizador (My Account › Security › ') +
+      Tr('User Token), não o de análise do sonar-scanner, de uma conta com a permissão «Browse» no projeto.');
+    404: Result := Tr('Não encontrei o projeto «') + AConfig.ProjectKey + Tr('» neste servidor.');
   else
-    Result := Format('O servidor respondeu com o erro %d.', [AStatus]);
+    Result := Format(Tr('O servidor respondeu com o erro %d.'), [AStatus]);
   end;
 end;
 
@@ -279,8 +282,8 @@ begin
     Exit('');
   Keys := ParseProjectKeys(Body);
   if Length(Keys) = 0 then
-    Exit('O servidor ainda não tem projetos analisados: corre primeiro o sonar-scanner (ci.bat sonar).');
-  Result := 'Chaves que existem: ' + string.Join(', ', Copy(Keys, 0, 5)) + IfThen(Length(Keys) > 5, ', …', '') + '.';
+    Exit(Tr('O servidor ainda não tem projetos analisados: corre primeiro o sonar-scanner (ci.bat sonar).'));
+  Result := Tr('Chaves que existem: ') + string.Join(', ', Copy(Keys, 0, 5)) + IfThen(Length(Keys) > 5, ', …', '') + '.';
 end;
 
 function SonarTest(const AConfig: TSonarConfig; out AMessage: string): Boolean;
@@ -292,7 +295,7 @@ begin
   Result := False;
   if NormalizeSonarUrl(AConfig.Url) = '' then
   begin
-    AMessage := 'Indica o endereço do servidor.';
+    AMessage := Tr('Indica o endereço do servidor.');
     Exit;
   end;
   Status := HttpGet(AConfig, '/api/system/status', Body, Fail);
@@ -311,7 +314,7 @@ begin
   end;
   if AConfig.ProjectKey = '' then
   begin
-    AMessage := 'Ligado ao SonarQube ' + Version + '. Falta indicar a chave do projeto.';
+    AMessage := Tr('Ligado ao SonarQube ') + Version + Tr('. Falta indicar a chave do projeto.');
     Exit;
   end;
   Status := HttpGet(AConfig, '/api/components/show?component=' + Enc(AConfig.ProjectKey), Body, Fail);
@@ -322,7 +325,7 @@ begin
       AMessage := AMessage + ' ' + AvailableKeysHint(AConfig);
     Exit;
   end;
-  AMessage := 'Ligado ao SonarQube ' + Version + ': projeto «' + AConfig.ProjectKey + '» encontrado.';
+  AMessage := Tr('Ligado ao SonarQube ') + Version + Tr(': projeto «') + AConfig.ProjectKey + Tr('» encontrado.');
   Result := True;
 end;
 
@@ -469,9 +472,9 @@ end;
 function SonarMissing(const AConfig: TSonarConfig): string;
 begin
   if NormalizeSonarUrl(AConfig.Url) = '' then
-    Result := 'Indica o endereço do servidor.'
+    Result := Tr('Indica o endereço do servidor.')
   else if Trim(AConfig.ProjectKey) = '' then
-    Result := 'Indica a chave do projeto no SonarQube.'
+    Result := Tr('Indica a chave do projeto no SonarQube.')
   else
     Result := '';
 end;

@@ -66,6 +66,9 @@ function MigrateMethodKeys(AScan: TProjectScan; AState: TProgressState): Boolean
 
 implementation
 
+
+uses
+  CM.Lang;
 function MethodsDoneCount(AUnit: TUnitInfo; AState: TProgressState): Integer;
 var
   S: TUnitState;
@@ -151,11 +154,11 @@ end;
 function ReviewText(AValue: TReviewState): string;
 begin
   case AValue of
-    rsInReview: Result := 'Em revisão';
-    rsNeedsChange: Result := 'Precisa de alteração';
-    rsDone: Result := 'Concluído';
+    rsInReview: Result := Tr('Em revisão');
+    rsNeedsChange: Result := Tr('Precisa de alteração');
+    rsDone: Result := Tr('Concluído');
   else
-    Result := 'Por rever';
+    Result := Tr('Por rever');
   end;
 end;
 

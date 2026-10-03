@@ -79,6 +79,9 @@ function CsvLine(const AFields: array of string): string;
 
 implementation
 
+
+uses
+  CM.Lang;
 type
   TXNode = class
   public
@@ -110,10 +113,10 @@ end;
 function ExportFormatName(AFormat: TExportFormat): string;
 begin
   case AFormat of
-    efMarkdown: Result := 'Markdown';
-    efText: Result := 'Texto (árvore)';
-    efCsv: Result := 'CSV (Excel)';
-    efJson: Result := 'JSON';
+    efMarkdown: Result := Tr('Markdown');
+    efText: Result := Tr('Texto (árvore)');
+    efCsv: Result := Tr('CSV (Excel)');
+    efJson: Result := Tr('JSON');
   end;
 end;
 
@@ -129,7 +132,7 @@ end;
 
 function ExportDefaultFileName(AProfile: TProjectProfile; AFormat: TExportFormat): string;
 begin
-  Result := SlugOf(AProfile.Name) + '-estrutura' + ExportFormatExt(AFormat);
+  Result := SlugOf(AProfile.Name) + Tr('-estrutura') + ExportFormatExt(AFormat);
 end;
 
 { ---------------------------------------------------------------- lista plana }
@@ -310,9 +313,9 @@ end;
 function YesNo(AValue: Boolean): string;
 begin
   if AValue then
-    Result := 'Sim'
+    Result := Tr('Sim')
   else
-    Result := 'Não';
+    Result := Tr('Não');
 end;
 
 function Plural(ACount: Integer; const ASingular, APlural: string): string;
@@ -332,14 +335,14 @@ var
 begin
   L := TList<string>.Create;
   try
-    L.Add('Pasta raiz: ' + AScan.Root);
-    L.Add('Gerado em: ' + FormatDateTime('yyyy-mm-dd hh:nn', Now));
-    L.Add(Plural(AScan.Folders, 'pasta', 'pastas') + ', ' + Plural(AScan.Units.Count, 'ficheiro', 'ficheiros') +
-      ', ' + Plural(AScan.TotalMethods, 'método', 'métodos'));
+    L.Add(Tr('Pasta raiz: ') + AScan.Root);
+    L.Add(Tr('Gerado em: ') + FormatDateTime('yyyy-mm-dd hh:nn', Now));
+    L.Add(Plural(AScan.Folders, Tr('pasta'), Tr('pastas')) + ', ' + Plural(AScan.Units.Count, Tr('ficheiro'), Tr('ficheiros')) +
+      ', ' + Plural(AScan.TotalMethods, Tr('método'), Tr('métodos')));
     if AOptions.IncludeProgress then
     begin
       St := ComputeStats(AScan, AState);
-      L.Add(Format('Progresso: %d/%d ficheiros concluídos, %d/%d métodos revistos',
+      L.Add(Format(Tr('Progresso: %d/%d ficheiros concluídos, %d/%d métodos revistos'),
         [St.DoneFiles, St.Files, St.DoneMethods, St.Methods]));
     end;
     Result := L.ToArray;
@@ -362,10 +365,10 @@ begin
   Rows := FlattenStructure(AScan, AOptions.IncludeMethods);
   SB := TStringBuilder.Create;
   try
-    SB.Append('# Estrutura do código — ').Append(AProfile.Name).AppendLine.AppendLine;
+    SB.Append('# ').Append(Tr('Estrutura do código — ')).Append(AProfile.Name).AppendLine.AppendLine;
     for Line in ExportHeaderLines(AScan, AState, AOptions) do
       SB.Append('- ').AppendLine(Line);
-    SB.AppendLine.AppendLine('## Estrutura').AppendLine;
+    SB.AppendLine.AppendLine('## ' + Tr('Estrutura')).AppendLine;
     for R in Rows do
     begin
       P := RowProgress(R, AState);
@@ -381,25 +384,25 @@ begin
       Line := StringOfChar(' ', 2 * R.Level) + '- ' + Mark;
       case R.Kind of
         xkDir:
-          Line := Line + '**`' + R.Name + '/`** _(' + Plural(R.FileCount, 'ficheiro', 'ficheiros') + ')_';
+          Line := Line + '**`' + R.Name + '/`** _(' + Plural(R.FileCount, Tr('ficheiro'), Tr('ficheiros')) + ')_';
         xkFile:
           begin
             Line := Line + '`' + R.Name + '`';
             if (not AOptions.IncludeMethods) and (Length(R.U.Methods) > 0) then
-              Line := Line + ' _(' + Plural(Length(R.U.Methods), 'método', 'métodos') + ')_';
+              Line := Line + ' _(' + Plural(Length(R.U.Methods), Tr('método'), Tr('métodos')) + ')_';
           end;
         xkMethod:
           Line := Line + '`' + R.U.Methods[R.MIndex].Sig + '`';
       end;
       if AOptions.IncludeProgress and (R.Kind <> xkDir) then
       begin
-        if P.Compila then Line := Line + ' [Compila]';
-        if P.Sonar then Line := Line + ' [Sonar]';
+        if P.Compila then Line := Line + Tr(' [Compila]');
+        if P.Sonar then Line := Line + Tr(' [Sonar]');
         Line := Line + ReviewTag(P.Review);
         if P.Star then Line := Line + ' ★';
         Line2 := OneLine(P.Note);
         if Line2 <> '' then
-          Line := Line + ' — nota: ' + Line2;
+          Line := Line + Tr(' — nota: ') + Line2;
       end;
       SB.AppendLine(Line);
     end;
@@ -471,19 +474,19 @@ begin
         begin
           Line := Line + R.Name;
           if (not AOptions.IncludeMethods) and (Length(R.U.Methods) > 0) then
-            Line := Line + '  (' + Plural(Length(R.U.Methods), 'método', 'métodos') + ')';
+            Line := Line + '  (' + Plural(Length(R.U.Methods), Tr('método'), Tr('métodos')) + ')';
         end;
       xkMethod: Line := Line + R.U.Methods[R.MIndex].Sig;
     end;
     if AOptions.IncludeProgress and (R.Kind <> xkDir) then
     begin
-      if P.Compila then Line := Line + ' [Compila]';
-      if P.Sonar then Line := Line + ' [Sonar]';
+      if P.Compila then Line := Line + Tr(' [Compila]');
+      if P.Sonar then Line := Line + Tr(' [Sonar]');
       Line := Line + ReviewTag(P.Review);
-      if P.Star then Line := Line + ' (prioritário)';
+      if P.Star then Line := Line + Tr(' (prioritário)');
       Note := OneLine(P.Note);
       if Note <> '' then
-        Line := Line + '  -- nota: ' + Note;
+        Line := Line + Tr('  -- nota: ') + Note;
     end;
 
     L.Row := R;
@@ -511,7 +514,7 @@ var
 begin
   SB := TStringBuilder.Create;
   try
-    SB.AppendLine('Estrutura do código — ' + AProfile.Name);
+    SB.AppendLine(Tr('Estrutura do código — ') + AProfile.Name);
     for Line in ExportHeaderLines(AScan, AState, AOptions) do
       SB.AppendLine(Line);
     SB.AppendLine;
@@ -568,10 +571,10 @@ begin
   SB := TStringBuilder.Create;
   Fields := TList<string>.Create;
   try
-    Fields.AddRange(['Nível', 'Pasta', 'Ficheiro', 'Camada', 'Classe', 'Método', 'Tipo', 'Assinatura', 'Linhas',
-      'Complexidade']);
+    Fields.AddRange([Tr('Nível'), Tr('Pasta'), Tr('Ficheiro'), Tr('Camada'), Tr('Classe'), Tr('Método'), Tr('Tipo'), Tr('Assinatura'), Tr('Linhas'),
+      Tr('Complexidade')]);
     if AOptions.IncludeProgress then
-      Fields.AddRange(['Concluído', 'Compila', 'Sonar', 'Prioritário', 'Nota', 'Revisão']);
+      Fields.AddRange([Tr('Concluído'), Tr('Compila'), Tr('Sonar'), Tr('Prioritário'), Tr('Nota'), Tr('Revisão')]);
     SB.Append(CsvLine(Fields.ToArray));
     for R in FlattenStructure(AScan, AOptions.IncludeMethods) do
     begin
@@ -580,11 +583,11 @@ begin
       P := RowProgress(R, AState);
       Fields.Clear;
       if R.Kind = xkFile then
-        Fields.AddRange(['Ficheiro', R.U.Dir, R.U.FileName, R.U.Layer, '', '', '', '', '', ''])
+        Fields.AddRange([Tr('Ficheiro'), R.U.Dir, R.U.FileName, R.U.Layer, '', '', '', '', '', ''])
       else
       begin
         M := R.U.Methods[R.MIndex];
-        Fields.AddRange(['Método', R.U.Dir, R.U.FileName, R.U.Layer, M.Owner, M.Name, M.Kind, M.Sig,
+        Fields.AddRange([Tr('Método'), R.U.Dir, R.U.FileName, R.U.Layer, M.Owner, M.Name, M.Kind, M.Sig,
           MeasureField(M.Lines), MeasureField(M.Complexity)]);
       end;
       if AOptions.IncludeProgress then

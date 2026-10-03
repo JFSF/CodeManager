@@ -11,7 +11,7 @@ uses
   FMX.Types, FMX.Controls, FMX.Layouts, FMX.Dialogs, FMX.DialogService.Sync,
   Winapi.Windows, Winapi.ShellAPI,
   CM.Theme, CM.Controls, CM.Layouts, CM.TreeList, CM.Analyzer, CM.Store, CM.Stats, CM.Html,
-  CM.Watcher, CM.Plan, CM.Sonar, CM.Secrets, CM.Pages.Host;
+  CM.Watcher, CM.Plan, CM.Sonar, CM.Secrets, CM.GitHub, CM.Pages.Host;
 
 type
   TProjectPage = class(TCMControl)
@@ -25,10 +25,10 @@ type
 
     FProjList: TCMList;
     FStepsBox: TCMControl;
-    FNameIn, FRootIn, FOutIn, FPlanIn, FExcludeIn: TCMInput;
+    FNameIn, FRootIn, FOutIn, FPlanIn, FExcludeIn, FRepoIn: TCMInput;
     FOpenSwitch: TCMSwitch;
     FWatchSwitch: TCMSwitch;
-    FBtnScan, FBtnExportMap, FBtnExportCk, FBtnFinalize, FBtnRemove: TCMButton;
+    FBtnSync, FBtnScan, FBtnExportMap, FBtnExportCk, FBtnFinalize, FBtnRemove: TCMButton;
     FProgress: TCMProgress;
     FStatus: TCMLabel;
     FSummary: TCMKeyValue;
@@ -52,6 +52,9 @@ type
     procedure NewProjectClick(Sender: TObject);
     procedure RemoveProjectClick(Sender: TObject);
     procedure ScanClick(Sender: TObject);
+    procedure SyncRepoClick(Sender: TObject);
+    procedure RepoChanged(Sender: TObject);
+    procedure ApplyRepoLock;
     procedure SetBusy(ABusy: Boolean);
     procedure ScanProgress(AToken: Integer; const AMsg: string; ADone, ATotal: Integer);
     procedure ScanDone(AToken: Integer; AScan, APlan: TProjectScan; const AWarnings: TArray<string>;
@@ -64,6 +67,7 @@ type
     procedure ExportChecklistClick(Sender: TObject);
     function EnsureReadyToExport: Boolean;
     procedure OpenFile(const APath: string);
+    procedure LanguageClick(Sender: TObject);
   public
     constructor Create(AOwner: TComponent; AParent: TFmxObject; const AHost: IPageHost); reintroduce;
     destructor Destroy; override;
@@ -78,7 +82,8 @@ type
     procedure CancelScan;
     // so descarta o resultado das analises a decorrer (fecho da janela)
     procedure InvalidateScans;
-    procedure StartScan;
+    // ASync: obtem de novo o repositorio do GitHub (so se o projeto tiver um); sem ele usa a cache
+    procedure StartScan(ASync: Boolean = False);
     procedure StartWatch;
     procedure StopWatch;
     procedure WatchSwitchChanged(Sender: TObject);
@@ -100,6 +105,9 @@ type
 
 implementation
 
+
+uses
+  CM.Lang;
 function KV(const ACaption, AValue: string; AHighlight: Boolean = False): TKeyValue;
 begin
   Result.Caption := ACaption;
@@ -114,7 +122,8 @@ var
   Card: TCMPanel;
   Row: TCMButtonRow;
   Sub: TCMLabel;
-  NewBtn: TCMButton;
+  NewBtn, LangBtn: TCMButton;
+  L: TLang;
 begin
   inherited Create(AOwner);
   FHost := AHost;
@@ -134,8 +143,8 @@ begin
   Left.Width := 340;
   Left.Margins.Right := 20;
   Left.Padding.Rect := TRectF.Create(16, 18, 16, 16);
-  TCMLabel.Make(Left, 'Projetos', 15, True).Align := TAlignLayout.Top;
-  Sub := TCMLabel.Make(Left, 'Cada projeto guarda o seu progresso.', 12, False, lcFaint);
+  TCMLabel.Make(Left, Tr('Projetos'), 15, True).Align := TAlignLayout.Top;
+  Sub := TCMLabel.Make(Left, Tr('Cada projeto guarda o seu progresso.'), 12, False, lcFaint);
   Sub.Align := TAlignLayout.Top;
   Sub.Margins.Bottom := 12;
   // orientacao enquanto o projecto ainda nao foi analisado (some quando ha analise)
@@ -143,15 +152,15 @@ begin
   FStepsBox.Parent := Left;
   FStepsBox.Align := TAlignLayout.Bottom;
   FStepsBox.Height := 92;
-  Sub := TCMLabel.Make(FStepsBox, 'Primeiros passos', 13, True);
+  Sub := TCMLabel.Make(FStepsBox, Tr('Primeiros passos'), 13, True);
   Sub.Align := TAlignLayout.Top;
   Sub.Height := 26;
-  Sub := TCMLabel.Make(FStepsBox, '1. Escolha a pasta do projeto e/ou o plano (.md)' + sLineBreak +
-    '2. Clique em «Analisar projeto»' + sLineBreak + '3. Reveja no Mapa, na Checklist e no Painel',
+  Sub := TCMLabel.Make(FStepsBox, Tr('1. Escolha a pasta do projeto e/ou o plano (.md)') + sLineBreak +
+    Tr('2. Clique em «Analisar projeto»') + sLineBreak + Tr('3. Reveja no Mapa, na Checklist e no Painel'),
     12.5, False, lcDim);
   Sub.Align := TAlignLayout.Top;
   Sub.Height := 62;
-  NewBtn := TCMButton.Make(Left, 'Novo projeto', icPlus, bkSecondary, NewProjectClick);
+  NewBtn := TCMButton.Make(Left, Tr('Novo projeto'), icPlus, bkSecondary, NewProjectClick);
   NewBtn.Align := TAlignLayout.Bottom;
   NewBtn.Height := 38;
   NewBtn.Margins.Top := 8;
@@ -166,32 +175,50 @@ begin
   Right.Align := TAlignLayout.Client;
   Right.ShowScrollBars := False;
 
-  Card := NewCard(Self, Right, 574);
-  TCMLabel.Make(Card, 'Configuração', 15, True).Align := TAlignLayout.Top;
-  FNameIn := AddField(Self, Card, 'Nome do projeto', 'ex.: AssisTEC', False);
-  FRootIn := AddField(Self, Card, 'Localização do projeto (pasta raiz a analisar)', 'C:\Projetos\MeuProjeto', True);
-  FOutIn := AddField(Self, Card, 'Pasta onde guardar as páginas HTML', 'C:\Projetos\MeuProjeto\docs', True);
-  FPlanIn := AddField(Self, Card, 'Documento do plano (.md) — opcional: estrutura e código previstos',
+  // idioma da aplicacao (a escolha reconstroi a interface)
+  Card := NewCard(Self, Right, 112);
+  TCMLabel.Make(Card, Tr('Idioma'), 15, True).Align := TAlignLayout.Top;
+  Row := NewButtonRow(Self, Card);
+  Row.Margins.Top := 12;
+  for L := Low(TLang) to High(TLang) do
+  begin
+    LangBtn := TCMButton.Create(Row);
+    LangBtn.Parent := Row;
+    LangBtn.Height := 36;
+    LangBtn.Text := LangNames[L];
+    LangBtn.Tag := Ord(L);
+    LangBtn.Active := L = CurrentLang;
+    LangBtn.OnClick := LanguageClick;
+  end;
+
+  Card := NewCard(Self, Right, 656);
+  TCMLabel.Make(Card, Tr('Configuração'), 15, True).Align := TAlignLayout.Top;
+  FNameIn := AddField(Self, Card, Tr('Nome do projeto'), Tr('ex.: AssisTEC'), False);
+  FRootIn := AddField(Self, Card, Tr('Localização do projeto (pasta raiz a analisar)'), 'C:\Projetos\MeuProjeto', True);
+  FRepoIn := AddField(Self, Card, Tr('Ou um repositório do GitHub (opcional, só leitura)'), 'https://github.com/utilizador/repositorio', False);
+  FOutIn := AddField(Self, Card, Tr('Pasta onde guardar as páginas HTML'), 'C:\Projetos\MeuProjeto\docs', True);
+  FPlanIn := AddField(Self, Card, Tr('Documento do plano (.md) — opcional: estrutura e código previstos'),
     'C:\Projetos\MeuProjeto\docs\plano.md', True);
-  FExcludeIn := AddField(Self, Card, 'Pastas a ignorar (separadas por vírgulas)', ExcludedDirsText, False);
+  FExcludeIn := AddField(Self, Card, Tr('Pastas a ignorar (separadas por vírgulas)'), ExcludedDirsText, False);
   FOpenSwitch := TCMSwitch.Create(Self);
   FOpenSwitch.Parent := Card;
   FOpenSwitch.Align := TAlignLayout.Top;
   FOpenSwitch.Margins.Top := 16;
-  FOpenSwitch.Text := 'Abrir a página no navegador depois de exportar';
+  FOpenSwitch.Text := Tr('Abrir a página no navegador depois de exportar');
   FOpenSwitch.OnChange := OpenSwitchChanged;
   FWatchSwitch := TCMSwitch.Create(Self);
   FWatchSwitch.Parent := Card;
   FWatchSwitch.Align := TAlignLayout.Top;
   FWatchSwitch.Margins.Top := 6;
-  FWatchSwitch.Text := 'Acompanhar alterações na pasta do projeto';
+  FWatchSwitch.Text := Tr('Acompanhar alterações na pasta do projeto');
   FWatchSwitch.OnChange := WatchSwitchChanged;
-  Sub := TCMLabel.Make(Card, 'Em branco = predefinidas. Analisa .pas, .dpr e .dpk. Com pasta e plano, o Mapa mostra o que falta e o que sobra.',
+  Sub := TCMLabel.Make(Card, Tr('Em branco = predefinidas. Analisa .pas, .dpr e .dpk. Com pasta e plano, o Mapa mostra o que falta e o que sobra.'),
     11.5, False, lcFaint, True);
   Sub.Align := TAlignLayout.Top;
   Sub.Margins.Top := 10;
   FNameIn.OnChangeText := FieldChanged;
   FRootIn.OnChangeText := FieldChanged;
+  FRepoIn.OnChangeText := RepoChanged;
   FOutIn.OnChangeText := FieldChanged;
   FPlanIn.OnChangeText := FieldChanged;
   FExcludeIn.OnChangeText := FieldChanged;
@@ -201,9 +228,9 @@ begin
 
   // SonarQube: opcional. Cada utilizador decide se o usa e como; nada se liga sem ele o activar
   Card := NewCard(Self, Right, 486);
-  TCMLabel.Make(Card, 'SonarQube (opcional)', 15, True).Align := TAlignLayout.Top;
-  Sub := TCMLabel.Make(Card, 'Cada utilizador decide se o usa. O endereço e o token ficam nos teus dados;' + sLineBreak +
-    'o token é cifrado e só funciona neste computador e nesta conta do Windows.', 11.5, False, lcFaint);
+  TCMLabel.Make(Card, Tr('SonarQube (opcional)'), 15, True).Align := TAlignLayout.Top;
+  Sub := TCMLabel.Make(Card, Tr('Cada utilizador decide se o usa. O endereço e o token ficam nos teus dados;') + sLineBreak +
+    Tr('o token é cifrado e só funciona neste computador e nesta conta do Windows.'), 11.5, False, lcFaint);
   Sub.Align := TAlignLayout.Top;
   Sub.Height := 36;
   Sub.Margins.Top := 4;
@@ -211,18 +238,18 @@ begin
   FSonarSwitch.Parent := Card;
   FSonarSwitch.Align := TAlignLayout.Top;
   FSonarSwitch.Margins.Top := 8;
-  FSonarSwitch.Text := 'Usar o SonarQube neste computador';
+  FSonarSwitch.Text := Tr('Usar o SonarQube neste computador');
   FSonarSwitch.OnChange := SonarSwitchChanged;
-  FSonarUrlIn := AddField(Self, Card, 'Endereço do servidor', 'http://localhost:5000', False);
-  FSonarTokenIn := AddField(Self, Card, 'Token de utilizador', 'cola aqui o token (My Account › Security)', False);
+  FSonarUrlIn := AddField(Self, Card, Tr('Endereço do servidor'), 'http://localhost:5000', False);
+  FSonarTokenIn := AddField(Self, Card, Tr('Token de utilizador'), Tr('cola aqui o token (My Account › Security)'), False);
   FSonarTokenIn.Edit.Password := True;
-  FSonarKeyIn := AddField(Self, Card, 'Chave deste projeto no SonarQube', 'ex.: CodeManager', False);
+  FSonarKeyIn := AddField(Self, Card, Tr('Chave deste projeto no SonarQube'), Tr('ex.: CodeManager'), False);
   FSonarUrlIn.OnChangeText := SonarFieldChanged;
   FSonarTokenIn.OnChangeText := SonarFieldChanged;
   FSonarKeyIn.OnChangeText := SonarFieldChanged;
   Row := NewButtonRow(Self, Card);
   Row.Margins.Top := 14;
-  TCMButton.Make(Row, 'Testar ligação', icRefresh, bkSecondary, SonarTestClick);
+  TCMButton.Make(Row, Tr('Testar ligação'), icRefresh, bkSecondary, SonarTestClick);
   FSonarStatus := TCMLabel.Make(Card, '', 12, False, lcDim);
   FSonarStatus.Align := TAlignLayout.Top;
   FSonarStatus.Height := 38;
@@ -233,25 +260,26 @@ begin
   FSonarTestTimer.OnTimer := SonarTestTick;
 
   Card := NewCard(Self, Right, 192);
-  TCMLabel.Make(Card, 'Ações', 15, True).Align := TAlignLayout.Top;
+  TCMLabel.Make(Card, Tr('Ações'), 15, True).Align := TAlignLayout.Top;
   Row := NewButtonRow(Self, Card);
   Row.Wrap := True;
   Row.Margins.Top := 14;
-  FBtnScan := TCMButton.Make(Row, 'Analisar projeto', icRefresh, bkPrimary, ScanClick);
-  FBtnExportMap := TCMButton.Make(Row, 'Exportar mapa (HTML)', icExport, bkSecondary, ExportMapClick);
-  FBtnExportCk := TCMButton.Make(Row, 'Exportar checklist (HTML)', icExport, bkSecondary, ExportChecklistClick);
-  FBtnFinalize := TCMButton.Make(Row, 'Fechar projeto como finalizado', icFlag, bkSecondary, FinalizeClick);
-  FBtnRemove := TCMButton.Make(Row, 'Remover projeto', icTrash, bkDanger, RemoveProjectClick);
+  FBtnScan := TCMButton.Make(Row, Tr('Analisar projeto'), icRefresh, bkPrimary, ScanClick);
+  FBtnSync := TCMButton.Make(Row, Tr('Atualizar do GitHub'), icDownload, bkSecondary, SyncRepoClick);
+  FBtnExportMap := TCMButton.Make(Row, Tr('Exportar mapa (HTML)'), icExport, bkSecondary, ExportMapClick);
+  FBtnExportCk := TCMButton.Make(Row, Tr('Exportar checklist (HTML)'), icExport, bkSecondary, ExportChecklistClick);
+  FBtnFinalize := TCMButton.Make(Row, Tr('Fechar projeto como finalizado'), icFlag, bkSecondary, FinalizeClick);
+  FBtnRemove := TCMButton.Make(Row, Tr('Remover projeto'), icTrash, bkDanger, RemoveProjectClick);
   FProgress := TCMProgress.Create(Self);
   FProgress.Parent := Card;
   FProgress.Align := TAlignLayout.Top;
   FProgress.Margins.Top := 10;
-  FStatus := TCMLabel.Make(Card, 'Escolha a pasta do projeto e clique em «Analisar projeto».', 12.5, False, lcDim);
+  FStatus := TCMLabel.Make(Card, Tr('Escolha a pasta do projeto e clique em «Analisar projeto».'), 12.5, False, lcDim);
   FStatus.Align := TAlignLayout.Top;
   FStatus.Margins.Top := 10;
 
   Card := NewCard(Self, Right, 226);
-  TCMLabel.Make(Card, 'Resumo da análise', 15, True).Align := TAlignLayout.Top;
+  TCMLabel.Make(Card, Tr('Resumo da análise'), 15, True).Align := TAlignLayout.Top;
   FSummary := TCMKeyValue.Create(Self);
   FSummary.Parent := Card;
   FSummary.Align := TAlignLayout.Top;
@@ -274,6 +302,7 @@ procedure TProjectPage.ApplyTheme;
 begin
   FNameIn.ApplyTheme;
   FRootIn.ApplyTheme;
+  FRepoIn.ApplyTheme;
   FOutIn.ApplyTheme;
   FPlanIn.ApplyTheme;
   FExcludeIn.ApplyTheme;
@@ -294,9 +323,9 @@ begin
   for I := 0 to Projects.Count - 1 do
   begin
     P := Projects[I];
-    if Trim(P.Name) <> '' then Items[I].Title := P.Name else Items[I].Title := '(sem nome)';
-    if P.RootPath <> '' then Items[I].Sub := P.RootPath else Items[I].Sub := '(sem pasta)';
-    if P.Finalized then Items[I].Badge := 'FINALIZADO' else Items[I].Badge := '';
+    if Trim(P.Name) <> '' then Items[I].Title := P.Name else Items[I].Title := Tr('(sem nome)');
+    if P.RootPath <> '' then Items[I].Sub := P.RootPath else Items[I].Sub := Tr('(sem pasta)');
+    if P.Finalized then Items[I].Badge := Tr('FINALIZADO') else Items[I].Badge := '';
     if P = FHost.CurrentProfile then
       Sel := I;
   end;
@@ -313,7 +342,7 @@ var
   P: TProjectProfile;
 begin
   P := FHost.AppSettings.AddProject;
-  P.Name := 'Novo projeto';
+  P.Name := Tr('Novo projeto');
   FHost.AppSettings.ActiveProjectId := P.Id;
   FHost.MarkSettingsDirty;
   FHost.SelectProject(P);
@@ -328,6 +357,7 @@ begin
   try
     FNameIn.Text := AProfile.Name;
     FRootIn.Text := AProfile.RootPath;
+    FRepoIn.Text := AProfile.RepoUrl;
     FOutIn.Text := AProfile.OutputFolder;
     FPlanIn.Text := AProfile.PlanPath;
     FExcludeIn.Text := AProfile.ExcludeDirs;
@@ -341,13 +371,14 @@ begin
   finally
     FLoadingFields := False;
   end;
+  ApplyRepoLock;
 end;
 
 procedure TProjectPage.ResetStatus;
 begin
   FProgress.Value := 0;
   FStatus.ColorRole := lcDim;
-  FStatus.Text := 'Escolha a pasta do projeto e clique em «Analisar projeto».';
+  FStatus.Text := Tr('Escolha a pasta do projeto e clique em «Analisar projeto».');
 end;
 
 procedure TProjectPage.ProjListSelect(Sender: TObject);
@@ -390,7 +421,7 @@ begin
   Config.Token := Trim(FSonarTokenIn.Text);
   Config.ProjectKey := Trim(FSonarKeyIn.Text);
   FSonarStatus.ColorRole := lcDim;
-  FSonarStatus.Text := 'A testar…';
+  FSonarStatus.Text := Tr('A testar…');
   FSonarTestJob := StartSonarTest(Config);
   FSonarTestTimer.Enabled := True;
 end;
@@ -419,6 +450,40 @@ begin
     FHost.RequestSonarRefresh;
 end;
 
+// com um repositorio do GitHub a pasta de analise e a cache: o campo da pasta passa a so de leitura
+procedure TProjectPage.ApplyRepoLock;
+var
+  Ref: TRepoRef;
+  Err: string;
+begin
+  FRootIn.Edit.ReadOnly := (Trim(FRepoIn.Text) <> '') and ParseRepoUrl(Trim(FRepoIn.Text), Ref, Err);
+  FBtnSync.Enabled := not FScanBusy;
+end;
+
+procedure TProjectPage.RepoChanged(Sender: TObject);
+var
+  Ref: TRepoRef;
+  Err: string;
+  Profile: TProjectProfile;
+begin
+  Profile := FHost.CurrentProfile;
+  if FLoadingFields or (Profile = nil) then
+    Exit;
+  if (Trim(FRepoIn.Text) <> '') and ParseRepoUrl(Trim(FRepoIn.Text), Ref, Err) then
+  begin
+    FRootIn.Edit.ReadOnly := False;
+    FRootIn.Text := RepoWorkDir(Profile.Id, Ref);
+    if Trim(FOutIn.Text) = '' then
+      FOutIn.Text := TPath.Combine(TPath.Combine(AppDataDir, 'html'), Profile.Id);
+    if Trim(FNameIn.Text) = '' then
+      FNameIn.Text := Ref.Name;
+  end
+  else if Trim(FRepoIn.Text) = '' then
+    FRootIn.Edit.ReadOnly := False;
+  FieldChanged(Sender);
+  ApplyRepoLock;
+end;
+
 procedure TProjectPage.FieldChanged(Sender: TObject);
 var
   Profile: TProjectProfile;
@@ -428,6 +493,7 @@ begin
     Exit;
   Profile.Name := Trim(FNameIn.Text);
   Profile.RootPath := Trim(FRootIn.Text);
+  Profile.RepoUrl := Trim(FRepoIn.Text);
   Profile.OutputFolder := Trim(FOutIn.Text);
   Profile.PlanPath := Trim(FPlanIn.Text);
   Profile.ExcludeDirs := Trim(FExcludeIn.Text);
@@ -443,7 +509,7 @@ begin
   Dir := FRootIn.Text;
   if not TDirectory.Exists(Dir) then
     Dir := '';
-  if SelectDirectory('Escolha a pasta raiz do projeto a analisar', '', Dir) then
+  if SelectDirectory(Tr('Escolha a pasta raiz do projeto a analisar'), '', Dir) then
   begin
     FRootIn.Text := Dir;
     if Trim(FNameIn.Text) = '' then
@@ -461,7 +527,7 @@ begin
   Dir := FOutIn.Text;
   if not TDirectory.Exists(Dir) then
     Dir := FRootIn.Text;
-  if SelectDirectory('Escolha a pasta onde guardar as páginas HTML', '', Dir) then
+  if SelectDirectory(Tr('Escolha a pasta onde guardar as páginas HTML'), '', Dir) then
     FOutIn.Text := Dir;
 end;
 
@@ -471,8 +537,8 @@ var
 begin
   D := TOpenDialog.Create(nil);
   try
-    D.Title := 'Escolha o documento do plano (Markdown)';
-    D.Filter := 'Markdown (*.md;*.markdown)|*.md;*.markdown|Todos os ficheiros (*.*)|*.*';
+    D.Title := Tr('Escolha o documento do plano (Markdown)');
+    D.Filter := Tr('Markdown (*.md;*.markdown)|*.md;*.markdown|Todos os ficheiros (*.*)|*.*');
     if TFile.Exists(FPlanIn.Text) then
       D.FileName := FPlanIn.Text
     else if TDirectory.Exists(FRootIn.Text) then
@@ -485,6 +551,11 @@ begin
   finally
     D.Free;
   end;
+end;
+
+procedure TProjectPage.LanguageClick(Sender: TObject);
+begin
+  FHost.SetLanguage(TLang(TFmxObject(Sender).Tag));
 end;
 
 procedure TProjectPage.OpenSwitchChanged(Sender: TObject);
@@ -505,13 +576,15 @@ begin
   if P = nil then
     Exit;
   if TDialogServiceSync.MessageDialog(
-    Format('Remover o projeto "%s" da lista? O progresso guardado será apagado (os ficheiros do projeto não são tocados).',
+    Format(Tr('Remover o projeto "%s" da lista? O progresso guardado será apagado (os ficheiros do projeto não são tocados).'),
       [P.Name]), TMsgDlgType.mtConfirmation, [TMsgDlgBtn.mbYes, TMsgDlgBtn.mbNo],
     TMsgDlgBtn.mbNo, 0) <> mrYes then
     Exit;
   Settings := FHost.AppSettings;
   Idx := Settings.Projects.IndexOf(P);
   FHost.DetachProfile;
+  if P.RepoUrl <> '' then
+    DeleteRepoCache(P.Id);
   Settings.RemoveProject(P);
   FHost.MarkSettingsDirty;
   if Settings.Projects.Count = 0 then
@@ -530,7 +603,7 @@ begin
   if not Profile.Finalized then
   begin
     if TDialogServiceSync.MessageDialog(
-      'Fechar o projeto como finalizado? O mapa exportado passa a ter o selo "PROJETO FINALIZADO".',
+      Tr('Fechar o projeto como finalizado? O mapa exportado passa a ter o selo "PROJETO FINALIZADO".'),
       TMsgDlgType.mtConfirmation, [TMsgDlgBtn.mbYes, TMsgDlgBtn.mbNo], TMsgDlgBtn.mbYes, 0) <> mrYes then
       Exit;
     Profile.Finalized := True;
@@ -548,9 +621,9 @@ begin
   if (FHost.CurrentScan <> nil) and (Trim(FOutIn.Text) <> '') then
     ExportMap(False)
   else if Profile.Finalized then
-    FHost.Toast('Projeto finalizado')
+    FHost.Toast(Tr('Projeto finalizado'))
   else
-    FHost.Toast('Projeto reaberto');
+    FHost.Toast(Tr('Projeto reaberto'));
 end;
 
 procedure TProjectPage.UpdateFinalizeButton;
@@ -560,12 +633,12 @@ begin
   Profile := FHost.CurrentProfile;
   if (Profile <> nil) and Profile.Finalized then
   begin
-    FBtnFinalize.Text := 'Reabrir projeto';
+    FBtnFinalize.Text := Tr('Reabrir projeto');
     FBtnFinalize.Icon := icRefresh;
   end
   else
   begin
-    FBtnFinalize.Text := 'Fechar projeto como finalizado';
+    FBtnFinalize.Text := Tr('Fechar projeto como finalizado');
     FBtnFinalize.Icon := icFlag;
   end;
   TCMButtonRow(FBtnFinalize.Parent).Relayout;
@@ -607,7 +680,7 @@ begin
     Exit;
   FWatcher := TFolderWatcher.Create(Scan.Root, WatcherSignal);
   FStatus.ColorRole := lcDim;
-  FStatus.Text := FStatus.Text + '  ·  a acompanhar alterações';
+  FStatus.Text := FStatus.Text + Tr('  ·  a acompanhar alterações');
 end;
 
 procedure TProjectPage.WatcherSignal(Sender: TObject);
@@ -706,20 +779,20 @@ begin
     C := AChanges[0];
     Name := C.Path.Substring(C.Path.LastIndexOf('/') + 1);
     case C.Kind of
-      rcAdded: Msg := Format('novo: %s (%d métodos)', [Name, Length(C.NewMethods)]);
-      rcRemoved: Msg := 'removido: ' + Name;
+      rcAdded: Msg := Format(Tr('novo: %s (%d métodos)'), [Name, Length(C.NewMethods)]);
+      rcRemoved: Msg := Tr('removido: ') + Name;
     else
       if Length(C.NewMethods) > 0 then
-        Msg := Format('%s (%d métodos novos ou alterados)', [Name, Length(C.NewMethods)])
+        Msg := Format(Tr('%s (%d métodos novos ou alterados)'), [Name, Length(C.NewMethods)])
       else
-        Msg := Name + ' atualizado';
+        Msg := Name + Tr(' atualizado');
     end;
   end
   else
-    Msg := Format('%d ficheiros (%d novos, %d alterados, %d removidos)', [AChanges.Count, Added, Changed, Removed]);
+    Msg := Format(Tr('%d ficheiros (%d novos, %d alterados, %d removidos)'), [AChanges.Count, Added, Changed, Removed]);
   FStatus.ColorRole := lcDim;
-  FStatus.Text := Format('Acompanhar · %s · %s', [FormatDateTime('hh:nn:ss', Now), Msg]);
-  FHost.Toast('Atualizado: ' + Msg);
+  FStatus.Text := Format(Tr('Acompanhar · %s · %s'), [FormatDateTime('hh:nn:ss', Now), Msg]);
+  FHost.Toast(Tr('Atualizado: ') + Msg);
 end;
 
 { ---------------------------------------------------------------- analise }
@@ -729,16 +802,27 @@ begin
   StartScan;
 end;
 
+procedure TProjectPage.SyncRepoClick(Sender: TObject);
+begin
+  if Trim(FRepoIn.Text) = '' then
+  begin
+    FHost.Toast(Tr('Indique o endereço do repositório no GitHub.'));
+    Exit;
+  end;
+  StartScan(True);
+end;
+
 procedure TProjectPage.SetBusy(ABusy: Boolean);
 begin
   FScanBusy := ABusy;
   FBtnScan.Enabled := not ABusy;
+  FBtnSync.Enabled := not ABusy;
   FBtnExportMap.Enabled := not ABusy;
   FBtnExportCk.Enabled := not ABusy;
   if ABusy then
-    FBtnScan.Text := 'A analisar…'
+    FBtnScan.Text := Tr('A analisar…')
   else
-    FBtnScan.Text := 'Analisar projeto';
+    FBtnScan.Text := Tr('Analisar projeto');
   TCMButtonRow(FBtnScan.Parent).Relayout;
 end;
 
@@ -753,41 +837,64 @@ begin
   Inc(FScanToken);
 end;
 
-procedure TProjectPage.StartScan;
+procedure TProjectPage.StartScan(ASync: Boolean);
 var
   Token: Integer;
-  Root, PlanFile: string;
+  Root, PlanFile, RepoText, RepoErr, ProjectId: string;
   ExcludeList: TArray<string>;
+  Ref: TRepoRef;
+  NeedSync: Boolean;
 begin
   if FHost.CurrentProfile = nil then
     Exit;
   Root := Trim(FRootIn.Text);
+  NeedSync := False;
+  ProjectId := FHost.CurrentProfile.Id;
+  RepoText := Trim(FRepoIn.Text);
+  if RepoText <> '' then
+  begin
+    // repositorio do GitHub: analisa-se a cache; so se vai buscar ao GitHub quando pedido ou se ainda nao existe
+    if not ParseRepoUrl(RepoText, Ref, RepoErr) then
+    begin
+      FStatus.ColorRole := lcDanger;
+      FStatus.Text := RepoErr;
+      FHost.Toast(RepoErr);
+      Exit;
+    end;
+    Root := RepoWorkDir(ProjectId, Ref);
+    if Trim(FRootIn.Text) <> Root then
+      FRootIn.Text := Root;
+    NeedSync := ASync or not TDirectory.Exists(TPath.Combine(RepoCacheDir(ProjectId), '.git'));
+  end;
   PlanFile := Trim(FPlanIn.Text);
   ExcludeList := ParseExcludeDirs(Trim(FExcludeIn.Text));
   if Trim(FNameIn.Text) = '' then
   begin
-    FHost.Toast('Indique o nome do projeto.');
+    FHost.Toast(Tr('Indique o nome do projeto.'));
     Exit;
   end;
-  if (Root <> '') and not TDirectory.Exists(Root) then
+  if (Root <> '') and not NeedSync and not TDirectory.Exists(Root) then
   begin
     FStatus.ColorRole := lcDanger;
-    FStatus.Text := 'Indique uma pasta de projeto válida.';
-    FHost.Toast('Indique uma pasta de projeto válida.');
+    FStatus.Text := Tr('Indique uma pasta de projeto válida.');
+    FHost.Toast(Tr('Indique uma pasta de projeto válida.'));
     Exit;
   end;
   if (Root = '') and not TFile.Exists(PlanFile) then
   begin
     FStatus.ColorRole := lcDanger;
-    FStatus.Text := 'Indique uma pasta de projeto ou um documento de plano válido.';
-    FHost.Toast('Indique uma pasta de projeto ou um documento de plano válido.');
+    FStatus.Text := Tr('Indique uma pasta de projeto ou um documento de plano válido.');
+    FHost.Toast(Tr('Indique uma pasta de projeto ou um documento de plano válido.'));
     Exit;
   end;
   Inc(FScanToken);
   Token := FScanToken;
   SetBusy(True);
   FStatus.ColorRole := lcDim;
-  FStatus.Text := 'A procurar unidades .pas/.dpr/.dpk…';
+  if NeedSync then
+    FStatus.Text := TrF('A obter %s do GitHub…', [Ref.Display])
+  else
+    FStatus.Text := Tr('A procurar unidades .pas/.dpr/.dpk…');
   FProgress.Value := 0;
 
   TTask.Run(
@@ -800,6 +907,18 @@ begin
       Res := nil;
       PlanRes := nil;
       Err := '';
+      if NeedSync then
+      begin
+        if not SyncRepo(ProjectId, Ref, Err) then
+          Root := ''
+        else if not TDirectory.Exists(Root) then
+        begin
+          Err := Tr('A pasta indicada no endereço não existe no repositório.');
+          Root := '';
+        end;
+      end;
+      if Err <> '' then
+        Root := '';
       try
         if Root <> '' then
           Res := ScanProject(Root, ExcludeList,
@@ -826,10 +945,10 @@ begin
           if TFile.Exists(PlanFile) then
             PlanRes := LoadPlanFile(PlanFile, Warnings)
           else
-            Warnings := ['Documento do plano não encontrado: ' + PlanFile];
+            Warnings := [Tr('Documento do plano não encontrado: ') + PlanFile];
         except
           on E: Exception do
-            Warnings := ['Falhou a leitura do plano: ' + E.Message];
+            Warnings := [Tr('Falhou a leitura do plano: ') + E.Message];
         end;
       System.Classes.TThread.Queue(nil,
         procedure
@@ -865,8 +984,8 @@ begin
   begin
     APlan.Free;
     FStatus.ColorRole := lcDanger;
-    FStatus.Text := 'ERRO: ' + AError;
-    FHost.Toast('Falhou a análise do projeto.');
+    FStatus.Text := Tr('ERRO: ') + AError;
+    FHost.Toast(Tr('Falhou a análise do projeto.'));
     Exit;
   end;
   FStatus.ColorRole := lcDim;
@@ -874,12 +993,12 @@ begin
   if AScan <> nil then
   begin
     FHost.BindScan(AScan, APlan);
-    Msg := Format('Análise concluída: %d ficheiros · %d métodos em %d units.',
+    Msg := Format(Tr('Análise concluída: %d ficheiros · %d métodos em %d units.'),
       [AScan.Units.Count, AScan.TotalMethods, AScan.UnitsWithMethods]);
     if FHost.HasPlan then
     begin
       S := FHost.PlanSummary;
-      Msg := Msg + Format(' Plano: %.0f%% dos ficheiros e %.0f%% dos métodos já existem.',
+      Msg := Msg + Format(Tr(' Plano: %.0f%% dos ficheiros e %.0f%% dos métodos já existem.'),
         [S.FilesCoverage, S.MethodsCoverage]);
     end;
   end
@@ -887,14 +1006,14 @@ begin
   begin
     // so o documento: a analise e a do plano (sem codigo para cruzar)
     FHost.BindScan(APlan, nil);
-    Msg := Format('Plano analisado: %d ficheiros · %d métodos em %d units (sem pasta de código).',
+    Msg := Format(Tr('Plano analisado: %d ficheiros · %d métodos em %d units (sem pasta de código).'),
       [APlan.Units.Count, APlan.TotalMethods, APlan.UnitsWithMethods]);
   end
   else
-    Msg := 'Nada para analisar.';
+    Msg := Tr('Nada para analisar.');
   if Length(AWarnings) > 0 then
   begin
-    Msg := Msg + Format(' %d aviso(s) do plano.', [Length(AWarnings)]);
+    Msg := Msg + Format(Tr(' %d aviso(s) do plano.'), [Length(AWarnings)]);
     FHost.Toast(AWarnings[0]);
   end;
   FStatus.Text := Msg;
@@ -905,18 +1024,18 @@ end;
 procedure TProjectPage.ClearStats;
 begin
   FStepsBox.Visible := True;
-  FSummary.SetRows([KV('Pastas', '—'), KV('Ficheiros', '—'), KV('Métodos', '—'),
-    KV('Units com métodos', '—'), KV('Ficheiros concluídos', '—'), KV('Métodos revistos', '—')]);
+  FSummary.SetRows([KV(Tr('Pastas'), '—'), KV(Tr('Ficheiros'), '—'), KV(Tr('Métodos'), '—'),
+    KV(Tr('Units com métodos'), '—'), KV(Tr('Ficheiros concluídos'), '—'), KV(Tr('Métodos revistos'), '—')]);
 end;
 
 procedure TProjectPage.ShowStats(const St: TStats);
 begin
   FStepsBox.Visible := False;
   FSummary.SetRows([
-    KV('Pastas', St.Folders.ToString), KV('Ficheiros', St.Files.ToString),
-    KV('Métodos', St.Methods.ToString), KV('Units com métodos', St.UnitsWithMethods.ToString),
-    KV('Ficheiros concluídos', Format('%d / %d', [St.DoneFiles, St.Files]), True),
-    KV('Métodos revistos', Format('%d / %d', [St.DoneMethods, St.Methods]), True)]);
+    KV(Tr('Pastas'), St.Folders.ToString), KV(Tr('Ficheiros'), St.Files.ToString),
+    KV(Tr('Métodos'), St.Methods.ToString), KV(Tr('Units com métodos'), St.UnitsWithMethods.ToString),
+    KV(Tr('Ficheiros concluídos'), Format('%d / %d', [St.DoneFiles, St.Files]), True),
+    KV(Tr('Métodos revistos'), Format('%d / %d', [St.DoneMethods, St.Methods]), True)]);
 end;
 
 { ---------------------------------------------------------------- exportacao HTML }
@@ -931,20 +1050,20 @@ begin
   Result := False;
   if (FHost.CurrentProfile = nil) or (FHost.CurrentScan = nil) then
   begin
-    FHost.Toast('Analise o projeto primeiro.');
+    FHost.Toast(Tr('Analise o projeto primeiro.'));
     Exit;
   end;
   if Trim(FOutIn.Text) = '' then
   begin
     FHost.ShowPage(pgProject);
     FOutIn.Edit.SetFocus;
-    FHost.Toast('Indique a pasta onde guardar as páginas HTML.');
+    FHost.Toast(Tr('Indique a pasta onde guardar as páginas HTML.'));
     Exit;
   end;
   if Trim(FHost.CurrentProfile.Name) = '' then
   begin
     FHost.ShowPage(pgProject);
-    FHost.Toast('Indique o nome do projeto.');
+    FHost.Toast(Tr('Indique o nome do projeto.'));
     Exit;
   end;
   Result := True;
@@ -961,12 +1080,12 @@ begin
     Path := MapOutputPath(FHost.CurrentProfile);
     ExportMapHtml(FHost.CurrentProfile, FHost.CurrentScan, FHost.CurrentState, Path);
     Result := True;
-    FHost.Toast('Mapa exportado: ' + TPath.GetFileName(Path));
+    FHost.Toast(Tr('Mapa exportado: ') + TPath.GetFileName(Path));
     if FHost.AppSettings.OpenAfterExport and not AQuiet then
       OpenFile(Path);
   except
     on E: Exception do
-      FHost.Toast('Falhou a exportação: ' + E.Message);
+      FHost.Toast(Tr('Falhou a exportação: ') + E.Message);
   end;
 end;
 
@@ -984,12 +1103,12 @@ begin
   try
     Path := ChecklistOutputPath(FHost.CurrentProfile);
     ExportChecklistHtml(FHost.CurrentProfile, FHost.CurrentScan, FHost.CurrentState, Path);
-    FHost.Toast('Checklist exportada: ' + TPath.GetFileName(Path));
+    FHost.Toast(Tr('Checklist exportada: ') + TPath.GetFileName(Path));
     if FHost.AppSettings.OpenAfterExport then
       OpenFile(Path);
   except
     on E: Exception do
-      FHost.Toast('Falhou a exportação: ' + E.Message);
+      FHost.Toast(Tr('Falhou a exportação: ') + E.Message);
   end;
 end;
 

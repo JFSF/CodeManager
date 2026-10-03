@@ -6,6 +6,16 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
 
 ## [Não lançado]
 
+### Funcionalidades
+
+- **Grafo de dependências:** nova página com o mapa visual de quem usa quem (cláusulas `uses` da *interface* e da
+  *implementation*), acoplamento, instabilidade, **ciclos**, filtro, simplificação e relatório em HTML (mapa em SVG)
+  ou Markdown.
+- **Idiomas:** português, inglês, francês e alemão, escolhidos na página Projeto; os relatórios exportados seguem o
+  idioma. Na primeira execução usa o idioma do Windows.
+- **Repositórios do GitHub:** analisar um repositório em vez de uma pasta; clona-se só a última versão para uma cache
+  própria (só leitura) e há «Atualizar do GitHub».
+
 ## [1.0.0] - 2026-10-03
 
 Primeira versão pública.

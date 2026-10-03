@@ -7,7 +7,10 @@ uses
   System.SysUtils,
   DUnitX.Loggers.Console,
   DUnitX.TestFramework,
+  CM.Lang.Table in '..\src\Core\CM.Lang.Table.pas',
+  CM.Lang in '..\src\Core\CM.Lang.pas',
   CM.Analyzer in '..\src\Core\CM.Analyzer.pas',
+  CM.Deps in '..\src\Core\CM.Deps.pas',
   CM.Store in '..\src\Core\CM.Store.pas',
   CM.Stats in '..\src\Core\CM.Stats.pas',
   CM.History in '..\src\Core\CM.History.pas',
@@ -15,11 +18,13 @@ uses
   CM.Metrics in '..\src\Core\CM.Metrics.pas',
   CM.SonarModel in '..\src\Core\CM.SonarModel.pas',
   CM.Git in '..\src\Infrastructure\CM.Git.pas',
+  CM.GitHub in '..\src\Infrastructure\CM.GitHub.pas',
   CM.Secrets in '..\src\Infrastructure\CM.Secrets.pas',
   CM.Sonar in '..\src\Infrastructure\CM.Sonar.pas',
   CM.GitReview in '..\src\Services\CM.GitReview.pas',
   CM.Plan in '..\src\Core\CM.Plan.pas',
   CM.Export in '..\src\Services\CM.Export.pas',
+  CM.DepsReport in '..\src\Services\CM.DepsReport.pas',
   CM.Print in '..\src\Services\CM.Print.pas',
   CM.Resources in '..\src\Infrastructure\CM.Resources.pas',
   CM.Html in '..\src\Services\CM.Html.pas',
@@ -44,7 +49,11 @@ uses
   Tests.Metrics in 'Tests.Metrics.pas',
   Tests.Review in 'Tests.Review.pas',
   Tests.Git in 'Tests.Git.pas',
-  Tests.Sonar in 'Tests.Sonar.pas';
+  Tests.Sonar in 'Tests.Sonar.pas',
+  Tests.Lang in 'Tests.Lang.pas',
+  Tests.GitHub in 'Tests.GitHub.pas',
+  Tests.Deps in 'Tests.Deps.pas',
+  Tests.DepsReport in 'Tests.DepsReport.pas';
 
 var
   Runner: ITestRunner;

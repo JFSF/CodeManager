@@ -58,6 +58,9 @@ type
 
 implementation
 
+
+uses
+  CM.Lang;
 const
   ChartScale = 0.6;
   KpiHeight = 100;
@@ -86,7 +89,7 @@ begin
   Align := TAlignLayout.Client;
   Visible := False;
 
-  FEmpty := TCMLabel.Make(Self, 'Analise um projeto para ver o painel.', 14, False, lcFaint);
+  FEmpty := TCMLabel.Make(Self, Tr('Analise um projeto para ver o painel.'), 14, False, lcFaint);
   FEmpty.Align := TAlignLayout.Top;
   FEmpty.Height := 40;
   FEmpty.Margins.Top := 8;
@@ -294,16 +297,16 @@ begin
   SetLength(MethodsPct, N);
 
   if N < 2 then
-    Subtitle := 'Ainda só há um registo: a curva aparece a partir do segundo dia'
+    Subtitle := Tr('Ainda só há um registo: a curva aparece a partir do segundo dia')
   else
-    Subtitle := Format('%s a %s · %d registos', [FormatDateTime('dd/mm/yyyy', Days[0]),
+    Subtitle := Format(Tr('%s a %s · %d registos'), [FormatDateTime('dd/mm/yyyy', Days[0]),
       FormatDateTime('dd/mm/yyyy', Days[N - 1]), N]);
-  Reset(FEvolution, TChartKind.Line, 'Evolução do progresso', Subtitle);
+  Reset(FEvolution, TChartKind.Line, Tr('Evolução do progresso'), Subtitle);
   if N = 0 then
     Exit;
   FEvolution.Plot.LegendPosition := TLegendPosition.Top;
-  FEvolution.Plot.AddLineSeries('Ficheiros concluídos', Days, FilesPct).Color := Pal.Accent;
-  FEvolution.Plot.AddLineSeries('Métodos revistos', Days, MethodsPct).Color := Pal.FlagCompila;
+  FEvolution.Plot.AddLineSeries(Tr('Ficheiros concluídos'), Days, FilesPct).Color := Pal.Accent;
+  FEvolution.Plot.AddLineSeries(Tr('Métodos revistos'), Days, MethodsPct).Color := Pal.FlagCompila;
   Axis := FEvolution.Plot.YAxis;
   Axis.MinValue := 0;
   Axis.MaxValue := 100;
@@ -330,12 +333,12 @@ begin
     Done[I] := FStats.Layers[I].Done;
     Pending[I] := FStats.Layers[I].Total - FStats.Layers[I].Done;
   end;
-  Reset(FLayers, TChartKind.StackedBar, 'Progresso por camada', 'Ficheiros concluídos e por concluir');
+  Reset(FLayers, TChartKind.StackedBar, Tr('Progresso por camada'), Tr('Ficheiros concluídos e por concluir'));
   FLayers.Plot.Orientation := TChartOrientation.Horizontal;
   FLayers.Plot.LegendPosition := TLegendPosition.Top;
   FLayers.Plot.Categories := Names;
-  FLayers.Plot.AddSeries('Concluídos', Done).Color := Pal.Accent;
-  FLayers.Plot.AddSeries('Por concluir', Pending).Color := Pal.BorderStrong;
+  FLayers.Plot.AddSeries(Tr('Concluídos'), Done).Color := Pal.Accent;
+  FLayers.Plot.AddSeries(Tr('Por concluir'), Pending).Color := Pal.BorderStrong;
 end;
 
 procedure TDashboardPage.FillKpis;
@@ -366,14 +369,14 @@ begin
     Compila[I] := History[First + I].PercentFilesCompila;
     Sonar[I] := History[First + I].PercentFilesSonar;
   end;
-  FKpi[0].SetValues('Ficheiros concluídos', Format('%d / %d', [FStats.DoneFiles, FStats.Files]),
-    Format('%d%% do projeto', [Pct(FStats.DoneFiles, FStats.Files)]), Files, Pal.Accent);
-  FKpi[1].SetValues('Métodos revistos', Format('%d / %d', [FStats.DoneMethods, FStats.Methods]),
-    Format('%d%% dos métodos', [Pct(FStats.DoneMethods, FStats.Methods)]), Methods, Pal.FlagCompila);
-  FKpi[2].SetValues('Compila', Format('%d / %d', [FStats.FilesCompila, FStats.Files]),
-    Format('%d%% dos ficheiros', [Pct(FStats.FilesCompila, FStats.Files)]), Compila, Pal.FlagCompila);
-  FKpi[3].SetValues('Sonar', Format('%d / %d', [FStats.FilesSonar, FStats.Files]),
-    Format('%d%% dos ficheiros', [Pct(FStats.FilesSonar, FStats.Files)]), Sonar, Pal.FlagSonar);
+  FKpi[0].SetValues(Tr('Ficheiros concluídos'), Format('%d / %d', [FStats.DoneFiles, FStats.Files]),
+    Format(Tr('%d%% do projeto'), [Pct(FStats.DoneFiles, FStats.Files)]), Files, Pal.Accent);
+  FKpi[1].SetValues(Tr('Métodos revistos'), Format('%d / %d', [FStats.DoneMethods, FStats.Methods]),
+    Format(Tr('%d%% dos métodos'), [Pct(FStats.DoneMethods, FStats.Methods)]), Methods, Pal.FlagCompila);
+  FKpi[2].SetValues(Tr('Compila'), Format('%d / %d', [FStats.FilesCompila, FStats.Files]),
+    Format(Tr('%d%% dos ficheiros'), [Pct(FStats.FilesCompila, FStats.Files)]), Compila, Pal.FlagCompila);
+  FKpi[3].SetValues(Tr('Sonar'), Format('%d / %d', [FStats.FilesSonar, FStats.Files]),
+    Format(Tr('%d%% dos ficheiros'), [Pct(FStats.FilesSonar, FStats.Files)]), Sonar, Pal.FlagSonar);
 end;
 
 procedure TDashboardPage.FillCompilaSonar;
@@ -412,11 +415,11 @@ begin
   finally
     Index.Free;
   end;
-  Reset(FCompilaSonar, TChartKind.GroupedBar, 'Compila e Sonar por camada', 'Ficheiros com cada marca');
+  Reset(FCompilaSonar, TChartKind.GroupedBar, Tr('Compila e Sonar por camada'), Tr('Ficheiros com cada marca'));
   FCompilaSonar.Plot.LegendPosition := TLegendPosition.Top;
   FCompilaSonar.Plot.Categories := Names;
-  FCompilaSonar.Plot.AddSeries('Compila', Compila).Color := Pal.FlagCompila;
-  FCompilaSonar.Plot.AddSeries('Sonar', Sonar).Color := Pal.FlagSonar;
+  FCompilaSonar.Plot.AddSeries(Tr('Compila'), Compila).Color := Pal.FlagCompila;
+  FCompilaSonar.Plot.AddSeries(Tr('Sonar'), Sonar).Color := Pal.FlagSonar;
 end;
 
 // complexidade ciclomatica dos metodos com corpo: os mais complexos e quantos ha em cada nivel
@@ -472,16 +475,16 @@ begin
   finally
     Items.Free;
   end;
-  Reset(FComplexTop, TChartKind.Bar, 'Métodos mais complexos',
-    Format('Os %d com maior complexidade ciclomática', [N]));
+  Reset(FComplexTop, TChartKind.Bar, Tr('Métodos mais complexos'),
+    Format(Tr('Os %d com maior complexidade ciclomática'), [N]));
   FComplexTop.Plot.Orientation := TChartOrientation.Horizontal;
   FComplexTop.Plot.Categories := Names;
-  FComplexTop.Plot.AddSeries('Complexidade', Values).Color := Pal.Pending;
+  FComplexTop.Plot.AddSeries(Tr('Complexidade'), Values).Color := Pal.Pending;
 
-  Reset(FComplexDist, TChartKind.Bar, 'Complexidade dos métodos',
-    'Quantos métodos em cada nível (simples até 10, moderada até 20)');
-  FComplexDist.Plot.Categories := ['Simples', 'Moderada', 'Alta'];
-  FComplexDist.Plot.AddSeries('Métodos',
+  Reset(FComplexDist, TChartKind.Bar, Tr('Complexidade dos métodos'),
+    Tr('Quantos métodos em cada nível (simples até 10, moderada até 20)'));
+  FComplexDist.Plot.Categories := [Tr('Simples'), Tr('Moderada'), Tr('Alta')];
+  FComplexDist.Plot.AddSeries(Tr('Métodos'),
     [Levels[cxLow], Levels[cxModerate], Levels[cxHigh]]).Color := Pal.Accent;
 end;
 
@@ -509,32 +512,32 @@ begin
     Missing[I] := Layers[I].Missing;
     Extra[I] := Layers[I].Extra;
   end;
-  Reset(FPlanLayers, TChartKind.StackedBar, 'Cobertura do plano por camada',
-    Format('Ficheiros · %.0f%% do planeado já existe', [S.FilesCoverage]));
+  Reset(FPlanLayers, TChartKind.StackedBar, Tr('Cobertura do plano por camada'),
+    Format(Tr('Ficheiros · %.0f%% do planeado já existe'), [S.FilesCoverage]));
   FPlanLayers.Plot.Orientation := TChartOrientation.Horizontal;
   FPlanLayers.Plot.LegendPosition := TLegendPosition.Top;
   FPlanLayers.Plot.Categories := Names;
-  FPlanLayers.Plot.AddSeries('Implementados', Done).Color := Pal.Accent;
-  FPlanLayers.Plot.AddSeries('Por implementar', Missing).Color := Pal.Pending;
-  FPlanLayers.Plot.AddSeries('Extra', Extra).Color := Pal.FlagCompila;
+  FPlanLayers.Plot.AddSeries(Tr('Implementados'), Done).Color := Pal.Accent;
+  FPlanLayers.Plot.AddSeries(Tr('Por implementar'), Missing).Color := Pal.Pending;
+  FPlanLayers.Plot.AddSeries(Tr('Extra'), Extra).Color := Pal.FlagCompila;
 
-  Reset(FPlanOverview, TChartKind.GroupedBar, 'Plano e código',
-    Format('Cobertura: %.0f%% dos ficheiros · %.0f%% dos métodos', [S.FilesCoverage, S.MethodsCoverage]));
+  Reset(FPlanOverview, TChartKind.GroupedBar, Tr('Plano e código'),
+    Format(Tr('Cobertura: %.0f%% dos ficheiros · %.0f%% dos métodos'), [S.FilesCoverage, S.MethodsCoverage]));
   FPlanOverview.Plot.LegendPosition := TLegendPosition.Top;
-  FPlanOverview.Plot.Categories := ['Ficheiros', 'Métodos'];
-  FPlanOverview.Plot.AddSeries('Implementados', [S.ImplementedFiles, S.ImplementedMethods]).Color := Pal.Accent;
-  FPlanOverview.Plot.AddSeries('Por implementar', [S.MissingFiles, S.MissingMethods]).Color := Pal.Pending;
-  FPlanOverview.Plot.AddSeries('Extra', [S.ExtraFiles, S.ExtraMethods]).Color := Pal.FlagCompila;
+  FPlanOverview.Plot.Categories := [Tr('Ficheiros'), Tr('Métodos')];
+  FPlanOverview.Plot.AddSeries(Tr('Implementados'), [S.ImplementedFiles, S.ImplementedMethods]).Color := Pal.Accent;
+  FPlanOverview.Plot.AddSeries(Tr('Por implementar'), [S.MissingFiles, S.MissingMethods]).Color := Pal.Pending;
+  FPlanOverview.Plot.AddSeries(Tr('Extra'), [S.ExtraFiles, S.ExtraMethods]).Color := Pal.FlagCompila;
 end;
 
 procedure TDashboardPage.FillStatus;
 var
   Axis: TAxisOptions;
 begin
-  Reset(FStatus, TChartKind.Bar, 'Estado dos ficheiros',
-    Format('Em %d ficheiros', [FStats.Files]));
-  FStatus.Plot.Categories := ['Concluídos', 'Em revisão', 'A alterar', 'Compila', 'Sonar'];
-  FStatus.Plot.AddSeries('Ficheiros',
+  Reset(FStatus, TChartKind.Bar, Tr('Estado dos ficheiros'),
+    Format(Tr('Em %d ficheiros'), [FStats.Files]));
+  FStatus.Plot.Categories := [Tr('Concluídos'), Tr('Em revisão'), Tr('A alterar'), Tr('Compila'), Tr('Sonar')];
+  FStatus.Plot.AddSeries(Tr('Ficheiros'),
     [FStats.FilesByReview[rsDone], FStats.FilesByReview[rsInReview], FStats.FilesByReview[rsNeedsChange],
      FStats.FilesCompila, FStats.FilesSonar]).Color := Pal.Accent;
   // a escala vai de 0 ao total de ficheiros, mesmo quando ainda nada esta marcado
@@ -575,10 +578,10 @@ begin
   finally
     Units.Free;
   end;
-  Reset(FTop, TChartKind.Bar, 'Maiores units', Format('As %d com mais métodos', [N]));
+  Reset(FTop, TChartKind.Bar, Tr('Maiores units'), Format(Tr('As %d com mais métodos'), [N]));
   FTop.Plot.Orientation := TChartOrientation.Horizontal;
   FTop.Plot.Categories := Names;
-  FTop.Plot.AddSeries('Métodos', Counts).Color := Pal.Accent;
+  FTop.Plot.AddSeries(Tr('Métodos'), Counts).Color := Pal.Accent;
 end;
 
 procedure TDashboardPage.FillHistogram;
@@ -601,7 +604,7 @@ begin
       Inc(I);
     end;
   end;
-  Reset(FHist, TChartKind.Histogram, 'Métodos por ficheiro', 'Quantos ficheiros têm cada número de métodos');
+  Reset(FHist, TChartKind.Histogram, Tr('Métodos por ficheiro'), Tr('Quantos ficheiros têm cada número de métodos'));
   if Length(Values) = 0 then
     Exit;
   Width := Max(1, Ceil(MaxM / 8));
@@ -638,9 +641,9 @@ begin
   finally
     Index.Free;
   end;
-  Reset(FLayerMethods, TChartKind.Bar, 'Métodos por camada', Format('Total: %d métodos', [FStats.Methods]));
+  Reset(FLayerMethods, TChartKind.Bar, Tr('Métodos por camada'), Format(Tr('Total: %d métodos'), [FStats.Methods]));
   FLayerMethods.Plot.Categories := Names;
-  FLayerMethods.Plot.AddSeries('Métodos', Counts).Color := Pal.Accent;
+  FLayerMethods.Plot.AddSeries(Tr('Métodos'), Counts).Color := Pal.Accent;
 end;
 
 end.

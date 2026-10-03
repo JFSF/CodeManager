@@ -7,10 +7,11 @@
 interface
 
 uses
-  CM.Analyzer, CM.Store, CM.History, CM.Plan, CM.SonarModel;
+  CM.Lang, CM.Analyzer, CM.Store, CM.History, CM.Plan, CM.SonarModel;
 
 type
-  TPage = (pgProject, pgMap, pgChecklist, pgDashboard);
+  // a ordem do enumerado e a dos indices do guiao --dev; a ordem na barra lateral esta em BuildRail
+  TPage = (pgProject, pgMap, pgChecklist, pgDashboard, pgGraph);
 
   IPageHost = interface
     ['{6F1D3A52-8C47-4B0E-9E21-5A7C3D90B4E8}']
@@ -28,6 +29,8 @@ type
     function GetSonarMessage: string;
 
     procedure Toast(const AText: string);
+    // muda o idioma da aplicacao: grava a escolha e reconstroi a interface (a analise recomeca)
+    procedure SetLanguage(ALang: TLang);
     // volta a consultar o SonarQube (so se o utilizador o activou e o projecto tem chave); em segundo plano
     procedure RequestSonarRefresh;
     procedure MarkStateDirty;

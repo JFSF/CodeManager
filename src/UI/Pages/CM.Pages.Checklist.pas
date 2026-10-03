@@ -86,6 +86,9 @@ type
 
 implementation
 
+
+uses
+  CM.Lang;
 function KV(const ACaption, AValue: string; AHighlight: Boolean = False): TKeyValue;
 begin
   Result.Caption := ACaption;
@@ -117,7 +120,7 @@ begin
   Side := SideBox(Self, Self, 340);
 
   Card := SideCard(Self, Side, 250);
-  TCMLabel.Make(Card, 'Progresso', 15, True).Align := TAlignLayout.Top;
+  TCMLabel.Make(Card, Tr('Progresso'), 15, True).Align := TAlignLayout.Top;
   FRing := TCMRing.Create(Self);
   FRing.Parent := Card;
   FRing.Align := TAlignLayout.Top;
@@ -128,7 +131,7 @@ begin
   FBars.Margins.Top := 14;
 
   Card := SideCard(Self, Side, 120);
-  TCMLabel.Make(Card, 'Estado da revisão', 15, True).Align := TAlignLayout.Top;
+  TCMLabel.Make(Card, Tr('Estado da revisão'), 15, True).Align := TAlignLayout.Top;
   FStateChips := TCMChipFlow.Create(Self);
   FStateChips.Parent := Card;
   FStateChips.Align := TAlignLayout.Top;
@@ -147,8 +150,8 @@ begin
   FSonarNote.Height := 0;
   Row := NewButtonRow(Self, FSonarCard);
   Row.Margins.Top := 10;
-  TCMButton.Make(Row, 'Atualizar', icRefresh, bkSecondary, SonarRefreshClick);
-  TCMButton.Make(Row, 'Sincronizar S', icCheck, bkSecondary, SonarSyncClick);
+  TCMButton.Make(Row, Tr('Atualizar'), icRefresh, bkSecondary, SonarRefreshClick);
+  TCMButton.Make(Row, Tr('Sincronizar S'), icCheck, bkSecondary, SonarSyncClick);
 
   FGitCard := SideCard(Self, Side, 200);
   FGitCard.Visible := False;
@@ -159,10 +162,10 @@ begin
   FGitInfo.Margins.Top := 8;
   Row := NewButtonRow(Self, FGitCard);
   Row.Margins.Top := 10;
-  FGitShowBtn := TCMButton.Make(Row, 'Só alterados', icChecklist, bkSecondary, GitShowClick);
-  TCMButton.Make(Row, 'Atualizar', icRefresh, bkSecondary, GitRefreshClick);
+  FGitShowBtn := TCMButton.Make(Row, Tr('Só alterados'), icChecklist, bkSecondary, GitShowClick);
+  TCMButton.Make(Row, Tr('Atualizar'), icRefresh, bkSecondary, GitRefreshClick);
   Row := NewButtonRow(Self, FGitCard);
-  TCMButton.Make(Row, 'Voltar a «por rever»', icRefresh, bkSecondary, GitResetClick);
+  TCMButton.Make(Row, Tr('Voltar a «por rever»'), icRefresh, bkSecondary, GitResetClick);
   FGitTimer := TTimer.Create(Self);
   FGitTimer.Enabled := False;
   FGitTimer.Interval := 900;
@@ -170,14 +173,14 @@ begin
 
   Card := SideCard(Self, Side, 200);
   Card.Visible := False;
-  TCMLabel.Make(Card, 'Plano', 15, True).Align := TAlignLayout.Top;
+  TCMLabel.Make(Card, Tr('Plano'), 15, True).Align := TAlignLayout.Top;
   FPlanStats := TCMKeyValue.Create(Self);
   FPlanStats.Parent := Card;
   FPlanStats.Align := TAlignLayout.Top;
   FPlanStats.Margins.Top := 8;
 
   Card := SideCard(Self, Side, 120);
-  TCMLabel.Make(Card, 'Filtrar por camada', 15, True).Align := TAlignLayout.Top;
+  TCMLabel.Make(Card, Tr('Filtrar por camada'), 15, True).Align := TAlignLayout.Top;
   FChips := TCMChipFlow.Create(Self);
   FChips.Parent := Card;
   FChips.Align := TAlignLayout.Top;
@@ -185,22 +188,22 @@ begin
   FChips.OnRelayout := FitChipsCard;
 
   Card := SideCard(Self, Side, 300);
-  TCMLabel.Make(Card, 'Ações', 15, True).Align := TAlignLayout.Top;
+  TCMLabel.Make(Card, Tr('Ações'), 15, True).Align := TAlignLayout.Top;
   Row := NewButtonRow(Self, Card);
   Row.Margins.Top := 12;
-  TCMButton.Make(Row, 'Expandir tudo', icChevronDown, bkSecondary, ExpandAllClick);
-  TCMButton.Make(Row, 'Colapsar tudo', icChevronRight, bkSecondary, CollapseAllClick);
+  TCMButton.Make(Row, Tr('Expandir tudo'), icChevronDown, bkSecondary, ExpandAllClick);
+  TCMButton.Make(Row, Tr('Colapsar tudo'), icChevronRight, bkSecondary, CollapseAllClick);
   Row := NewButtonRow(Self, Card);
-  TCMButton.Make(Row, 'Abrir métodos', icChevronDown, bkSecondary, ExpandMethodsClick);
-  TCMButton.Make(Row, 'Fechar métodos', icChevronRight, bkSecondary, CollapseMethodsClick);
+  TCMButton.Make(Row, Tr('Abrir métodos'), icChevronDown, bkSecondary, ExpandMethodsClick);
+  TCMButton.Make(Row, Tr('Fechar métodos'), icChevronRight, bkSecondary, CollapseMethodsClick);
   Row := NewButtonRow(Self, Card);
-  TCMButton.Make(Row, 'Markdown', icCopy, bkSecondary, CopyMarkdownClick);
-  TCMButton.Make(Row, 'Exportar HTML', icExport, bkPrimary, ExportChecklistClick);
+  TCMButton.Make(Row, Tr('Markdown'), icCopy, bkSecondary, CopyMarkdownClick);
+  TCMButton.Make(Row, Tr('Exportar HTML'), icExport, bkPrimary, ExportChecklistClick);
   Row := NewButtonRow(Self, Card);
-  TCMButton.Make(Row, 'Exportar', icDownload, bkSecondary, ExportProgressClick);
-  TCMButton.Make(Row, 'Importar', icUpload, bkSecondary, ImportProgressClick);
+  TCMButton.Make(Row, Tr('Exportar'), icDownload, bkSecondary, ExportProgressClick);
+  TCMButton.Make(Row, Tr('Importar'), icUpload, bkSecondary, ImportProgressClick);
   Row := NewButtonRow(Self, Card);
-  TCMButton.Make(Row, 'Reiniciar progresso', icRefresh, bkDanger, ResetProgressClick);
+  TCMButton.Make(Row, Tr('Reiniciar progresso'), icRefresh, bkDanger, ResetProgressClick);
 
   Holder := TCMPanel.Create(Self);
   Holder.Parent := Self;
@@ -217,7 +220,7 @@ begin
   FNotePanel.Padding.Rect := TRectF.Create(14, 10, 14, 10);
   FNotePanel.Margins.Rect := TRectF.Create(6, 6, 6, 4);
   FNotePanel.Visible := False;
-  CloseBtn := TCMButton.MakeIcon(FNotePanel, icClose, CloseNote, 'Fechar nota');
+  CloseBtn := TCMButton.MakeIcon(FNotePanel, icClose, CloseNote, Tr('Fechar nota'));
   CloseBtn.Align := TAlignLayout.Right;
   CloseBtn.Margins.Left := 8;
   FNoteLabel := TCMLabel.Make(FNotePanel, '', 12, True, lcDim, True);
@@ -226,7 +229,7 @@ begin
   FNoteIn := TCMInput.Create(Self);
   FNoteIn.Parent := FNotePanel;
   FNoteIn.Align := TAlignLayout.Client;
-  FNoteIn.Placeholder := 'Nota sobre este ficheiro…';
+  FNoteIn.Placeholder := Tr('Nota sobre este ficheiro…');
   FNoteIn.OnChangeText := NoteChanged;
 
   FList := TCMTreeList.Create(Self);
@@ -236,16 +239,16 @@ begin
   FList.OnChanged := ListChanged;
   FList.OnEditNote := EditNote;
   FList.OnHint := Hint;
-  FList.EmptyText := 'Analise um projeto para ver a checklist.';
+  FList.EmptyText := Tr('Analise um projeto para ver a checklist.');
 
   FSearch := TCMInput.Create(Self);
   FSearch.Parent := Bar;
   FSearch.Align := TAlignLayout.Client;
   FSearch.SetLeadingIcon(icSearch);
-  FSearch.Placeholder := 'Filtrar por nome ou pasta…   ( / )';
+  FSearch.Placeholder := Tr('Filtrar por nome ou pasta…   ( / )');
   FSearch.OnChangeText := SearchChanged;
 
-  FStarBtn := TCMButton.Make(Bar, 'Só prioritários', icStar, bkSecondary, StarOnlyClick);
+  FStarBtn := TCMButton.Make(Bar, Tr('Só prioritários'), icStar, bkSecondary, StarOnlyClick);
   FStarBtn.Align := TAlignLayout.Right;
   FStarBtn.Height := 42;
   FStarBtn.Margins.Left := 10;
@@ -287,7 +290,7 @@ end;
 
 procedure TChecklistPage.ClearStats;
 begin
-  FRing.SetValues(0, '0%', '0 / 0 ficheiros', 0, '0 / 0 (0%)');
+  FRing.SetValues(0, '0%', Tr('0 / 0 ficheiros'), 0, '0 / 0 (0%)');
   FBars.SetRows(nil);
   FitProgressCard;
   RebuildStateChips(Default(TStats));
@@ -303,7 +306,7 @@ begin
   if St.Files > 0 then Pct := St.DoneFiles / St.Files else Pct := 0;
   if St.Methods > 0 then MPct := St.DoneMethods / St.Methods else MPct := 0;
   FRing.SetValues(Pct, Format('%d%%', [Round(Pct * 100)]),
-    Format('%d / %d ficheiros', [St.DoneFiles, St.Files]), MPct,
+    Format(Tr('%d / %d ficheiros'), [St.DoneFiles, St.Files]), MPct,
     Format('%d / %d (%d%%)', [St.DoneMethods, St.Methods, Round(MPct * 100)]));
 
   SetLength(Bars, Length(St.Layers));
@@ -332,10 +335,10 @@ begin
     Exit;
   S := FHost.PlanSummary;
   FPlanStats.SetRows([
-    KV('Ficheiros', Format('%d / %d (%.0f%%)', [S.ImplementedFiles, S.PlannedFiles, S.FilesCoverage]), True),
-    KV('Métodos', Format('%d / %d (%.0f%%)', [S.ImplementedMethods, S.PlannedMethods, S.MethodsCoverage]), True),
-    KV('Por implementar', Format('%d fich. · %d mét.', [S.MissingFiles, S.MissingMethods])),
-    KV('Extra no código', Format('%d fich. · %d mét.', [S.ExtraFiles, S.ExtraMethods]))]);
+    KV(Tr('Ficheiros'), Format('%d / %d (%.0f%%)', [S.ImplementedFiles, S.PlannedFiles, S.FilesCoverage]), True),
+    KV(Tr('Métodos'), Format('%d / %d (%.0f%%)', [S.ImplementedMethods, S.PlannedMethods, S.MethodsCoverage]), True),
+    KV(Tr('Por implementar'), Format(Tr('%d fich. · %d mét.'), [S.MissingFiles, S.MissingMethods])),
+    KV(Tr('Extra no código'), Format(Tr('%d fich. · %d mét.'), [S.ExtraFiles, S.ExtraMethods]))]);
   Card.Height := 16 + 16 + 28 + 8 + FPlanStats.Height;
 end;
 
@@ -424,7 +427,7 @@ begin
   Msg := FHost.SonarMessage;
   if Snap = nil then
   begin
-    FSonarInfo.SetRows([KV('Servidor', IfThen(FHost.SonarBusy, 'a consultar…', 'sem dados'))]);
+    FSonarInfo.SetRows([KV(Tr('Servidor'), IfThen(FHost.SonarBusy, Tr('a consultar…'), Tr('sem dados')))]);
   end
   else
   begin
@@ -433,24 +436,24 @@ begin
       for U in FHost.CurrentScan.Units do
         if Snap.Find(U.Path, Info) and (Info.Issues > 0) then
           Inc(WithIssues);
-    if Snap.GateStatus = 'OK' then Gate := 'aprovada'
-    else if Snap.GateStatus = 'ERROR' then Gate := 'reprovada'
-    else if Snap.GateStatus = 'WARN' then Gate := 'com avisos'
-    else if Snap.GateStatus = 'NONE' then Gate := 'sem gate'
-    else Gate := 'desconhecida';
+    if Snap.GateStatus = 'OK' then Gate := Tr('aprovada')
+    else if Snap.GateStatus = 'ERROR' then Gate := Tr('reprovada')
+    else if Snap.GateStatus = 'WARN' then Gate := Tr('com avisos')
+    else if Snap.GateStatus = 'NONE' then Gate := Tr('sem gate')
+    else Gate := Tr('desconhecida');
     FSonarInfo.SetRows([
-      KV('Quality gate', Gate, Snap.GateStatus = 'OK'),
-      KV('Problemas abertos', IntToStr(Snap.TotalIssues)),
-      KV('Ficheiros com problemas', IntToStr(WithIssues)),
-      KV('Atualizado', FormatDateTime('hh:nn', Snap.FetchedAt))]);
+      KV(Tr('Quality gate'), Gate, Snap.GateStatus = 'OK'),
+      KV(Tr('Problemas abertos'), IntToStr(Snap.TotalIssues)),
+      KV(Tr('Ficheiros com problemas'), IntToStr(WithIssues)),
+      KV(Tr('Atualizado'), FormatDateTime('hh:nn', Snap.FetchedAt))]);
   end;
   // erro ou estado numa linha de texto por baixo (so quando ha o que dizer)
   if Snap = nil then
     FSonarNote.Text := WrapText(Msg, sLineBreak, [' '], 38)       // o rotulo nao quebra linhas sozinho
   else if Snap.FileCount = 0 then
     // o projecto existe mas o servidor nao tem ficheiros analisados: "0 problemas" enganaria
-    FSonarNote.Text := WrapText('O servidor ainda não tem ficheiros analisados para este projeto (sem análises, ' +
-      'ou o SonarQube não analisa Delphi sem um plugin).', sLineBreak, [' '], 38)
+    FSonarNote.Text := WrapText(Tr('O servidor ainda não tem ficheiros analisados para este projeto (sem análises, ') +
+      Tr('ou o SonarQube não analisa Delphi sem um plugin).'), sLineBreak, [' '], 38)
   else
     FSonarNote.Text := '';
   if FSonarNote.Text = '' then
@@ -472,19 +475,19 @@ var
 begin
   if FHost.CurrentSonar = nil then
   begin
-    FHost.Toast('Ainda não há dados do SonarQube. Usa «Atualizar».');
+    FHost.Toast(Tr('Ainda não há dados do SonarQube. Usa «Atualizar».'));
     Exit;
   end;
   if TDialogServiceSync.MessageDialog(
-    'Marcar «S» nos ficheiros que o SonarQube analisou sem problemas abertos e tirá-lo aos que têm problemas? ' +
-    'Os ficheiros que o SonarQube não conhece ficam como estão.',
+    Tr('Marcar «S» nos ficheiros que o SonarQube analisou sem problemas abertos e tirá-lo aos que têm problemas? ') +
+    Tr('Os ficheiros que o SonarQube não conhece ficam como estão.'),
     TMsgDlgType.mtConfirmation, [TMsgDlgBtn.mbYes, TMsgDlgBtn.mbNo], TMsgDlgBtn.mbNo, 0) <> mrYes then
     Exit;
   R := SyncSonarFlags(FHost.CurrentScan, FHost.CurrentState, FHost.CurrentSonar);
   FHost.RefreshAllLists;
   FHost.UpdateAll;
   FHost.MarkStateDirty;
-  FHost.Toast(Format('Sonar: %d ficheiros marcados, %d desmarcados', [R.Marked, R.Cleared]));
+  FHost.Toast(Format(Tr('Sonar: %d ficheiros marcados, %d desmarcados'), [R.Marked, R.Cleared]));
 end;
 
 procedure TChecklistPage.RequestGitRefresh;
@@ -539,8 +542,8 @@ begin
     Exit;
   end;
   FGitInfo.SetRows([
-    KV('Commit atual', Copy(AHead, 1, 8)),
-    KV('Mudaram desde a revisão', IntToStr(Length(FStalePaths)), Length(FStalePaths) > 0)]);
+    KV(Tr('Commit atual'), Copy(AHead, 1, 8)),
+    KV(Tr('Mudaram desde a revisão'), IntToStr(Length(FStalePaths)), Length(FStalePaths) > 0)]);
   FGitCard.Height := 16 + 16 + 28 + 8 + FGitInfo.Height + 10 + 36 + 8 + 36;
 end;
 
@@ -553,7 +556,7 @@ end;
 procedure TChecklistPage.GitRefreshClick(Sender: TObject);
 begin
   RefreshGit;
-  FHost.Toast(Format('Git: %d ficheiros revistos mudaram desde a revisão', [Length(FStalePaths)]));
+  FHost.Toast(Format(Tr('Git: %d ficheiros revistos mudaram desde a revisão'), [Length(FStalePaths)]));
 end;
 
 procedure TChecklistPage.GitResetClick(Sender: TObject);
@@ -563,12 +566,12 @@ var
 begin
   if Length(FStalePaths) = 0 then
   begin
-    FHost.Toast('Nenhum ficheiro revisto mudou desde a revisão');
+    FHost.Toast(Tr('Nenhum ficheiro revisto mudou desde a revisão'));
     Exit;
   end;
   if TDialogServiceSync.MessageDialog(
-    Format('Voltar a «por rever» os %d ficheiros que mudaram desde a revisão? ' +
-      'Ficam sem estado de revisão; Compila, Sonar, prioridade e notas mantêm-se.', [Length(FStalePaths)]),
+    Format(Tr('Voltar a «por rever» os %d ficheiros que mudaram desde a revisão? ') +
+      Tr('Ficam sem estado de revisão; Compila, Sonar, prioridade e notas mantêm-se.'), [Length(FStalePaths)]),
     TMsgDlgType.mtConfirmation, [TMsgDlgBtn.mbYes, TMsgDlgBtn.mbNo], TMsgDlgBtn.mbNo, 0) <> mrYes then
     Exit;
   for Path in FStalePaths do
@@ -581,7 +584,7 @@ begin
   FHost.UpdateAll;
   FHost.MarkStateDirty;
   RefreshGit;
-  FHost.Toast('Ficheiros repostos como por rever');
+  FHost.Toast(Tr('Ficheiros repostos como por rever'));
 end;
 
 procedure TChecklistPage.ChipClick(Sender: TObject);
@@ -607,7 +610,7 @@ begin
   finally
     FLoadingFields := False;
   end;
-  FNoteLabel.Text := 'Nota · ' + AUnit.Path;
+  FNoteLabel.Text := Tr('Nota · ') + AUnit.Path;
   FNotePanel.Visible := True;
   FNoteIn.Edit.SetFocus;
 end;
@@ -666,13 +669,13 @@ var
 begin
   if FHost.CurrentScan = nil then
   begin
-    FHost.Toast('Analise um projeto primeiro.');
+    FHost.Toast(Tr('Analise um projeto primeiro.'));
     Exit;
   end;
   if TPlatformServices.Current.SupportsPlatformService(IFMXClipboardService, Svc) then
   begin
     Svc.SetClipboard(TValue.From<string>(FList.BuildMarkdown(FHost.CurrentProfile.Name)));
-    FHost.Toast('Markdown copiado');
+    FHost.Toast(Tr('Markdown copiado'));
   end;
 end;
 
@@ -685,15 +688,15 @@ begin
     Exit;
   D := TSaveDialog.Create(nil);
   try
-    D.Filter := 'Progresso (*.json)|*.json';
+    D.Filter := Tr('Progresso (*.json)|*.json');
     D.DefaultExt := 'json';
-    D.FileName := SlugOf(FHost.CurrentProfile.Name) + '-checklist-progresso-' + FormatDateTime('yyyy-mm-dd', Now) + '.json';
+    D.FileName := SlugOf(FHost.CurrentProfile.Name) + Tr('-checklist-progresso-') + FormatDateTime('yyyy-mm-dd', Now) + '.json';
     if D.Execute then
     begin
       Json := '{"version":2,"exportedAt":"' + FormatDateTime('yyyy-mm-dd"T"hh:nn:ss', Now) +
         '","state":' + FHost.CurrentState.ToJSONString + '}';
       TFile.WriteAllText(D.FileName, Json, TEncoding.UTF8);
-      FHost.Toast('Progresso exportado');
+      FHost.Toast(Tr('Progresso exportado'));
     end;
   finally
     D.Free;
@@ -706,7 +709,7 @@ var
 begin
   D := TOpenDialog.Create(nil);
   try
-    D.Filter := 'Progresso (*.json)|*.json';
+    D.Filter := Tr('Progresso (*.json)|*.json');
     if D.Execute then
     begin
       try
@@ -714,7 +717,7 @@ begin
       except
         on E: Exception do
         begin
-          FHost.Toast('Ficheiro inválido: ' + E.Message);
+          FHost.Toast(Tr('Ficheiro inválido: ') + E.Message);
           Exit;
         end;
       end;
@@ -724,7 +727,7 @@ begin
       RebuildChips;
       FHost.UpdateAll;
       FHost.MarkStateDirty;
-      FHost.Toast('Progresso importado');
+      FHost.Toast(Tr('Progresso importado'));
     end;
   finally
     D.Free;
@@ -734,7 +737,7 @@ end;
 procedure TChecklistPage.ResetProgressClick(Sender: TObject);
 begin
   if TDialogServiceSync.MessageDialog(
-    'Reiniciar o progresso, notas e prioridades de todos os ficheiros deste projeto?',
+    Tr('Reiniciar o progresso, notas e prioridades de todos os ficheiros deste projeto?'),
     TMsgDlgType.mtWarning, [TMsgDlgBtn.mbYes, TMsgDlgBtn.mbNo], TMsgDlgBtn.mbNo, 0) <> mrYes then
     Exit;
   FHost.CurrentState.Clear;
@@ -742,7 +745,7 @@ begin
   FHost.RefreshAllLists;
   FHost.UpdateAll;
   FHost.MarkStateDirty;
-  FHost.Toast('Progresso reiniciado');
+  FHost.Toast(Tr('Progresso reiniciado'));
 end;
 
 end.

@@ -20,6 +20,9 @@ procedure ExportMapHtml(AProfile: TProjectProfile; AScan: TProjectScan;
 
 implementation
 
+
+uses
+  CM.Lang;
 { Escapa texto para uma string JSON dentro de um <script> }
 function JsonString(const AText: string): string;
 var
@@ -137,9 +140,9 @@ begin
       S := S + '</code>, <code>';
     S := S + HtmlText(Dir);
   end;
-  Result := 'As pastas <code>' + S + '</code> foram ignoradas nesta análise ' +
-    '(dependências de terceiros, artefactos de build ou cópias de segurança do IDE) — ' +
-    'não são código próprio.';
+  Result := Tr('As pastas <code>') + S + Tr('</code> foram ignoradas nesta análise ') +
+    Tr('(dependências de terceiros, artefactos de build ou cópias de segurança do IDE) — ') +
+    Tr('não são código próprio.');
 end;
 
 procedure WriteOutput(const AOutputPath, AHtml: string);
@@ -192,7 +195,7 @@ begin
   Stamp := FormatDateTime('yyyy-mm-dd hh:nn', Now);
   Banner := '';
   if AProfile.Finalized then
-    Banner := '<div class="finalized-banner">&#10003; PROJECTO FINALIZADO em ' +
+    Banner := Tr('<div class="finalized-banner">&#10003; PROJECTO FINALIZADO em ') +
       AProfile.FinalizedAt + '</div>';
   Html := LoadTextResource('TPL_MAP');
   Html := Html.Replace('__EXCLUDED_NOTE__', ExcludedNote(AScan));

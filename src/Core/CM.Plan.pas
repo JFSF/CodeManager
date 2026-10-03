@@ -50,6 +50,9 @@ function PlanLayerCoverage(APlanView: TProjectScan): TArray<TPlanLayerCoverage>;
 
 implementation
 
+
+uses
+  CM.Lang;
 type
   TPlanFile = class
   public
@@ -139,15 +142,22 @@ end;
 function CleanItem(const AText: string): string;
 var
   P: Integer;
+  V: string;
 begin
   Result := AText.Replace('**', '').Replace('`', '');
-  P := Result.IndexOf(' — nota:');
-  if P >= 0 then
-    Result := Copy(Result, 1, P);
+  // o documento pode ter sido exportado noutro idioma
+  for V in TranslateAll(' — nota: ') do
+  begin
+    P := Result.IndexOf(V.TrimRight);
+    if P >= 0 then
+      Result := Copy(Result, 1, P);
+  end;
   P := Result.IndexOf(' _(');
   if P >= 0 then
     Result := Copy(Result, 1, P);
-  Result := Result.Replace(' [Compila]', '').Replace(' [Sonar]', '').Replace('★', '');
+  for V in TranslateAll(' [Compila]') do
+    Result := Result.Replace(V, '');
+  Result := Result.Replace(' [Sonar]', '').Replace('★', '');
   Result := Result.Trim;
   // enfase simples a volta do texto (_x_ / *x*)
   if (Length(Result) > 2) and CharInSet(Result[1], ['_', '*']) and (Result[Length(Result)] = Result[1]) then
@@ -257,7 +267,7 @@ end;
 
 procedure TPlanParser.Warn(ALine: Integer; const AMsg: string);
 begin
-  FWarnings.Add(Format('Linha %d: %s', [ALine, AMsg]));
+  FWarnings.Add(TrF('Linha %d: %s', [ALine, AMsg]));
 end;
 
 function TPlanParser.GetFile(const APath: string): TPlanFile;
@@ -326,7 +336,7 @@ begin
   if IsSignature(Txt) then
   begin
     if FCurrent = nil then
-      Warn(ALineNo, 'assinatura de método sem ficheiro associado — ignorada: ' + Txt)
+      Warn(ALineNo, Tr('assinatura de método sem ficheiro associado — ignorada: ') + Txt)
     else
     begin
       if not Txt.EndsWith(';') then
@@ -501,7 +511,7 @@ begin
     end;
     if Path = '' then
     begin
-      Warn(ALineNo, 'bloco de código sem caminho de ficheiro — ignorado');
+      Warn(ALineNo, Tr('bloco de código sem caminho de ficheiro — ignorado'));
       Exit;
     end;
     if not Path.Contains('/') and (FHeadingDir <> '') then
@@ -597,7 +607,7 @@ begin
           on E: Exception do
           begin
             U.Methods := nil;
-            FWarnings.Add(Format('%s: não foi possível ler o código (%s)', [F.Path, E.Message]));
+            FWarnings.Add(Format(Tr('%s: não foi possível ler o código (%s)'), [F.Path, E.Message]));
           end;
         end;
     end;
@@ -622,7 +632,7 @@ begin
     Parser.Run(AText);
     Result := Parser.BuildScan;
     if Result.Units.Count = 0 then
-      Parser.Warnings.Add('O documento não contém nenhum ficheiro (.pas, .dpr ou .dpk).');
+      Parser.Warnings.Add(Tr('O documento não contém nenhum ficheiro (.pas, .dpr ou .dpk).'));
     AWarnings := Parser.Warnings.ToArray;
   finally
     Parser.Free;
@@ -632,7 +642,7 @@ end;
 function LoadPlanFile(const AFileName: string; out AWarnings: TArray<string>): TProjectScan;
 begin
   if not TFile.Exists(AFileName) then
-    raise Exception.CreateFmt('O documento do plano não existe: %s', [AFileName]);
+    raise Exception.CreateFmt(Tr('O documento do plano não existe: %s'), [AFileName]);
   Result := ParsePlan(TFile.ReadAllText(AFileName, TEncoding.UTF8), AWarnings);
 end;
 
