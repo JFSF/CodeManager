@@ -1,10 +1,10 @@
-# Modelo de divulgação — CodeManager 1.0.0
+# Modelo de divulgação — CodeManager 1.0.1
 
 Material pronto para publicar nos grupos de **WhatsApp** e **Telegram**.
 
 | Ficheiro | Para quê |
 |---|---|
-| [`cartaz-1.0.0.png`](cartaz-1.0.0.png) | A imagem (1600 × 900) |
+| [`cartaz-1.0.1.png`](cartaz-1.0.1.png) | A imagem (1600 × 900) |
 | Este documento | Os textos, já com a formatação de cada aplicação |
 
 ## Como publicar
@@ -25,42 +25,41 @@ Formatação: `*negrito*`, `_itálico_`. As ligações ficam clicáveis sozinhas
 ### Legenda curta (para a imagem)
 
 ```text
-*CodeManager 1.0.0* 🚀
+*CodeManager 1.0.1* 🚀
 _Mapa e checklist de código-fonte Delphi_
 
-Já saiu a primeira versão pública! Lê as units do teu projeto Delphi e ajuda-te a ver o que tens, rever o que já foi visto e acompanhar o progresso, sem alterar uma linha do código.
+Nova versão! Novas páginas e mais integrações, sempre sem alterar uma linha do teu código.
 
-✅ Mapa pastas → ficheiros → métodos, com linhas e complexidade
-✅ Checklist com estados de revisão (por rever, em revisão, a alterar, concluído)
-✅ Avisa quando um ficheiro mudou desde a revisão (Git)
-✅ SonarQube opcional: problemas abertos por ficheiro
-✅ Compara o código com um plano em Markdown
+✅ Grafo: quem usa quem entre as units, com ciclos e relatório
+✅ Código: lê o ficheiro (ou o método) com duplo clique, com realce e ligaduras
+✅ SonarQube: cobertura, dívida técnica e problemas na margem das linhas
+✅ Git e Subversion: avisa o que mudou desde a revisão
+✅ Aspeto à tua maneira e em 4 idiomas (PT · EN · FR · DE)
 
 🪟 Windows 10/11 · gratuito · código aberto
-⬇️ https://github.com/JFSF/CodeManager/releases/tag/v1.0.0
+⬇️ https://github.com/JFSF/CodeManager/releases/tag/v1.0.1
 ```
 
 ### Mensagem completa
 
 ```text
-*CodeManager 1.0.0* 🚀
+*CodeManager 1.0.1* 🚀
 _Mapa e checklist de código-fonte Delphi_
 
-Já está disponível a primeira versão pública do *CodeManager*, uma aplicação para Windows que lê as units de um projeto Delphi e te dá uma forma simples de:
+Já está disponível a versão 1.0.1 do *CodeManager*, a aplicação para Windows que lê as units de um projeto Delphi e te ajuda a ver o que tens, rever o que já foi visto e acompanhar o progresso.
 
-• *ver o que tens* — pastas, ficheiros e métodos, com as linhas e a complexidade de cada método;
-• *rever o que já foi visto* — checklist com estados (por rever, em revisão, precisa de alteração, concluído), Compila, Sonar, prioridade e notas;
-• *acompanhar o progresso* — painel com gráficos e evolução dia a dia.
-
-Também:
-• avisa quando um ficheiro que já revistes mudou desde então (usa o Git, só em leitura);
-• liga ao SonarQube *se quiseres* — é opcional e cada utilizador decide; o token fica cifrado;
-• compara o código com um plano em Markdown (o que está feito, o que falta, o que sobra);
-• exporta para Markdown, CSV, JSON, páginas HTML offline e PDF.
+O que há de novo:
+• *Grafo* — o mapa de dependências entre as units (quem usa quem), com acoplamento, ciclos e relatório em HTML ou Markdown;
+• *Código* — um duplo clique num ficheiro ou método abre o código para leitura, em separadores, com realce Delphi, salto para o método e fonte moderna com ligaduras;
+• *SonarQube* — cobertura, duplicação, dívida técnica e classificações A–E, mais os problemas e hotspots na margem das linhas (continua a ser opcional);
+• *Subversion* — o aviso «mudou desde a revisão» funciona agora também em cópias de trabalho do Subversion, além do Git;
+• *Aspeto* — escolhe a cor de destaque, as fontes e o tamanho do texto;
+• *Idiomas* — português, inglês, francês e alemão;
+• mais métricas por método (parâmetros e aninhamento), repositórios do GitHub e uma página *Acerca*.
 
 O CodeManager *não altera o teu código*. É um único ficheiro, sem instalador.
 
-⬇️ Descarregar: https://github.com/JFSF/CodeManager/releases/tag/v1.0.0
+⬇️ Descarregar: https://github.com/JFSF/CodeManager/releases/tag/v1.0.1
 📖 Guia e código-fonte: https://github.com/JFSF/CodeManager
 
 _Nota:_ o executável não está assinado, por isso o Windows pode mostrar um aviso do SmartScreen na primeira vez ("Mais informações" → "Executar mesmo assim"). Podes confirmar o ficheiro com o SHA-256 da release.
@@ -77,42 +76,41 @@ Formatação: `**negrito**`, `__itálico__` (escreve o texto com estes símbolos
 ### Legenda curta (para a imagem)
 
 ```text
-**CodeManager 1.0.0** 🚀
+**CodeManager 1.0.1** 🚀
 __Mapa e checklist de código-fonte Delphi__
 
-Já saiu a primeira versão pública! Lê as units do teu projeto Delphi e ajuda-te a ver o que tens, rever o que já foi visto e acompanhar o progresso, sem alterar uma linha do código.
+Nova versão! Novas páginas e mais integrações, sempre sem alterar uma linha do teu código.
 
-✅ Mapa pastas → ficheiros → métodos, com linhas e complexidade
-✅ Checklist com estados de revisão (por rever, em revisão, a alterar, concluído)
-✅ Avisa quando um ficheiro mudou desde a revisão (Git)
-✅ SonarQube opcional: problemas abertos por ficheiro
-✅ Compara o código com um plano em Markdown
+✅ Grafo: quem usa quem entre as units, com ciclos e relatório
+✅ Código: lê o ficheiro (ou o método) com duplo clique, com realce e ligaduras
+✅ SonarQube: cobertura, dívida técnica e problemas na margem das linhas
+✅ Git e Subversion: avisa o que mudou desde a revisão
+✅ Aspeto à tua maneira e em 4 idiomas (PT · EN · FR · DE)
 
 🪟 Windows 10/11 · gratuito · código aberto
-⬇️ https://github.com/JFSF/CodeManager/releases/tag/v1.0.0
+⬇️ https://github.com/JFSF/CodeManager/releases/tag/v1.0.1
 ```
 
 ### Mensagem completa
 
 ```text
-**CodeManager 1.0.0** 🚀
+**CodeManager 1.0.1** 🚀
 __Mapa e checklist de código-fonte Delphi__
 
-Já está disponível a primeira versão pública do **CodeManager**, uma aplicação para Windows que lê as units de um projeto Delphi e te dá uma forma simples de:
+Já está disponível a versão 1.0.1 do **CodeManager**, a aplicação para Windows que lê as units de um projeto Delphi e te ajuda a ver o que tens, rever o que já foi visto e acompanhar o progresso.
 
-• **ver o que tens** — pastas, ficheiros e métodos, com as linhas e a complexidade de cada método;
-• **rever o que já foi visto** — checklist com estados (por rever, em revisão, precisa de alteração, concluído), Compila, Sonar, prioridade e notas;
-• **acompanhar o progresso** — painel com gráficos e evolução dia a dia.
-
-Também:
-• avisa quando um ficheiro que já revistes mudou desde então (usa o Git, só em leitura);
-• liga ao SonarQube __se quiseres__ — é opcional e cada utilizador decide; o token fica cifrado;
-• compara o código com um plano em Markdown (o que está feito, o que falta, o que sobra);
-• exporta para Markdown, CSV, JSON, páginas HTML offline e PDF.
+O que há de novo:
+• **Grafo** — o mapa de dependências entre as units (quem usa quem), com acoplamento, ciclos e relatório em HTML ou Markdown;
+• **Código** — um duplo clique num ficheiro ou método abre o código para leitura, em separadores, com realce Delphi, salto para o método e fonte moderna com ligaduras;
+• **SonarQube** — cobertura, duplicação, dívida técnica e classificações A–E, mais os problemas e hotspots na margem das linhas (continua a ser opcional);
+• **Subversion** — o aviso «mudou desde a revisão» funciona agora também em cópias de trabalho do Subversion, além do Git;
+• **Aspeto** — escolhe a cor de destaque, as fontes e o tamanho do texto;
+• **Idiomas** — português, inglês, francês e alemão;
+• mais métricas por método (parâmetros e aninhamento), repositórios do GitHub e uma página **Acerca**.
 
 O CodeManager **não altera o teu código**. É um único ficheiro, sem instalador.
 
-⬇️ Descarregar: https://github.com/JFSF/CodeManager/releases/tag/v1.0.0
+⬇️ Descarregar: https://github.com/JFSF/CodeManager/releases/tag/v1.0.1
 📖 Guia e código-fonte: https://github.com/JFSF/CodeManager
 
 __Nota:__ o executável não está assinado, por isso o Windows pode mostrar um aviso do SmartScreen na primeira vez ("Mais informações" → "Executar mesmo assim"). Podes confirmar o ficheiro com o SHA-256 da release.
@@ -124,5 +122,6 @@ Sugestões e erros são muito bem-vindos! 🙏
 
 ## Para as próximas versões
 
-Troca `1.0.0` pelo número novo (na legenda, no texto e na ligação da release) e acrescenta, em vez da lista geral, as
-novidades da versão — o CHANGELOG tem-nas. A imagem pode ser refeita com as capturas de `docs/images`.
+Troca `1.0.1` pelo número novo (na legenda, no texto e na ligação da release) e acrescenta as novidades da versão — o
+CHANGELOG tem-nas. O cartaz refaz-se com `python tools/make-cartaz.py <versão> pt` (e `en`): edita os textos e as duas
+capturas no início do `tools/make-cartaz.py` (as capturas vêm de `docs/images`).

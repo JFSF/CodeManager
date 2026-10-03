@@ -205,7 +205,8 @@ O caminho do repositório não pode ter espaços.
    comparação no fim; atualiza a secção **Alterações** dos `README` e o «Estado do projeto».
 3. `ci.bat` (compila em Release/Win64 e corre os testes); copia `out\bin\Win64\Release\CodeManager.exe` para
    `CodeManager-X.Y.Z-win64.exe` e gera o `SHA256SUMS.txt` com `Get-FileHash`.
-4. Junta o `develop` ao `master`, cria a etiqueta `vX.Y.Z` e envia tudo; `gh release create vX.Y.Z` com o executável
+4. Refaz o cartaz e os modelos de divulgação (`docs/divulgacao`): `python tools/make-cartaz.py X.Y.Z pt` e `en`.
+5. Junta o `develop` ao `master`, cria a etiqueta `vX.Y.Z` e envia tudo; `gh release create vX.Y.Z` com o executável
    e o `SHA256SUMS.txt`.
 
 ## Receitas
