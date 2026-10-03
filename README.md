@@ -194,3 +194,5 @@ Distribuído sob a [licença MIT](LICENSE).
 
 Os gráficos do Painel usam o [Chart4D](https://github.com/GDKsoftware/Chart4D) (MIT, GDK Software); os testes usam
 o DUnitX. Ver [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
+<a href="https://www.buymeacoffee.com/joaofsferreira"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=joaofsferreira&button_colour=FFDD00&font_colour=000000&font_family=Lato&outline_colour=000000&coffee_colour=ffffff" /></a>
