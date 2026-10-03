@@ -22,6 +22,7 @@ type
     function GetShuttingDown: Boolean;
     function GetHasPlan: Boolean;
     function GetPlanSummary: TPlanSummary;
+    function GetCurrentPlanView: TProjectScan;
 
     procedure Toast(const AText: string);
     procedure MarkStateDirty;
@@ -53,6 +54,8 @@ type
     // ha um plano cruzado com o codigo (vista do Mapa com estados) e o resumo da comparacao
     property HasPlan: Boolean read GetHasPlan;
     property PlanSummary: TPlanSummary read GetPlanSummary;
+    // a analise do codigo cruzada com o plano (nil sem plano); e de quem a janela, nao a liberte
+    property CurrentPlanView: TProjectScan read GetCurrentPlanView;
   end;
 
 implementation

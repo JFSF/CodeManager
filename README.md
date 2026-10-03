@@ -179,7 +179,7 @@ Em desenvolvimento ativo, desenvolvido e testado em **Windows / Win64** com **De
 automáticos cobrem o motor, as exportações, o vigia e as regras de arquitetura; a interface é verificada com o
 [modo de desenvolvimento](docs/DESENVOLVIMENTO.md#modo-de-desenvolvimento---dev).
 
-Ideias para o futuro: cobertura do plano no Painel e na Checklist, linhas e complexidade por método, estados de
+Ideias para o futuro: linhas e complexidade por método, estados de
 revisão além de «feito», integração com Git e SonarQube. Sugestões são bem-vindas.
 
 ## Contribuir

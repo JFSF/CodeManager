@@ -9,7 +9,7 @@ uses
   System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math, System.IOUtils,
   System.Rtti,
   FMX.Types, FMX.Controls, FMX.Layouts, FMX.Dialogs, FMX.Platform, FMX.DialogService.Sync,
-  CM.Theme, CM.Controls, CM.Layouts, CM.TreeList, CM.Analyzer, CM.Store, CM.Stats, CM.Pages.Host;
+  CM.Theme, CM.Controls, CM.Layouts, CM.TreeList, CM.Analyzer, CM.Store, CM.Stats, CM.Plan, CM.Pages.Host;
 
 type
   TChecklistPage = class(TCMControl)
@@ -19,6 +19,7 @@ type
     FList: TCMTreeList;
     FRing: TCMRing;
     FBars: TCMBars;
+    FPlanStats: TCMKeyValue;       // cobertura do plano; o cartao so aparece quando ha plano
     FChips: TCMChipFlow;
     FStarBtn: TCMButton;
     FNotePanel: TCMPanel;
@@ -28,6 +29,7 @@ type
     FLoadingFields: Boolean;
     procedure Hint(const AText: string);
     procedure FitProgressCard;
+    procedure ShowPlanCard;
     procedure FitChipsCard(Sender: TObject);
     procedure ListChanged(Sender: TObject);
     procedure SearchChanged(Sender: TObject);
@@ -100,6 +102,14 @@ begin
   FBars.Parent := Card;
   FBars.Align := TAlignLayout.Top;
   FBars.Margins.Top := 14;
+
+  Card := SideCard(Self, Side, 200);
+  Card.Visible := False;
+  TCMLabel.Make(Card, 'Plano', 15, True).Align := TAlignLayout.Top;
+  FPlanStats := TCMKeyValue.Create(Self);
+  FPlanStats.Parent := Card;
+  FPlanStats.Align := TAlignLayout.Top;
+  FPlanStats.Margins.Top := 8;
 
   Card := SideCard(Self, Side, 120);
   TCMLabel.Make(Card, 'Filtrar por camada', 15, True).Align := TAlignLayout.Top;
@@ -215,6 +225,7 @@ begin
   FRing.SetValues(0, '0%', '0 / 0 ficheiros', 0, '0 / 0 (0%)');
   FBars.SetRows(nil);
   FitProgressCard;
+  ShowPlanCard;
 end;
 
 procedure TChecklistPage.ShowStats(const St: TStats);
@@ -238,6 +249,26 @@ begin
   end;
   FBars.SetRows(Bars);
   FitProgressCard;
+  ShowPlanCard;
+end;
+
+// cobertura do plano (o que ja existe, o que falta e o que sobra); escondido sem plano
+procedure TChecklistPage.ShowPlanCard;
+var
+  Card: TCMPanel;
+  S: TPlanSummary;
+begin
+  Card := TCMPanel(FPlanStats.Parent);
+  Card.Visible := FHost.HasPlan;
+  if not Card.Visible then
+    Exit;
+  S := FHost.PlanSummary;
+  FPlanStats.SetRows([
+    KV('Ficheiros', Format('%d / %d (%.0f%%)', [S.ImplementedFiles, S.PlannedFiles, S.FilesCoverage]), True),
+    KV('Métodos', Format('%d / %d (%.0f%%)', [S.ImplementedMethods, S.PlannedMethods, S.MethodsCoverage]), True),
+    KV('Por implementar', Format('%d fich. · %d mét.', [S.MissingFiles, S.MissingMethods])),
+    KV('Extra no código', Format('%d fich. · %d mét.', [S.ExtraFiles, S.ExtraMethods]))]);
+  Card.Height := 16 + 16 + 28 + 8 + FPlanStats.Height;
 end;
 
 procedure TChecklistPage.RebuildChips;

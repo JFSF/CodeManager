@@ -30,12 +30,23 @@ type
     function MethodsCoverage: Double;
   end;
 
+  // ficheiros de uma camada na vista cruzada: ja existem, faltam (so no plano) ou sobram (so no codigo)
+  TPlanLayerCoverage = record
+    Layer: string;
+    Implemented, Missing, Extra: Integer;
+    function Planned: Integer;
+    // percentagem (0..100) do que esta planeado na camada e ja existe; 0 sem nada planeado
+    function Coverage: Double;
+  end;
+
 // le o texto do plano; AWarnings lista o que foi ignorado (com o numero da linha)
 function ParsePlan(const AText: string; out AWarnings: TArray<string>): TProjectScan;
 function LoadPlanFile(const AFileName: string; out AWarnings: TArray<string>): TProjectScan;
 // vista do codigo cruzada com o plano; a analise do codigo nao e alterada (copia as units).
 // O resultado e de quem chama.
 function MergePlan(ACode, APlan: TProjectScan; out ASummary: TPlanSummary): TProjectScan;
+// cobertura por camada (ficheiros) de uma vista devolvida por MergePlan, por ordem de camada
+function PlanLayerCoverage(APlanView: TProjectScan): TArray<TPlanLayerCoverage>;
 
 implementation
 
@@ -89,6 +100,18 @@ end;
 function TPlanSummary.MethodsCoverage: Double;
 begin
   if PlannedMethods > 0 then Result := 100 * ImplementedMethods / PlannedMethods else Result := 0;
+end;
+
+{ TPlanLayerCoverage }
+
+function TPlanLayerCoverage.Planned: Integer;
+begin
+  Result := Implemented + Missing;
+end;
+
+function TPlanLayerCoverage.Coverage: Double;
+begin
+  if Planned > 0 then Result := 100 * Implemented / Planned else Result := 0;
 end;
 
 { ---------------------------------------------------------------- leitura }
@@ -938,6 +961,51 @@ begin
     CodeTaken.Free;
     Pair.Free;
     CodeBy.Free;
+  end;
+end;
+
+function PlanLayerCoverage(APlanView: TProjectScan): TArray<TPlanLayerCoverage>;
+var
+  Index: TDictionary<string, Integer>;
+  List: TList<TPlanLayerCoverage>;
+  U: TUnitInfo;
+  Idx: Integer;
+  L: TPlanLayerCoverage;
+begin
+  Result := nil;
+  if APlanView = nil then
+    Exit;
+  Index := TDictionary<string, Integer>.Create;
+  List := TList<TPlanLayerCoverage>.Create;
+  try
+    for U in APlanView.Units do
+    begin
+      if U.PlanStatus = psNone then
+        Continue;
+      if not Index.TryGetValue(U.Layer, Idx) then
+      begin
+        L := Default(TPlanLayerCoverage);
+        L.Layer := U.Layer;
+        Idx := List.Add(L);
+        Index.Add(U.Layer, Idx);
+      end;
+      L := List[Idx];
+      case U.PlanStatus of
+        psImplemented: Inc(L.Implemented);
+        psPlanned: Inc(L.Missing);
+        psExtra: Inc(L.Extra);
+      end;
+      List[Idx] := L;
+    end;
+    List.Sort(TComparer<TPlanLayerCoverage>.Construct(
+      function(const A, B: TPlanLayerCoverage): Integer
+      begin
+        Result := CompareText(A.Layer, B.Layer);
+      end));
+    Result := List.ToArray;
+  finally
+    List.Free;
+    Index.Free;
   end;
 end;
 

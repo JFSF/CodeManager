@@ -11,7 +11,7 @@ uses
   System.Generics.Collections, System.Generics.Defaults,
   FMX.Types, FMX.Controls, FMX.Layouts,
   Chart4D.Types, Chart4D.Style, Chart4D.Axis, Chart4D.FMX,
-  CM.Theme, CM.Controls, CM.Layouts, CM.Analyzer, CM.Store, CM.Stats, CM.History, CM.Pages.Host;
+  CM.Theme, CM.Controls, CM.Layouts, CM.Analyzer, CM.Store, CM.Stats, CM.History, CM.Plan, CM.Pages.Host;
 
 type
   TDashboardPage = class(TCMControl)
@@ -23,8 +23,9 @@ type
     FKpiRow: TCMCardRow;
     FKpi: array[0..3] of TCMKpi;
     FEvoRow: TCMControl;
-    FRows: array[0..2] of TCMCardRow;
+    FRows: array[0..3] of TCMCardRow;           // a ultima so aparece quando ha plano
     FEvolution, FLayers, FStatus, FTop, FHist, FLayerMethods, FCompilaSonar: TChart4D;
+    FPlanLayers, FPlanOverview: TChart4D;
     FStats: TStats;
     FHasStats: Boolean;
     FDirty: Boolean;
@@ -41,6 +42,7 @@ type
     procedure FillTop;
     procedure FillHistogram;
     procedure FillLayerMethods;
+    procedure FillPlan;
     procedure Reset(AChart: TChart4D; AKind: TChartKind; const ATitle, ASubtitle: string);
   protected
     procedure Resize; override;
@@ -114,7 +116,7 @@ begin
   FEvoRow.Align := TAlignLayout.Top;
   FEvoRow.Height := 380;
   FEvoRow.Padding.Bottom := RowGap;
-  for I := 0 to 2 do
+  for I := 0 to High(FRows) do
   begin
     FRows[I] := TCMCardRow.Create(Self);
     FRows[I].Parent := FBody;
@@ -130,6 +132,8 @@ begin
   FLayerMethods := AddChartCard(1);
   FHist := AddChartCard(2);
   FCompilaSonar := AddChartCard(2);
+  FPlanLayers := AddChartCard(3);
+  FPlanOverview := AddChartCard(3);
   StyleAll;
   Relayout;
 end;
@@ -159,7 +163,10 @@ begin
     if Narrow then FRows[I].Columns := 1 else FRows[I].Columns := 2;
     FRows[I].Height := FRows[I].HeightFor(Cell);
   end;
+  FRows[3].Visible := FHost.HasPlan;
   FBody.Height := FKpiRow.Height + FEvoRow.Height + FRows[0].Height + FRows[1].Height + FRows[2].Height;
+  if FRows[3].Visible then
+    FBody.Height := FBody.Height + FRows[3].Height;
 end;
 
 function TDashboardPage.AddChartCard(ARow: Integer): TChart4D;
@@ -188,7 +195,7 @@ procedure TDashboardPage.StyleAll;
 var
   C: TChart4D;
 begin
-  for C in [FEvolution, FLayers, FStatus, FTop, FHist, FLayerMethods, FCompilaSonar] do
+  for C in [FEvolution, FLayers, FStatus, FTop, FHist, FLayerMethods, FCompilaSonar, FPlanLayers, FPlanOverview] do
     C.Plot.Style := ThemedStyle;
 end;
 
@@ -251,6 +258,8 @@ begin
   FillHistogram;
   FillLayerMethods;
   FillCompilaSonar;
+  FillPlan;
+  Relayout;                // a linha do plano aparece ou desaparece conforme ha plano
 end;
 
 procedure TDashboardPage.FillEvolution;
@@ -403,6 +412,48 @@ begin
   FCompilaSonar.Plot.Categories := Names;
   FCompilaSonar.Plot.AddSeries('Compila', Compila).Color := Pal.FlagCompila;
   FCompilaSonar.Plot.AddSeries('Sonar', Sonar).Color := Pal.FlagSonar;
+end;
+
+// cobertura do plano: por camada (ficheiros) e o total de ficheiros e metodos; so com plano
+procedure TDashboardPage.FillPlan;
+var
+  Layers: TArray<TPlanLayerCoverage>;
+  Names: TArray<string>;
+  Done, Missing, Extra: TArray<Double>;
+  S: TPlanSummary;
+  I: Integer;
+begin
+  if not FHost.HasPlan then
+    Exit;
+  S := FHost.PlanSummary;
+  Layers := PlanLayerCoverage(FHost.CurrentPlanView);
+  SetLength(Names, Length(Layers));
+  SetLength(Done, Length(Layers));
+  SetLength(Missing, Length(Layers));
+  SetLength(Extra, Length(Layers));
+  for I := 0 to High(Layers) do
+  begin
+    Names[I] := Layers[I].Layer;
+    Done[I] := Layers[I].Implemented;
+    Missing[I] := Layers[I].Missing;
+    Extra[I] := Layers[I].Extra;
+  end;
+  Reset(FPlanLayers, TChartKind.StackedBar, 'Cobertura do plano por camada',
+    Format('Ficheiros · %.0f%% do planeado já existe', [S.FilesCoverage]));
+  FPlanLayers.Plot.Orientation := TChartOrientation.Horizontal;
+  FPlanLayers.Plot.LegendPosition := TLegendPosition.Top;
+  FPlanLayers.Plot.Categories := Names;
+  FPlanLayers.Plot.AddSeries('Implementados', Done).Color := Pal.Accent;
+  FPlanLayers.Plot.AddSeries('Por implementar', Missing).Color := Pal.Pending;
+  FPlanLayers.Plot.AddSeries('Extra', Extra).Color := Pal.FlagCompila;
+
+  Reset(FPlanOverview, TChartKind.GroupedBar, 'Plano e código',
+    Format('Métodos · %.0f%% do planeado já existe', [S.MethodsCoverage]));
+  FPlanOverview.Plot.LegendPosition := TLegendPosition.Top;
+  FPlanOverview.Plot.Categories := ['Ficheiros', 'Métodos'];
+  FPlanOverview.Plot.AddSeries('Implementados', [S.ImplementedFiles, S.ImplementedMethods]).Color := Pal.Accent;
+  FPlanOverview.Plot.AddSeries('Por implementar', [S.MissingFiles, S.MissingMethods]).Color := Pal.Pending;
+  FPlanOverview.Plot.AddSeries('Extra', [S.ExtraFiles, S.ExtraMethods]).Color := Pal.FlagCompila;
 end;
 
 procedure TDashboardPage.FillStatus;

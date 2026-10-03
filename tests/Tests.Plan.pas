@@ -75,6 +75,9 @@ type
     [Test] procedure SummaryCountsFilesAndMethods;
     [Test] procedure CoverageIsPercentageOfThePlan;
     [Test] procedure CoverageIsZeroForAnEmptyPlan;
+    [Test] procedure LayerCoverageCountsFilesPerLayer;
+    [Test] procedure LayerCoverageIsEmptyWithoutAView;
+    [Test] procedure LayerCoverageIgnoresUnitsWithoutPlanStatus;
     [Test] procedure CodeScanIsNotModified;
     [Test] procedure MergedScanIsRecountedAndSorted;
     [Test] procedure MethodStatusOutOfRangeIsNone;
@@ -717,6 +720,53 @@ begin
   Assert.AreEqual(3, FMerged.TotalMethods);
   Assert.AreEqual(2, FMerged.UnitsWithMethods);
   Assert.AreEqual(2, FMerged.Folders);
+end;
+
+procedure TMergePlanTests.LayerCoverageCountsFilesPerLayer;
+var
+  L: TArray<TPlanLayerCoverage>;
+begin
+  FPlan := NewScan(1, [
+    MakeUnitInfo('Core/a.pas', 'Core', []),
+    MakeUnitInfo('Core/b.pas', 'Core', []),
+    MakeUnitInfo('Core/c.pas', 'Core', []),
+    MakeUnitInfo('UI/d.pas', 'UI', [])]);
+  FCode := NewScan(1, [
+    MakeUnitInfo('Core/a.pas', 'Core', []),
+    MakeUnitInfo('Core/x.pas', 'Core', []),
+    MakeUnitInfo('UI/d.pas', 'UI', [])]);
+  Merge;
+  L := PlanLayerCoverage(FMerged);
+  Assert.AreEqual(2, Integer(Length(L)));
+  Assert.AreEqual('Core', L[0].Layer, 'por ordem de camada');
+  Assert.AreEqual(1, L[0].Implemented);
+  Assert.AreEqual(2, L[0].Missing, 'b e c');
+  Assert.AreEqual(1, L[0].Extra, 'x');
+  Assert.AreEqual(3, L[0].Planned);
+  Assert.AreEqual(100 / 3, L[0].Coverage, 0.001);
+  Assert.AreEqual('UI', L[1].Layer);
+  Assert.AreEqual(100.0, L[1].Coverage, 0.001);
+end;
+
+procedure TMergePlanTests.LayerCoverageIsEmptyWithoutAView;
+var
+  L: TPlanLayerCoverage;
+begin
+  Assert.AreEqual(0, Integer(Length(PlanLayerCoverage(nil))));
+  L := Default(TPlanLayerCoverage);
+  Assert.AreEqual(0.0, L.Coverage, 0.001, 'sem nada planeado');
+end;
+
+procedure TMergePlanTests.LayerCoverageIgnoresUnitsWithoutPlanStatus;
+var
+  Scan: TProjectScan;
+begin
+  Scan := NewScan(1, [MakeUnitInfo('a.pas', 'Raiz', [])]);   // vista sem plano: PlanStatus = psNone
+  try
+    Assert.AreEqual(0, Integer(Length(PlanLayerCoverage(Scan))));
+  finally
+    Scan.Free;
+  end;
 end;
 
 procedure TMergePlanTests.MethodStatusOutOfRangeIsNone;

@@ -82,6 +82,7 @@ type
     function GetShuttingDown: Boolean;
     function GetHasPlan: Boolean;
     function GetPlanSummary: TPlanSummary;
+    function GetCurrentPlanView: TProjectScan;
     function MapScan: TProjectScan;
     function SwapPlanView: TProjectScan;
     procedure Toast(const AText: string);
@@ -457,6 +458,11 @@ end;
 function TMainForm.GetPlanSummary: TPlanSummary;
 begin
   Result := FPlanSummary;
+end;
+
+function TMainForm.GetCurrentPlanView: TProjectScan;
+begin
+  Result := FPlanView;
 end;
 
 // o que o Mapa mostra: a vista cruzada com o plano, ou a analise do codigo

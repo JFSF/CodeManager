@@ -146,7 +146,8 @@ Se tens (ou vais escrever) um documento Markdown com a estrutura e o código pre
 | `MOVIDO` | Existe, mas noutra pasta |
 
 Os métodos planeados que ainda não existem aparecem em itálico. As estatísticas passam a incluir a **cobertura do
-plano**. Sem pasta de código, o documento é analisado sozinho (útil para rever o desenho antes de haver código).
+plano**, que também aparece na **Checklist** (cartão «Plano») e no **Painel** (uma linha de gráficos com a
+cobertura por camada e o total de ficheiros e métodos). Sem pasta de código, o documento é analisado sozinho (útil para rever o desenho antes de haver código).
 
 O formato, as regras de correspondência e um exemplo estão em [FORMATO-DO-PLANO.md](FORMATO-DO-PLANO.md).
 

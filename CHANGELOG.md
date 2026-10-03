@@ -20,7 +20,8 @@ Primeira versão pública.
   adapta-se à largura da janela.
 - **Histórico:** um registo por dia por projeto, para mostrar a evolução ao longo do tempo.
 - **Plano em Markdown:** leitura tolerante de um documento com a estrutura e o código previstos e cruzamento com o
-  código (`PLANEADO`, `EXTRA`, `MOVIDO`, cobertura do plano), ou análise só do documento.
+  código (`PLANEADO`, `EXTRA`, `MOVIDO`, cobertura do plano no Mapa, na Checklist e no
+  Painel, por camada), ou análise só do documento.
 - **Acompanhar alterações:** reanálise automática do que muda na pasta do projeto, sem perder o scroll.
 - **Exportar e imprimir:** estrutura em Markdown, TXT, CSV e JSON; páginas HTML offline; impressão com paginação.
 - **Tema claro e escuro**, que segue o Windows na primeira execução.
