@@ -154,7 +154,7 @@ Os comandos separam-se por `;`; os argumentos de cada um, por `,`.
 | `theme:dark` ou `theme:light` | Muda o tema |
 | `size:largura,altura` | Redimensiona a área cliente (testar janelas pequenas ou altas) |
 | `click:x,y` · `dblclick:x,y` · `move:x,y` · `wheel:x,y,delta` | Rato, em coordenadas da janela (`dblclick` = dois cliques seguidos) |
-| `page:6` | A página Aspeto (a ordem dos índices é a de `TPage`: 0 Projeto, 1 Mapa, 2 Checklist, 3 Painel, 4 Grafo, 5 Código, 6 Aspeto) |
+| `page:7` | A página Acerca (a ordem dos índices é a de `TPage`: 0 Projeto, 1 Mapa, 2 Checklist, 3 Painel, 4 Grafo, 5 Código, 6 Aspeto, 7 Acerca) |
 | `sonardemo` | Enche o SonarQube com dados **inventados** (medidas, problemas em linhas reais, hotspots), só para as imagens e para testar a interface |
 | `code:caminho[#método]` | Abre o código de uma unit (e salta para o método) na página Código e regista o separador no `dev.log` |
 | `hint:x,y` | Põe o rato em (x,y) e regista no `dev.log` a dica que apareceria |

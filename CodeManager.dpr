@@ -9,6 +9,7 @@ uses
   CM.Deps in 'src\Core\CM.Deps.pas',
   CM.Highlight in 'src\Core\CM.Highlight.pas',
   CM.Colors in 'src\Core\CM.Colors.pas',
+  CM.AppInfo in 'src\Core\CM.AppInfo.pas',
   CM.SafeFile in 'src\Core\CM.SafeFile.pas',
   CM.Metrics in 'src\Core\CM.Metrics.pas',
   CM.SonarModel in 'src\Core\CM.SonarModel.pas',
@@ -16,6 +17,7 @@ uses
   CM.Git in 'src\Infrastructure\CM.Git.pas',
   CM.Svn in 'src\Infrastructure\CM.Svn.pas',
   CM.Vcs in 'src\Infrastructure\CM.Vcs.pas',
+  CM.SysInfo in 'src\Infrastructure\CM.SysInfo.pas',
   CM.GitHub in 'src\Infrastructure\CM.GitHub.pas',
   CM.Secrets in 'src\Infrastructure\CM.Secrets.pas',
   CM.Sonar in 'src\Infrastructure\CM.Sonar.pas',
@@ -43,6 +45,7 @@ uses
   CM.Pages.Graph in 'src\UI\Pages\CM.Pages.Graph.pas',
   CM.Pages.Code in 'src\UI\Pages\CM.Pages.Code.pas',
   CM.Pages.Appearance in 'src\UI\Pages\CM.Pages.Appearance.pas',
+  CM.Pages.About in 'src\UI\Pages\CM.Pages.About.pas',
   CM.MainForm in 'src\UI\CM.MainForm.pas';
 
 {$R *.res}

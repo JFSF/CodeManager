@@ -13,6 +13,7 @@ uses
   CM.Deps in '..\src\Core\CM.Deps.pas',
   CM.Highlight in '..\src\Core\CM.Highlight.pas',
   CM.Colors in '..\src\Core\CM.Colors.pas',
+  CM.AppInfo in '..\src\Core\CM.AppInfo.pas',
   CM.Clicks in '..\src\UI\CM.Clicks.pas',
   CM.Theme in '..\src\UI\CM.Theme.pas',
   CM.Store in '..\src\Core\CM.Store.pas',
@@ -25,6 +26,7 @@ uses
   CM.Git in '..\src\Infrastructure\CM.Git.pas',
   CM.Svn in '..\src\Infrastructure\CM.Svn.pas',
   CM.Vcs in '..\src\Infrastructure\CM.Vcs.pas',
+  CM.SysInfo in '..\src\Infrastructure\CM.SysInfo.pas',
   CM.GitHub in '..\src\Infrastructure\CM.GitHub.pas',
   CM.Secrets in '..\src\Infrastructure\CM.Secrets.pas',
   CM.Sonar in '..\src\Infrastructure\CM.Sonar.pas',
@@ -66,7 +68,8 @@ uses
   Tests.SonarMeasures in 'Tests.SonarMeasures.pas',
   Tests.Svn in 'Tests.Svn.pas',
   Tests.Colors in 'Tests.Colors.pas',
-  Tests.Appearance in 'Tests.Appearance.pas';
+  Tests.Appearance in 'Tests.Appearance.pas',
+  Tests.AppInfo in 'Tests.AppInfo.pas';
 
 var
   Runner: ITestRunner;

@@ -374,6 +374,24 @@ papel mantêm o aspeto original.
 
 ![Aspeto, no tema escuro, com outra cor](images/18-aspeto-escuro.png)
 
+## Acerca
+
+A última opção da barra lateral, **Acerca** (o «i»), mostra a aplicação por dentro.
+
+![Acerca](images/19-acerca.png)
+
+- **Versão e compilação:** a versão (a do executável), se é uma compilação *Release* ou *Debug*, de 32 ou 64 bits, e
+  a data em que foi compilada.
+- **Ambiente:** o Delphi que compilou, o Windows, o idioma, se o `git` e o `svn` foram encontrados e a **pasta de
+  dados** (`%APPDATA%\CodeManager`).
+- **Ligações:** o repositório, as novidades (o registo de alterações), «Reportar um problema» e **Pasta de dados**
+  (abre-a no Explorador).
+- **Copiar informação** põe na área de transferência um texto de diagnóstico (versão, compilação, sistema, idioma,
+  tema, pasta de dados, Git e Subversion) para colares numa *issue*. Não leva nomes de projetos, caminhos de código
+  nem credenciais.
+- **Licença e créditos:** a licença MIT e o software de terceiros (Chart4D, DUnitX, ícones Material Design e o
+  DelphiNodeEditor, que inspirou o Grafo); os avisos completos estão em `THIRD-PARTY-NOTICES.md`.
+
 ## Tema claro e escuro
 
 O botão da lua/sol, em baixo na barra lateral, alterna o tema (a barra de título do Windows acompanha). Na primeira

@@ -11,6 +11,9 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
 - **Grafo de dependências:** nova página com o mapa visual de quem usa quem (cláusulas `uses` da *interface* e da
   *implementation*), acoplamento, instabilidade, **ciclos**, filtro, simplificação e relatório em HTML (mapa em SVG)
   ou Markdown.
+- **Acerca:** nova opção na barra lateral com a versão (lida do executável), a compilação (Release ou Debug, 32 ou 64
+  bits, data), o Delphi, o Windows, o idioma, a pasta de dados, ligações (repositório, novidades, reportar um problema)
+  e os créditos; «Copiar informação» dá um texto de diagnóstico para as *issues*.
 - **Aspeto:** nova página para escolher a **cor de destaque** (cores prontas ou `#RRGGBB`, com as variantes e o texto
   por cima calculados para se lerem nos dois temas), as **fontes** (interface, texto técnico e código), a **escala do
   texto** (90 % a 125 %) e o **tamanho do código**, com pré-visualização e «Repor». Guardado por utilizador.

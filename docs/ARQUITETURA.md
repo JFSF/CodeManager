@@ -354,6 +354,7 @@ classDiagram
 | `Core.SonarModel` / `Infrastructure.Sonar` | O retrato do Sonar (por ficheiro: problemas, medidas, hotspots; do projeto: medidas e classificações) e o cliente de leitura da API; os analisadores das respostas são puros. Alimentam o Mapa, a Checklist, a página Código e o Painel. |
 | `Infrastructure.Vcs` / `Git` / `Svn` | `Vcs` descobre se a pasta é Git ou Subversion (o marcador `.git` / `.svn` mais próximo) e despacha para o cliente; `Proc` corre os programas sem janela. Só leitura. `Services.GitReview` usa só `Vcs`. |
 | `Pages.Appearance` / `Theme` / `Core.Colors` | A página Aspeto (cor de destaque, fontes, escala). `Theme` guarda o aspeto (`ApplyAppearance`), deriva as paletas e aplica a escala do texto em `DrawTextRect` / `MeasureText`; `Core.Colors` é a matemática de cor (hex, HSL, contraste, `DeriveAccent`), sem interface. |
+| `Pages.About` / `Core.AppInfo` / `Infrastructure.SysInfo` | A página Acerca. `AppInfo` (puro) lê e compara versões, nomeia o Delphi e monta o texto de diagnóstico; `SysInfo` lê o executável (versão e data), a compilação e o Windows. A versão mostrada é a do recurso de versão do executável (`VerInfo_Keys` no `CodeManager.dproj`). |
 | `Pages.Dashboard` | Cartões de números e gráficos [Chart4D](https://github.com/GDKsoftware/Chart4D) que seguem o tema; com plano, uma linha de cobertura. |
 
 O que cada página **não** faz (por exemplo, trocar de projeto) pede-o ao anfitrião. Quando uma ação mexe em várias

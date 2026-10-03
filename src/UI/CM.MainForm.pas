@@ -12,7 +12,7 @@ uses
   System.Generics.Collections, System.StrUtils,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Edit, FMX.Printer,
   CM.Lang, CM.Deps, CM.DepsReport, CM.Theme, CM.Controls, CM.TreeList, CM.Analyzer, CM.Store, CM.SafeFile, CM.SonarModel, CM.Sonar, CM.Secrets, CM.Stats, CM.History, CM.Plan, CM.Export, CM.Print,
-  CM.GitHub, CM.Pages.Host, CM.Pages.Project, CM.Pages.Map, CM.Pages.Checklist, CM.Pages.Dashboard, CM.Pages.Graph, CM.Pages.Code, CM.Pages.Appearance;
+  CM.GitHub, CM.Pages.Host, CM.Pages.Project, CM.Pages.Map, CM.Pages.Checklist, CM.Pages.Dashboard, CM.Pages.Graph, CM.Pages.Code, CM.Pages.Appearance, CM.Pages.About;
 
 type
   TMainForm = class(TForm, IPageHost)
@@ -66,6 +66,7 @@ type
     FGraph: TGraphPage;
     FCode: TCodePage;
     FAppearance: TAppearancePage;
+    FAbout: TAboutPage;
 
     procedure BuildUI;
     procedure BuildRail;
@@ -298,6 +299,7 @@ begin
   FGraph := TGraphPage.Create(Self, FPages, Self);
   FCode := TCodePage.Create(Self, FPages, Self);
   FAppearance := TAppearancePage.Create(Self, FPages, Self);
+  FAbout := TAboutPage.Create(Self, FPages, Self);
   FMap.List.OnOpenCode := OpenCode;
   FCk.List.OnOpenCode := OpenCode;
   FPageBox[pgProject] := FProject;
@@ -307,6 +309,7 @@ begin
   FPageBox[pgGraph] := FGraph;
   FPageBox[pgCode] := FCode;
   FPageBox[pgAppearance] := FAppearance;
+  FPageBox[pgAbout] := FAbout;
 
   FToast := TCMToast.Create(Self);
   FToast.Parent := FContent;   // o toast posiciona-se em relacao a um TControl
@@ -314,8 +317,8 @@ end;
 
 procedure TMainForm.BuildRail;
 const
-  Icons: array[TPage] of TIconKind = (icDashboard, icMap, icChecklist, icChart, icGraph, icCode, icPalette);
-  NavOrder: array[0..6] of TPage = (pgProject, pgMap, pgGraph, pgCode, pgChecklist, pgDashboard, pgAppearance);
+  Icons: array[TPage] of TIconKind = (icDashboard, icMap, icChecklist, icChart, icGraph, icCode, icPalette, icInfo);
+  NavOrder: array[0..7] of TPage = (pgProject, pgMap, pgGraph, pgCode, pgChecklist, pgDashboard, pgAppearance, pgAbout);
 var
   P: TPage;
   K: Integer;
@@ -330,6 +333,7 @@ begin
   Names[pgGraph] := Tr('Grafo');
   Names[pgCode] := Tr('Código');
   Names[pgAppearance] := Tr('Aspeto');
+  Names[pgAbout] := Tr('Acerca');
   Line := TCMPanel.Create(Self);
   Line.Parent := FRail;
   Line.Align := TAlignLayout.Right;
@@ -411,6 +415,7 @@ begin
   FGraph.ApplyTheme;
   FCode.ApplyTheme;
   FAppearance.ApplyTheme;
+  FAbout.ApplyTheme;
   ApplyTitleBarTheme(Self);
   Invalidate;
 end;
@@ -472,6 +477,8 @@ begin
     FCode.Activate;
   if APage = pgAppearance then
     FAppearance.Activate;
+  if APage = pgAbout then
+    FAbout.Activate;
   UpdateHeader;
 end;
 
@@ -936,6 +943,11 @@ begin
       begin
         FTitle.Text := Tr('Projeto');
         FSubtitle.Text := Tr('Configure o projeto, analise o código-fonte e exporte as páginas HTML.');
+      end;
+    pgAbout:
+      begin
+        FTitle.Text := Tr('Acerca do CodeManager');
+        FSubtitle.Text := Tr('A versão, o sistema e as ligações úteis.');
       end;
     pgAppearance:
       begin

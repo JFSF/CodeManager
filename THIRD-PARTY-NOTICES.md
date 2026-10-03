@@ -40,3 +40,20 @@ Framework de testes (só usado nos testes, não faz parte do executável). Distr
 
 - Projeto: <https://github.com/VSoftTechnologies/DUnitX>
 - Licença: Apache License 2.0
+
+## Material Design Icons
+
+Os ícones da interface (`CM.Theme`) são formas vetoriais dos Material Design Icons da Google.
+
+- Projeto: <https://github.com/google/material-design-icons>
+- Licença: Apache License 2.0 (<https://www.apache.org/licenses/LICENSE-2.0>)
+
+## DelphiNodeEditor
+
+A forma dos nós e das ligações em curva do mapa de dependências inspira-se neste projeto; o código do CodeManager é
+próprio (não copia o do DelphiNodeEditor).
+
+- Projeto: <https://github.com/HemulGM/DelphiNodeEditor>
+- Autor: HemulGM
+- Licença: MIT
+

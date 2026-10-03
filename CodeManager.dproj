@@ -99,6 +99,7 @@
         <DCCReference Include="src\Core\CM.Deps.pas"/>
         <DCCReference Include="src\Core\CM.Highlight.pas"/>
         <DCCReference Include="src\Core\CM.Colors.pas"/>
+        <DCCReference Include="src\Core\CM.AppInfo.pas"/>
         <DCCReference Include="src\Core\CM.SafeFile.pas"/>
         <DCCReference Include="src\Core\CM.Metrics.pas"/>
         <DCCReference Include="src\Core\CM.SonarModel.pas"/>
@@ -106,6 +107,7 @@
         <DCCReference Include="src\Infrastructure\CM.Git.pas"/>
         <DCCReference Include="src\Infrastructure\CM.Svn.pas"/>
         <DCCReference Include="src\Infrastructure\CM.Vcs.pas"/>
+        <DCCReference Include="src\Infrastructure\CM.SysInfo.pas"/>
         <DCCReference Include="src\Infrastructure\CM.GitHub.pas"/>
         <DCCReference Include="src\Infrastructure\CM.Secrets.pas"/>
         <DCCReference Include="src\Infrastructure\CM.Sonar.pas"/>
@@ -133,6 +135,7 @@
         <DCCReference Include="src\UI\Pages\CM.Pages.Graph.pas"/>
         <DCCReference Include="src\UI\Pages\CM.Pages.Code.pas"/>
         <DCCReference Include="src\UI\Pages\CM.Pages.Appearance.pas"/>
+        <DCCReference Include="src\UI\Pages\CM.Pages.About.pas"/>
         <DCCReference Include="src\UI\CM.MainForm.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>

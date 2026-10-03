@@ -512,6 +512,36 @@ Rosa	Pink	Rose	Rosa
 Vermelho	Red	Rouge	Rot
 Laranja	Orange	Orange	Orange
 Grafite	Graphite	Graphite	Graphit
+# --- Pagina Acerca
+Acerca	About	À propos	Über
+Acerca do CodeManager	About CodeManager	À propos de CodeManager	Über CodeManager
+A versão, o sistema e as ligações úteis.	The version, the system and useful links.	La version, le système et des liens utiles.	Die Version, das System und nützliche Links.
+Mapa e checklist do código-fonte Delphi	Delphi source code map and checklist	Carte et checklist du code source Delphi	Karte und Checkliste für Delphi-Quellcode
+Versão 	Version 	Version 	Version
+Versão	Version	Version	Version
+Informação	Information	Informations	Informationen
+Compilação	Build	Compilation	Build
+Compilado em	Built on	Compilé le	Erstellt am
+Compilador	Compiler	Compilateur	Compiler
+Sistema	System	Système	System
+Git	Git	Git	Git
+Subversion	Subversion	Subversion	Subversion
+disponível	available	disponible	verfügbar
+não encontrado	not found	introuvable	nicht gefunden
+Pasta de dados	Data folder	Dossier de données	Datenordner
+Licença	License	Licence	Lizenz
+Repositório	Repository	Dépôt	Repository
+Novidades	What's new	Nouveautés	Neuigkeiten
+Reportar um problema	Report a problem	Signaler un problème	Problem melden
+Copiar informação	Copy information	Copier les informations	Informationen kopieren
+Informação copiada	Information copied	Informations copiées	Informationen kopiert
+Licença e créditos	License and credits	Licence et crédits	Lizenz und Danksagungen
+Distribuído sob a licença MIT. © 2026 João.	Distributed under the MIT license. © 2026 João.	Distribué sous licence MIT. © 2026 João.	Unter der MIT-Lizenz veröffentlicht. © 2026 João.
+Gráficos do Painel: Chart4D (MIT, GDK Software).	Dashboard charts: Chart4D (MIT, GDK Software).	Graphiques du tableau de bord : Chart4D (MIT, GDK Software).	Diagramme der Übersicht: Chart4D (MIT, GDK Software).
+Testes: DUnitX (Apache 2.0).	Tests: DUnitX (Apache 2.0).	Tests : DUnitX (Apache 2.0).	Tests: DUnitX (Apache 2.0).
+Ícones: Material Design Icons (Apache 2.0).	Icons: Material Design Icons (Apache 2.0).	Icônes : Material Design Icons (Apache 2.0).	Symbole: Material Design Icons (Apache 2.0).
+Mapa de dependências inspirado no DelphiNodeEditor (MIT, HemulGM).	Dependency map inspired by DelphiNodeEditor (MIT, HemulGM).	Carte des dépendances inspirée de DelphiNodeEditor (MIT, HemulGM).	Abhängigkeitskarte angelehnt an DelphiNodeEditor (MIT, HemulGM).
+Os avisos completos estão em THIRD-PARTY-NOTICES.md, no repositório.	The full notices are in THIRD-PARTY-NOTICES.md, in the repository.	Les avis complets sont dans THIRD-PARTY-NOTICES.md, dans le dépôt.	Die vollständigen Hinweise stehen in THIRD-PARTY-NOTICES.md im Repository.
 #!html
 # Textos dos modelos HTML (res\templates): cada chave e um troco exacto do modelo; so se aplicam ao modelo, antes de
 # se preencherem os marcadores __XXX__. Nas traducoes nao se usam aspas ASCII duplas (estao em strings JS e atributos).
