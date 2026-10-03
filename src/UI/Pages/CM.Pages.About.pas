@@ -126,7 +126,7 @@ begin
   // 4) creditos
   FCards[3] := NewCard(Self, FBody, 240);
   TCMLabel.Make(FCards[3], Tr('Licença e créditos'), 15, True).Align := TAlignLayout.Top;
-  Lbl := TCMLabel.Make(FCards[3], Tr('Distribuído sob a licença MIT. © 2026 João.'), 12.5, False, lcDim);
+  Lbl := TCMLabel.Make(FCards[3], Tr('Distribuído sob a licença MIT. © 2026 João Ferreira.'), 12.5, False, lcDim);
   Lbl.Align := TAlignLayout.Top;
   Lbl.Height := 22;
   Lbl.Margins.Top := 10;

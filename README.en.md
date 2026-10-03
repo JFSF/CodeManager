@@ -80,6 +80,27 @@ The analysis engine does not depend on the UI or on Windows; the FireMonkey inte
 the theme. The application **only reads** the project it analyses. Your progress is stored in
 `%APPDATA%\CodeManager`.
 
+## Changes
+
+What changed in **version 1.0.1** (the full history is in the [changelog](CHANGELOG.md), in Portuguese):
+
+**New pages**
+- **Graph** — a visual map of which unit uses which (from the `uses` clauses), with coupling, instability, cycles and an HTML or Markdown report.
+- **Code** — read the source in tabs, opened by double-clicking in the Graph, the Map or the Checklist; Delphi syntax colouring, jump to the method and a modern font with ligatures.
+- **Appearance** — accent colour, fonts, text scale and code size, just for you.
+- **About** — version, build, environment, useful links and «Copy information» for issues.
+
+**Improvements**
+- **More metrics per method** — number of parameters and block nesting (tooltip, CSV and JSON).
+- **SonarQube** — project and per-file measures (coverage, duplication, technical debt, A–E ratings), issue details and hotspots; shown in the Map, the Code page and the Dashboard.
+- **Subversion** — «changed since review» also works in Subversion working copies (besides Git).
+- **Languages** — Portuguese, English, French and German, including the exported HTML pages.
+- **GitHub repositories** — analyse a repository instead of a folder (read-only).
+
+**Behind the scenes**
+- About 200 new automated tests (now over 690), including tests against a real Subversion repository.
+- Fixed translation generator, updated documentation and images.
+
 ## Documentation (Portuguese)
 
 - [User guide](docs/GUIA-DO-UTILIZADOR.md)

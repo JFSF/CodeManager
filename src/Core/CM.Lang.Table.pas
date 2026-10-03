@@ -522,7 +522,7 @@ const
   ('Copiar informação', 'Copy information', 'Copier les informations', 'Informationen kopieren'),
   ('Informação copiada', 'Information copied', 'Informations copiées', 'Informationen kopiert'),
   ('Licença e créditos', 'License and credits', 'Licence et crédits', 'Lizenz und Danksagungen'),
-  ('Distribuído sob a licença MIT. © 2026 João.', 'Distributed under the MIT license. © 2026 João.', 'Distribué sous licence MIT. © 2026 João.', 'Unter der MIT-Lizenz veröffentlicht. © 2026 João.'),
+  ('Distribuído sob a licença MIT. © 2026 João Ferreira.', 'Distributed under the MIT license. © 2026 João Ferreira.', 'Distribué sous licence MIT. © 2026 João Ferreira.', 'Unter der MIT-Lizenz veröffentlicht. © 2026 João Ferreira.'),
   ('Gráficos do Painel: Chart4D (MIT, GDK Software).', 'Dashboard charts: Chart4D (MIT, GDK Software).', 'Graphiques du tableau de bord : Chart4D (MIT, GDK Software).', 'Diagramme der Übersicht: Chart4D (MIT, GDK Software).'),
   ('Testes: DUnitX (Apache 2.0).', 'Tests: DUnitX (Apache 2.0).', 'Tests : DUnitX (Apache 2.0).', 'Tests: DUnitX (Apache 2.0).'),
   ('Ícones: Material Design Icons (Apache 2.0).', 'Icons: Material Design Icons (Apache 2.0).', 'Icônes : Material Design Icons (Apache 2.0).', 'Symbole: Material Design Icons (Apache 2.0).'),

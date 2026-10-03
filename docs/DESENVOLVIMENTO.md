@@ -197,6 +197,17 @@ O script `tools\capture-docs.ps1`:
 
 O caminho do repositório não pode ter espaços.
 
+## Publicar uma versão
+
+1. Sobe o número em `CodeManager.dproj` (`FileVersion` e `ProductVersion` em `VerInfo_Keys`): é o que a página
+   **Acerca** mostra.
+2. No `CHANGELOG.md`, passa o que está em «Não lançado» para a versão nova (com a data) e acrescenta a ligação de
+   comparação no fim; atualiza a secção **Alterações** dos `README` e o «Estado do projeto».
+3. `ci.bat` (compila em Release/Win64 e corre os testes); copia `out\bin\Win64\Release\CodeManager.exe` para
+   `CodeManager-X.Y.Z-win64.exe` e gera o `SHA256SUMS.txt` com `Get-FileHash`.
+4. Junta o `develop` ao `master`, cria a etiqueta `vX.Y.Z` e envia tudo; `gh release create vX.Y.Z` com o executável
+   e o `SHA256SUMS.txt`.
+
 ## Receitas
 
 ### Adicionar uma página

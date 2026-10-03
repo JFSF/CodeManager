@@ -33,6 +33,7 @@ documento com o que o projeto *devia* ter, compara os dois.
 - [O que podes fazer](#o-que-podes-fazer)
 - [Plano × código](#plano--código)
 - [Como funciona](#como-funciona)
+- [Alterações](#alterações)
 - [Documentação](#documentação)
 - [Estado do projeto](#estado-do-projeto)
 - [Contribuir](#contribuir)
@@ -202,6 +203,27 @@ código e segue o tema. As camadas e as suas regras estão explicadas, com diagr
 Os teus dados ficam em `%APPDATA%\CodeManager` (`settings.json`, `progress-<id>.json`, `history-<id>.json`). A
 aplicação **só lê** os ficheiros do projeto analisado.
 
+## Alterações
+
+O que mudou na **versão 1.0.1** (a lista completa, versão a versão, está no [registo de alterações](CHANGELOG.md)):
+
+**Novas páginas**
+- **Grafo** — o mapa visual de quem usa quem (cláusulas `uses`), com acoplamento, instabilidade, ciclos e relatório em HTML ou Markdown.
+- **Código** — leitura do código em separadores, aberta por duplo clique no Grafo, no Mapa ou na Checklist; realce Delphi, salto para o método e fonte moderna com ligaduras.
+- **Aspeto** — cor de destaque, fontes, escala do texto e tamanho do código, só para ti.
+- **Acerca** — versão, compilação, ambiente, ligações úteis e «Copiar informação» para as *issues*.
+
+**Melhorias**
+- **Mais métricas por método** — número de parâmetros e aninhamento de blocos (dica, CSV e JSON).
+- **SonarQube** — medidas do projeto e de cada ficheiro (cobertura, duplicação, dívida técnica, classificações A–E), o detalhe dos problemas e os *hotspots*; vê-se no Mapa, na página Código e no Painel.
+- **Subversion** — «alterado desde a revisão» também em cópias de trabalho do Subversion (além do Git).
+- **Idiomas** — português, inglês, francês e alemão, incluindo as páginas HTML exportadas.
+- **Repositórios do GitHub** — analisar um repositório em vez de uma pasta (só leitura).
+
+**Nos bastidores**
+- Cerca de 200 testes automáticos novos (agora mais de 690), incluindo testes contra um repositório Subversion real.
+- Gerador de traduções corrigido, e documentação e imagens atualizadas.
+
 ## Documentação
 
 | Documento | Para quê |
@@ -215,7 +237,7 @@ aplicação **só lê** os ficheiros do projeto analisado.
 
 ## Estado do projeto
 
-Versão **1.0.0**. Em desenvolvimento ativo, desenvolvido e testado em **Windows / Win64** com **Delphi 13**. Mais de 490 testes
+Versão **1.0.1**. Em desenvolvimento ativo, desenvolvido e testado em **Windows / Win64** com **Delphi 13**. Mais de 690 testes
 automáticos cobrem o motor, as exportações, o vigia e as regras de arquitetura; a interface é verificada com o
 [modo de desenvolvimento](docs/DESENVOLVIMENTO.md#modo-de-desenvolvimento---dev).
 

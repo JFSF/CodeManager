@@ -6,6 +6,11 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
 
 ## [Não lançado]
 
+## [1.0.1] - 2026-10-03
+
+Novas páginas (Grafo, Código, Aspeto, Acerca), mais métricas por método, mais do SonarQube, Subversion, quatro idiomas e
+repositórios do GitHub.
+
 ### Funcionalidades
 
 - **Grafo de dependências:** nova página com o mapa visual de quem usa quem (cláusulas `uses` da *interface* e da
@@ -73,5 +78,6 @@ Primeira versão pública.
 - Mais de 490 testes DUnitX (incluindo os da integração com o Git, contra um repositório temporário real).
 - Contraste do texto com pelo menos 4,5:1 nos dois temas.
 
-[Não lançado]: https://github.com/JFSF/CodeManager/compare/v1.0.0...HEAD
+[Não lançado]: https://github.com/JFSF/CodeManager/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/JFSF/CodeManager/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/JFSF/CodeManager/releases/tag/v1.0.0
