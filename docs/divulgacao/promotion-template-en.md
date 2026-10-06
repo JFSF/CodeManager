@@ -1,10 +1,10 @@
-# Promotion template — CodeManager 1.0.3 (English)
+# Promotion template — CodeManager 1.0.4 (English)
 
 Ready-to-post material for **WhatsApp** and **Telegram** groups. Portuguese version: [`modelo-divulgacao.md`](modelo-divulgacao.md).
 
 | File | Purpose |
 |---|---|
-| [`cartaz-1.0.3-en.png`](cartaz-1.0.3-en.png) | The image (1600 × 900) |
+| [`cartaz-1.0.4-en.png`](cartaz-1.0.4-en.png) | The image (1600 × 900) |
 | This document | The texts, already formatted for each app |
 
 > The screenshots in the image show the Portuguese interface (the app is also available in English, French and German).
@@ -27,38 +27,38 @@ Formatting: `*bold*`, `_italic_`. Links become clickable on their own.
 ### Short caption (for the image)
 
 ```text
-*CodeManager 1.0.3* 🚀
+*CodeManager 1.0.4* 🚀
 _Delphi source-code map and checklist_
 
-New version! The software bill of materials (SBOM), still without changing a single line of your code.
+New version! The inheritance depth of every class, still without changing a single line of your code.
 
-✅ SBOM: the outside units the project uses, in CycloneDX and SPDX
-✅ Where each one comes from (Embarcadero or third party) and how sure we are
-✅ SHA-256 of the files found, without compiling
-✅ Uses the .map file, if any, to confirm what ends up in the executable
-✅ Report in HTML and Markdown, in 4 languages (PT · EN · FR · DE)
+✅ Classes page: classes and interfaces as a tree, with the inheritance depth
+✅ Children, methods and declaration of each (double-click opens the code)
+✅ «>=» when the chain leaves the project for an unknown class
+✅ Dashboard: the deepest classes and the depth distribution
+✅ Exports Markdown and CSV
 
 🪟 Windows 10/11 · free · open source
-⬇️ https://github.com/JFSF/CodeManager/releases/tag/v1.0.3
+⬇️ https://github.com/JFSF/CodeManager/releases/tag/v1.0.4
 ```
 
 ### Full message
 
 ```text
-*CodeManager 1.0.3* 🚀
+*CodeManager 1.0.4* 🚀
 _Delphi source-code map and checklist_
 
-Version 1.0.3 of *CodeManager* is out: the Windows app that reads the units of a Delphi project and helps you see what you have, review what has been looked at and track progress.
+Version 1.0.4 of *CodeManager* is out: the Windows app that reads the units of a Delphi project and helps you see what you have, review what has been looked at and track progress.
 
 What's new:
-• *SBOM* — a new page with the project's software bill of materials: the outside units it uses, where each comes from (Embarcadero or third party) and how sure we are, with the SHA-256 of the files;
-• *Standard formats* — exports CycloneDX 1.5 and SPDX 2.3 (JSON), handy for audits and for the Cyber Resilience Act;
-• *No compiling* — it starts from the source code and the .dproj, and uses the .map file, if any, to confirm what ends up in the executable;
-• *Report* — in HTML (with a PT · EN · FR · DE switcher in the page) or Markdown, without the full paths of your folders.
+• *Classes* — a new page with the project's classes, interfaces and records and the inheritance depth of each, its children and its methods;
+• *In the list itself* — sort by the headings, filter, and double-click opens the code at the class declaration;
+• *Minimum depth* — when the chain leaves the project for an unknown class, «>=» is shown instead of a false value;
+• *Dashboard and reports* — the deepest classes, the depth distribution and export to Markdown and CSV.
 
 CodeManager *never changes your code*. It is a single file, no installer.
 
-⬇️ Download: https://github.com/JFSF/CodeManager/releases/tag/v1.0.3
+⬇️ Download: https://github.com/JFSF/CodeManager/releases/tag/v1.0.4
 📖 Guide and source code: https://github.com/JFSF/CodeManager
 
 _Note:_ the executable is not signed, so Windows may show a SmartScreen warning the first time ("More info" → "Run anyway"). You can check the file against the SHA-256 in the release.
@@ -75,38 +75,38 @@ Formatting: `**bold**`, `__italic__` (type the text with these symbols and Teleg
 ### Short caption (for the image)
 
 ```text
-**CodeManager 1.0.3** 🚀
+**CodeManager 1.0.4** 🚀
 __Delphi source-code map and checklist__
 
-New version! The software bill of materials (SBOM), still without changing a single line of your code.
+New version! The inheritance depth of every class, still without changing a single line of your code.
 
-✅ SBOM: the outside units the project uses, in CycloneDX and SPDX
-✅ Where each one comes from (Embarcadero or third party) and how sure we are
-✅ SHA-256 of the files found, without compiling
-✅ Uses the .map file, if any, to confirm what ends up in the executable
-✅ Report in HTML and Markdown, in 4 languages (PT · EN · FR · DE)
+✅ Classes page: classes and interfaces as a tree, with the inheritance depth
+✅ Children, methods and declaration of each (double-click opens the code)
+✅ «>=» when the chain leaves the project for an unknown class
+✅ Dashboard: the deepest classes and the depth distribution
+✅ Exports Markdown and CSV
 
 🪟 Windows 10/11 · free · open source
-⬇️ https://github.com/JFSF/CodeManager/releases/tag/v1.0.3
+⬇️ https://github.com/JFSF/CodeManager/releases/tag/v1.0.4
 ```
 
 ### Full message
 
 ```text
-**CodeManager 1.0.3** 🚀
+**CodeManager 1.0.4** 🚀
 __Delphi source-code map and checklist__
 
-Version 1.0.3 of **CodeManager** is out: the Windows app that reads the units of a Delphi project and helps you see what you have, review what has been looked at and track progress.
+Version 1.0.4 of **CodeManager** is out: the Windows app that reads the units of a Delphi project and helps you see what you have, review what has been looked at and track progress.
 
 What's new:
-• **SBOM** — a new page with the project's software bill of materials: the outside units it uses, where each comes from (Embarcadero or third party) and how sure we are, with the SHA-256 of the files;
-• **Standard formats** — exports CycloneDX 1.5 and SPDX 2.3 (JSON), handy for audits and for the Cyber Resilience Act;
-• **No compiling** — it starts from the source code and the .dproj, and uses the .map file, if any, to confirm what ends up in the executable;
-• **Report** — in HTML (with a PT · EN · FR · DE switcher in the page) or Markdown, without the full paths of your folders.
+• **Classes** — a new page with the project's classes, interfaces and records and the inheritance depth of each, its children and its methods;
+• **In the list itself** — sort by the headings, filter, and double-click opens the code at the class declaration;
+• **Minimum depth** — when the chain leaves the project for an unknown class, «>=» is shown instead of a false value;
+• **Dashboard and reports** — the deepest classes, the depth distribution and export to Markdown and CSV.
 
 CodeManager **never changes your code**. It is a single file, no installer.
 
-⬇️ Download: https://github.com/JFSF/CodeManager/releases/tag/v1.0.3
+⬇️ Download: https://github.com/JFSF/CodeManager/releases/tag/v1.0.4
 📖 Guide and source code: https://github.com/JFSF/CodeManager
 
 __Note:__ the executable is not signed, so Windows may show a SmartScreen warning the first time ("More info" → "Run anyway"). You can check the file against the SHA-256 in the release.
@@ -118,6 +118,6 @@ Suggestions and bug reports are very welcome! 🙏
 
 ## For future versions
 
-Replace `1.0.3` with the new number (in the caption, the text and the release link) and add the version's highlights —
+Replace `1.0.4` with the new number (in the caption, the text and the release link) and add the version's highlights —
 the CHANGELOG has them. Remake the image with `python tools/make-cartaz.py <version> en` (and `pt`): edit the texts and
 the two screenshots at the top of `tools/make-cartaz.py` (the screenshots come from `docs/images`).

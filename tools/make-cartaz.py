@@ -1,7 +1,7 @@
 """Gera o cartaz de divulgacao (1600 x 900) a partir das capturas de docs/images.
 
-    python tools/make-cartaz.py 1.0.3 pt     -> docs/divulgacao/cartaz-1.0.3.png
-    python tools/make-cartaz.py 1.0.3 en     -> docs/divulgacao/cartaz-1.0.3-en.png
+    python tools/make-cartaz.py 1.0.4 pt     -> docs/divulgacao/cartaz-1.0.4.png
+    python tools/make-cartaz.py 1.0.4 en     -> docs/divulgacao/cartaz-1.0.4-en.png
 
 Precisa do Pillow e das fontes Segoe UI do Windows. Os textos de cada idioma estao em TEXTS; ao mudar de versao
 actualiza-os (as novidades vem do CHANGELOG) e escolhe as duas capturas em SHOTS.
@@ -16,31 +16,31 @@ FONTS = r'C:\Windows\Fonts'
 W, H = 1600, 900
 
 # a captura de tras e a da frente (dentro de docs/images)
-SHOTS = ('21-sbom.png', '22-sbom-relatorio.png')
+SHOTS = ('13-grafo.png', '23-classes.png')
 
 TEXTS = {
     'pt': {
-        'subtitle': 'Lista de materiais de software',
+        'subtitle': 'Profundidade de herança por classe',
         'headline': ['Mapa e checklist de', 'código-fonte Delphi'],
         'bullets': [
-            'SBOM: CycloneDX 1.5 e SPDX 2.3',
-            'Origem e confiança de cada unit',
-            'SHA-256 dos ficheiros achados',
-            'Usa o ficheiro .map, se existir',
-            'Relatório em PT · EN · FR · DE',
+            'Página Classes: árvore de herança',
+            'Profundidade, filhas e métodos',
+            'Duplo clique abre a declaração',
+            'Painel: as classes mais profundas',
+            'Exporta Markdown e CSV',
         ],
         'footer': ['Windows 10/11', 'gratuito', 'código aberto'],
         'suffix': '',
     },
     'en': {
-        'subtitle': 'Software bill of materials',
+        'subtitle': 'Inheritance depth per class',
         'headline': ['Delphi source-code', 'map and checklist'],
         'bullets': [
-            'SBOM: CycloneDX 1.5 and SPDX 2.3',
-            'Origin and confidence of each unit',
-            'SHA-256 of the files found',
-            'Uses the .map file, if any',
-            'Report in PT · EN · FR · DE',
+            'Classes page: inheritance tree',
+            'Depth, children and methods',
+            'Double-click opens the declaration',
+            'Dashboard: the deepest classes',
+            'Exports Markdown and CSV',
         ],
         'footer': ['Windows 10/11', 'free', 'open source'],
         'suffix': '-en',
@@ -81,7 +81,7 @@ def card(path, width):
 
 
 def main():
-    version = sys.argv[1] if len(sys.argv) > 1 else '1.0.3'
+    version = sys.argv[1] if len(sys.argv) > 1 else '1.0.4'
     lang = sys.argv[2] if len(sys.argv) > 2 else 'pt'
     t = TEXTS[lang]
     img = gradient().convert('RGBA')

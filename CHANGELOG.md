@@ -6,6 +6,10 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
 
 ## [Não lançado]
 
+## [1.0.4] - 2026-10-06
+
+Profundidade de herança por classe.
+
 ### Funcionalidades
 
 - **Classes e herança:** nova página **Classes** com as classes, interfaces e records do projeto e a **profundidade de
@@ -140,7 +144,8 @@ Primeira versão pública.
 - Mais de 490 testes DUnitX (incluindo os da integração com o Git, contra um repositório temporário real).
 - Contraste do texto com pelo menos 4,5:1 nos dois temas.
 
-[Não lançado]: https://github.com/JFSF/CodeManager/compare/v1.0.3...HEAD
+[Não lançado]: https://github.com/JFSF/CodeManager/compare/v1.0.4...HEAD
+[1.0.4]: https://github.com/JFSF/CodeManager/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/JFSF/CodeManager/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/JFSF/CodeManager/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/JFSF/CodeManager/compare/v1.0.0...v1.0.1

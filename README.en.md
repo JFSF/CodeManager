@@ -22,6 +22,7 @@ a document describing what the project *should* contain, it compares the two.
 ## Features
 
 - **Map** — the folder → file → method tree, with search, statistics and the **lines, complexity (cyclomatic and cognitive), parameters and nesting** of each method.
+- **Classes** — the project's classes and interfaces with the **inheritance depth** of each, its children and its declaration, exported as Markdown and CSV.
 - **SBOM** — the project's software bill of materials (which outside units it uses, where they come from and how sure we are), exported as **CycloneDX** and **SPDX**, plus a report in four languages.
 - **Checklist** — mark what you reviewed, what is under review or needs changes, what compiles, what passed Sonar, what is a priority; add notes. In a Git or Mercurial repository, or a Subversion working copy, it flags the files that changed since you reviewed them; SonarQube is optional and per user.
   A file is *done* when **all its methods** are reviewed.
@@ -83,14 +84,16 @@ the theme. The application **only reads** the project it analyses. Your progress
 
 ## Changes
 
-What changed in **version 1.0.3** (the full history is in the [changelog](CHANGELOG.md), in Portuguese):
+What changed in **version 1.0.4** (the full history is in the [changelog](CHANGELOG.md), in Portuguese):
 
 **New**
+- **Classes and inheritance** — a new page with the project's classes, interfaces and records and the **inheritance depth** of each, its children and its methods. Click the headings to sort, filter, and double-click to open the code at the declaration; when the chain leaves the project for an unknown class, the depth is shown as a minimum («>=»). It exports Markdown and CSV, and the Dashboard gets the deepest classes and the depth distribution.
+
+**Previous version (1.0.3)**
 - **SBOM** — a new page with the project's **software bill of materials**: the outside units it uses, where each one comes from (Embarcadero or third party), how sure we are about each, and the **SHA-256** of the files. It starts from the source code and the `.dproj`, without compiling, and uses the `.map` file if there is one. It exports **CycloneDX 1.5** and **SPDX 2.3** (JSON) and a report in HTML (four languages, with a switcher in the page) or Markdown. Adapts ideas from [DX.Comply](https://github.com/omonien/DX.Comply) (MIT, Olaf Monien).
 
 **Behind the scenes**
-- About 130 new automated tests (now over 870), including reading the `.dproj` and the `.map`, resolving files, and the writers and validators of the formats.
-- The dependency report and the SBOM share the four-language phrase mechanism.
+- About 60 new automated tests (now over 920), including extracting class declarations and computing the hierarchy and depth.
 - Updated documentation and images.
 
 ## Documentation (Portuguese)

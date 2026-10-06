@@ -59,7 +59,7 @@
         <Icon_MainIcon>res\CodeManager.ico</Icon_MainIcon>
         <VerInfo_Locale>2070</VerInfo_Locale>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_Keys>CompanyName=;FileDescription=CodeManager - mapa e checklist de codigo-fonte Delphi;FileVersion=1.0.3.0;InternalName=CodeManager;LegalCopyright=;LegalTrademarks=;OriginalFilename=CodeManager.exe;ProductName=CodeManager;ProductVersion=1.0.3.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=;FileDescription=CodeManager - mapa e checklist de codigo-fonte Delphi;FileVersion=1.0.4.0;InternalName=CodeManager;LegalCopyright=;LegalTrademarks=;OriginalFilename=CodeManager.exe;ProductName=CodeManager;ProductVersion=1.0.4.0;Comments=</VerInfo_Keys>
         <DCC_DcpOutput>.\out\dcp\$(Platform)\$(Config)</DCC_DcpOutput>
         <DCC_BplOutput>.\out\bpl\$(Platform)\$(Config)</DCC_BplOutput>
     </PropertyGroup>

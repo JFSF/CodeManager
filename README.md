@@ -225,14 +225,16 @@ aplicação **só lê** os ficheiros do projeto analisado.
 
 ## Alterações
 
-O que mudou na **versão 1.0.3** (a lista completa, versão a versão, está no [registo de alterações](CHANGELOG.md)):
+O que mudou na **versão 1.0.4** (a lista completa, versão a versão, está no [registo de alterações](CHANGELOG.md)):
 
 **Novidade**
+- **Classes e herança** — nova página com as classes, interfaces e records do projeto e a **profundidade de herança** de cada uma, as filhas e os métodos. Ordena-se pelos títulos, filtra-se, e o duplo clique abre o código na declaração; quando a cadeia sai do projeto para uma classe desconhecida, a profundidade vem como mínimo («>=»). Exporta Markdown e CSV, e o Painel ganha as classes mais profundas e a distribuição da profundidade.
+
+**Versão anterior (1.0.3)**
 - **SBOM** — nova página com a **lista de materiais de software** do projeto: as units de fora que usa, de onde vem cada uma (Embarcadero ou terceiros), a confiança de cada uma e o **SHA-256** dos ficheiros. Parte do código-fonte e do `.dproj`, sem compilar, e usa o ficheiro `.map` se existir. Exporta **CycloneDX 1.5** e **SPDX 2.3** (JSON) e um relatório em HTML (quatro idiomas, com seletor na página) ou Markdown. Adapta ideias do [DX.Comply](https://github.com/omonien/DX.Comply) (MIT, Olaf Monien).
 
 **Nos bastidores**
-- Cerca de 130 testes novos (agora mais de 870), incluindo a leitura do `.dproj` e do `.map`, a resolução de ficheiros e os escritores e validadores dos formatos.
-- O relatório de dependências e a SBOM partilham o mecanismo de frases em quatro idiomas.
+- Cerca de 60 testes novos (agora mais de 920), incluindo a extração das declarações de classes e o cálculo da hierarquia e da profundidade.
 - Documentação e imagens atualizadas.
 
 ## Documentação
@@ -248,7 +250,7 @@ O que mudou na **versão 1.0.3** (a lista completa, versão a versão, está no 
 
 ## Estado do projeto
 
-Versão **1.0.3**. Em desenvolvimento ativo, desenvolvido e testado em **Windows / Win64** com **Delphi 13**. Mais de 870 testes
+Versão **1.0.4**. Em desenvolvimento ativo, desenvolvido e testado em **Windows / Win64** com **Delphi 13**. Mais de 920 testes
 automáticos cobrem o motor, as exportações, o vigia e as regras de arquitetura; a interface é verificada com o
 [modo de desenvolvimento](docs/DESENVOLVIMENTO.md#modo-de-desenvolvimento---dev).
 
