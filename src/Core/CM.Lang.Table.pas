@@ -531,7 +531,7 @@ const
   );
 
   // trocos dos modelos HTML (res/templates), por ordem de leitura
-  HtmlRows: array[0..79] of array[0..3] of string = (
+  HtmlRows: array[0..83] of array[0..3] of string = (
   ('lang="pt-PT"', 'lang="en"', 'lang="fr"', 'lang="de"'),
   (' — Mapa de Código-Fonte</title>', ' — Source Code Map</title>', ' — Carte du code source</title>', ' — Quellcode-Karte</title>'),
   ('<span class="eyebrow">Mapa de código-fonte</span>', '<span class="eyebrow">Source code map</span>', '<span class="eyebrow">Carte du code source</span>', '<span class="eyebrow">Quellcode-Karte</span>'),
@@ -669,7 +669,11 @@ const
   ('"Não foi possível copiar automaticamente."', '"Could not copy automatically."', '"Impossible de copier automatiquement."', '"Automatisches Kopieren nicht möglich."'),
   ('"Tema: "', '"Theme: "', '"Thème : "', '"Design: "'),
   ('" ficheiros · "', '" files · "', '" fichiers · "', '" Dateien · "'),
-  ('" métodos em "', '" methods in "', '" méthodes dans "', '" Methoden in "')
+  ('" métodos em "', '" methods in "', '" méthodes dans "', '" Methoden in "'),
+  ('"Linhas de código"', '"Lines of code"', '"Lignes de code"', '"Codezeilen"'),
+  ('"Complexidade ciclomática"', '"Cyclomatic complexity"', '"Complexité cyclomatique"', '"Zyklomatische Komplexität"'),
+  ('"Parâmetros"', '"Parameters"', '"Paramètres"', '"Parameter"'),
+  ('"Aninhamento"', '"Nesting"', '"Imbrication"', '"Verschachtelung"')
   );
 
 implementation

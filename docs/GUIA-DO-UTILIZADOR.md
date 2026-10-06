@@ -131,7 +131,8 @@ As duas medidas avisam pela cor, como a complexidade: os **parâmetros** ficam �
 de 7; o **aninhamento**, âmbar a partir de 4 e vermelho acima de 5.
 
 O CSV e o JSON exportados levam estas duas medidas (colunas **Parâmetros** e **Aninhamento**; `parameters` e
-`nesting` no JSON).
+`nesting` no JSON). As **páginas HTML** do mapa e da checklist mostram as quatro (`74 l`, `cx 18`, `p 3`, `n 2`) à
+direita de cada método, com as mesmas cores de aviso, e a dica de cada uma diz o que significa (no idioma escolhido).
 
 ## Checklist
 

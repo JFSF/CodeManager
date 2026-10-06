@@ -8,7 +8,7 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.IOUtils, System.Generics.Collections,
-  CM.Analyzer, CM.Store, CM.Resources;
+  CM.Analyzer, CM.Store, CM.Resources, CM.Metrics;
 
 function ChecklistOutputPath(AProfile: TProjectProfile): string;
 function MapOutputPath(AProfile: TProjectProfile): string;
@@ -118,7 +118,16 @@ begin
         FirstMethod := False;
         SB.Append('{"name":').Append(JsonString(M.Name))
           .Append(',"kind":').Append(JsonString(M.Kind))
-          .Append(',"sig":').Append(JsonString(M.Sig)).Append('}');
+          .Append(',"sig":').Append(JsonString(M.Sig));
+        if M.Lines > 0 then
+          SB.Append(',"l":').Append(M.Lines)
+            .Append(',"cx":').Append(M.Complexity)
+            .Append(',"p":').Append(M.ParamCount)
+            .Append(',"n":').Append(M.Nesting)
+            .Append(',"lv":[').Append(Ord(ComplexityLevel(M.Complexity)))
+            .Append(',').Append(Ord(ParamsLevel(M.ParamCount)))
+            .Append(',').Append(Ord(NestingLevel(M.Nesting))).Append(']');
+        SB.Append('}');
       end;
       SB.Append(']');
     end;

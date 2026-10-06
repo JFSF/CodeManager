@@ -18,6 +18,7 @@
     --accent-soft: #e3ede9;
     --flag-compila: #2f6fed;
     --flag-sonar: #8b5cf6;
+    --cx-mid: #b7791f; --cx-high: #c0392b;
     --shadow: 0 1px 2px rgba(20, 24, 18, 0.06), 0 4px 14px rgba(20, 24, 18, 0.05);
     --radius: 10px;
     --mono: "Cascadia Code", "Cascadia Mono", Consolas, "SFMono-Regular", ui-monospace, Menlo, monospace;
@@ -30,6 +31,7 @@
       --accent: #4fb89b; --accent-strong: #7fd6bc; --accent-soft: #1e2f2b;
       --flag-compila: #6fa8ff;
       --flag-sonar: #c9a6ff;
+      --cx-mid: #e0a84a; --cx-high: #ef6b5f;
       --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.28);
     }
   }
@@ -39,6 +41,7 @@
     --accent: #4fb89b; --accent-strong: #7fd6bc; --accent-soft: #1e2f2b;
     --flag-compila: #6fa8ff;
     --flag-sonar: #c9a6ff;
+    --cx-mid: #e0a84a; --cx-high: #ef6b5f;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.28);
   }
   html[data-theme="light"] {
@@ -47,6 +50,7 @@
     --accent: #23705f; --accent-strong: #17493d; --accent-soft: #e3ede9;
     --flag-compila: #2f6fed;
     --flag-sonar: #8b5cf6;
+    --cx-mid: #b7791f; --cx-high: #c0392b;
     --shadow: 0 1px 2px rgba(20, 24, 18, 0.06), 0 4px 14px rgba(20, 24, 18, 0.05);
   }
 
@@ -166,6 +170,9 @@
   .methoditem { display: flex; align-items: flex-start; gap: 0.55rem; padding: 0.28rem 0 0.28rem 0.75rem; }
   .methoditem .mkind { font-family: var(--mono); font-size: 0.62rem; color: var(--text-faint); flex-shrink: 0; padding-top: 0.15rem; min-width: 78px; }
   .methoditem .msig { font-family: var(--mono); font-size: 0.78rem; color: var(--text); overflow-wrap: anywhere; }
+  .methoditem .mmetrics { margin-left: auto; padding-left: 0.6rem; flex-shrink: 0; display: flex; gap: 0.5rem; font-family: var(--mono); font-size: 0.7rem; color: var(--text-faint); padding-top: 0.12rem; }
+  .methoditem .mmetrics .m2 { color: var(--cx-mid); }
+  .methoditem .mmetrics .m3 { color: var(--cx-high); }
 
   .empty-state { color: var(--text-faint); font-size: 0.85rem; padding: 2rem 0.5rem; text-align: center; font-family: var(--mono); }
 
@@ -195,6 +202,7 @@
       --text: #000000; --text-dim: #2c2f28; --text-faint: #52554d;
       --accent: #175a49; --accent-strong: #0f3f34; --accent-soft: #dcece5;
       --flag-compila: #1c4fb8; --flag-sonar: #5b21a6;
+      --cx-mid: #8a5300; --cx-high: #a61b1b;
     }
     body { background: #fff; color: #000; }
     .sidebar, #themeToggle, .search-box, .action-row, .methodsbtn { display: none !important; }
@@ -320,6 +328,26 @@
   }
 
   function methodsOf(path) { return METHODS[path] || []; }
+  var MLABELS = ["Linhas de código", "Complexidade ciclomática", "Parâmetros", "Aninhamento"];
+  // linhas, complexidade, parametros e aninhamento do metodo (so as medidas nao nulas); mm.lv traz o nivel de aviso
+  function makeMetrics(mm) {
+    if (!mm.l) return null;
+    var box = document.createElement("span");
+    box.className = "mmetrics";
+    function add(text, label, level) {
+      var s = document.createElement("span");
+      s.className = "m" + level;
+      s.textContent = text;
+      s.title = label;
+      box.appendChild(s);
+    }
+    add(mm.l + " l", MLABELS[0], 0);
+    add("cx " + mm.cx, MLABELS[1], mm.lv[0]);
+    if (mm.p) add("p " + mm.p, MLABELS[2], mm.lv[1]);
+    if (mm.n) add("n " + mm.n, MLABELS[3], mm.lv[2]);
+    return box;
+  }
+
 
   function extOf(name) {
     var i = name.lastIndexOf(".");
@@ -463,6 +491,8 @@
         mli.appendChild(mFlagSonar);
         mli.appendChild(mkind);
         mli.appendChild(msig);
+        var mmetrics = makeMetrics(mm);
+        if (mmetrics) mli.appendChild(mmetrics);
         mul.appendChild(mli);
       });
       methodsRow.appendChild(mul);

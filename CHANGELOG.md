@@ -11,6 +11,8 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
 - **Mapa:** os **parâmetros** (`p 3`) e o **aninhamento** (`n 2`) de cada método aparecem ao lado das linhas e da
   complexidade (só quando não são zero), com cor de aviso: parâmetros âmbar a partir de 5 e vermelho acima de 7;
   aninhamento âmbar a partir de 4 e vermelho acima de 5.
+- **Páginas HTML exportadas:** o mapa e a checklist mostram as linhas, a complexidade, os parâmetros e o
+  aninhamento de cada método, com as mesmas cores de aviso e dicas traduzidas.
 
 ## [1.0.1] - 2026-10-03
 

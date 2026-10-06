@@ -43,6 +43,8 @@ type
     [Test] procedure StorageKeysCarryTheSlug;
     [Test] procedure FilesJsonListsEveryUnit;
     [Test] procedure MethodsJsonListsMethodsAndSkipsEmptyUnits;
+    [Test] procedure MethodsJsonCarriesTheMeasuresOfMethodsWithABody;
+    [Test] procedure MetricLabelsAreTranslated;
     [Test] procedure ExcludedFoldersAreMentioned;
     [Test] procedure SeedStateCarriesTheProgress;
     [Test] procedure SeedStateNeverClosesTheScriptTag;
@@ -260,6 +262,28 @@ begin
   Assert.IsTrue(Html.Contains('"Core/Sub/c.pas":[{"name":"TC.Run"'), 'metodos de c.pas');
   Assert.IsFalse(Html.Contains('"Core/b.pas":['), 'units sem metodos nao entram em METHODS');
   Assert.IsFalse(Html.Contains('"UI/d.pas":['), 'units sem metodos nao entram em METHODS');
+end;
+
+procedure TExportHtmlTests.MethodsJsonCarriesTheMeasuresOfMethodsWithABody;
+var
+  M: TMethodInfo;
+  Html: string;
+begin
+  M := FScan.Units[0].Methods[0];
+  FScan.Units[0].Methods[0].Lines := 74;
+  FScan.Units[0].Methods[0].Complexity := 18;
+  FScan.Units[0].Methods[0].ParamCount := 8;
+  FScan.Units[0].Methods[0].Nesting := 2;
+  Html := Map;
+  Assert.IsTrue(Html.Contains('"sig":"' + M.Sig + '","l":74,"cx":18,"p":8,"n":2,"lv":[2,3,1]}'), 'medidas e niveis');
+  Assert.IsTrue(Html.Contains('"sig":"procedure TA.Two;"}'), 'sem corpo, sem medidas');
+end;
+
+procedure TExportHtmlTests.MetricLabelsAreTranslated;
+begin
+  SetLang(lgEn);
+  Assert.IsTrue(Map.Contains('"Cyclomatic complexity"'), 'mapa');
+  Assert.IsTrue(Checklist.Contains('"Nesting"'), 'checklist');
 end;
 
 procedure TExportHtmlTests.ExcludedFoldersAreMentioned;
