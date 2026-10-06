@@ -304,13 +304,13 @@ begin
   end;
 end;
 
-// de quem e um ficheiro que nao e do projecto: da Embarcadero (se esta dentro da instalacao) ou de terceiros
-function OriginOfPath(const APath, AUnitName, AProjectDir, ADelphiRoot: string): TSbomOrigin;
+// de quem e uma unit de fora do codigo analisado: da Embarcadero (se o ficheiro esta dentro da instalacao) ou de terceiros.
+// As units do proprio projecto ja estao no grafo; uma que apareca noutra pasta, mesmo dentro da do projecto (uma biblioteca
+// copiada para libs\ ou modules\), e uma dependencia
+function OriginOfPath(const APath, AUnitName, ADelphiRoot: string): TSbomOrigin;
 var
   Lower: string;
 begin
-  if IsUnderFolder(APath, AProjectDir) then
-    Exit(soProject);
   if IsUnderFolder(APath, ADelphiRoot) then
   begin
     Lower := LowerCase(APath);
@@ -380,7 +380,7 @@ begin
           C.Evidence := seFile;                // o mapa continua a ser a prova mais forte
         C.Confidence := scStrong;
         if C.Origin <> soProject then
-          C.Origin := OriginOfPath(Found, C.Name, Base, AOptions.DelphiRoot);
+          C.Origin := OriginOfPath(Found, C.Name, AOptions.DelphiRoot);
         if AOptions.ComputeHashes then
           C.Hash := FileSha256(Found);
       end;

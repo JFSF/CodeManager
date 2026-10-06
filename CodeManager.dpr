@@ -25,6 +25,7 @@ uses
   CM.SbomFormats in 'src\Services\CM.SbomFormats.pas',
   CM.HtmlLang in 'src\Services\CM.HtmlLang.pas',
   CM.SbomReport in 'src\Services\CM.SbomReport.pas',
+  CM.SbomService in 'src\Services\CM.SbomService.pas',
   CM.Vcs in 'src\Infrastructure\CM.Vcs.pas',
   CM.SysInfo in 'src\Infrastructure\CM.SysInfo.pas',
   CM.GitHub in 'src\Infrastructure\CM.GitHub.pas',

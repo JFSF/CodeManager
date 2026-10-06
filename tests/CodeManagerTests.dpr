@@ -34,6 +34,7 @@ uses
   CM.SbomFormats in '..\src\Services\CM.SbomFormats.pas',
   CM.HtmlLang in '..\src\Services\CM.HtmlLang.pas',
   CM.SbomReport in '..\src\Services\CM.SbomReport.pas',
+  CM.SbomService in '..\src\Services\CM.SbomService.pas',
   CM.Vcs in '..\src\Infrastructure\CM.Vcs.pas',
   CM.SysInfo in '..\src\Infrastructure\CM.SysInfo.pas',
   CM.GitHub in '..\src\Infrastructure\CM.GitHub.pas',
@@ -84,6 +85,7 @@ uses
   Tests.SbomResolve in 'Tests.SbomResolve.pas',
   Tests.SbomFormats in 'Tests.SbomFormats.pas',
   Tests.SbomReport in 'Tests.SbomReport.pas',
+  Tests.SbomService in 'Tests.SbomService.pas',
   Tests.Colors in 'Tests.Colors.pas',
   Tests.Appearance in 'Tests.Appearance.pas',
   Tests.AppInfo in 'Tests.AppInfo.pas';

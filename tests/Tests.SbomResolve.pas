@@ -30,7 +30,7 @@ type
     [Test] procedure UnknownUnitsKeepTheirWeakConfidence;
     [Test] procedure HashesAreSha256OfTheFile;
     [Test] procedure HashesCanBeSkipped;
-    [Test] procedure UnitsOfTheProjectFolderCountAsLocal;
+    [Test] procedure LibrariesCopiedIntoTheProjectFolderStayThirdParty;
     [Test] procedure SearchPathsAreRelativeToTheProjectFile;
     [Test] procedure ProgressIsReported;
     [Test] procedure NilSbomIsIgnored;
@@ -209,16 +209,17 @@ begin
   Assert.AreEqual('', C.Hash);
 end;
 
-procedure TSbomResolveTests.UnitsOfTheProjectFolderCountAsLocal;
+procedure TSbomResolveTests.LibrariesCopiedIntoTheProjectFolderStayThirdParty;
 var
   C: TSbomComponent;
 begin
-  // uma unit que nao entrou no grafo (pasta ignorada) mas esta debaixo do projecto
+  // uma biblioteca copiada para a pasta do projecto (modules\, libs\) e uma dependencia, nao codigo do projecto
   FDir.Write('proj/modules/Extra.Unit.pas', 'unit Extra.Unit;');
   FOptions.SearchPaths := [FDir.Full('proj/modules')];
   C := Add('Extra.Unit', soThirdParty);
   ResolveSbom(FSbom, FOptions);
-  Assert.AreEqual(Ord(soProject), Ord(C.Origin));
+  Assert.AreEqual(Ord(soThirdParty), Ord(C.Origin));
+  Assert.AreEqual(Ord(scStrong), Ord(C.Confidence));
 end;
 
 procedure TSbomResolveTests.SearchPathsAreRelativeToTheProjectFile;
