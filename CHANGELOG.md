@@ -13,6 +13,11 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
   o que foi gravado depois com o que ainda não foi, e a dica mostra os conjuntos que tocaram no ficheiro. A página
   Acerca indica se o `hg` foi encontrado. O Git e o Subversion continuam como antes.
 
+- **Complexidade cognitiva:** nova medida por método (regras da SonarSource, aproximadas ao nível dos símbolos): as
+  estruturas de controlo somam 1 mais o aninhamento, `else if` não aninha, cada sequência de `and`/`or` soma 1 e os
+  métodos anónimos aninham. Aparece no Mapa e na Checklist (`cg 25`, âmbar acima de 15 e vermelha acima de 25), na dica,
+  nas páginas HTML, no CSV e no JSON, e no Painel (os 10 mais difíceis de ler e a distribuição por nível).
+
 ### Melhorias
 
 - **Mapa:** os **parâmetros** (`p 3`) e o **aninhamento** (`n 2`) de cada método aparecem ao lado das linhas e da

@@ -98,9 +98,9 @@ A árvore do projeto: **pastas → ficheiros → métodos**.
   **Expandir tudo**, **Colapsar tudo**, **Abrir métodos** e **Fechar métodos** fazem-no de uma vez.
 - As caixas **C** (*Compila*) e **S** (*Sonar*) assinalam, por ficheiro ou por método, que compila sem erros e que
   passou na análise do SonarQube.
-- À direita de cada método vês as **linhas de código** (`74 l`), a **complexidade ciclomática** (`cx 18`), os
-  **parâmetros** (`p 3`) e o **aninhamento** (`n 2`; os dois últimos só aparecem quando não são zero); a dica mostra-os
-  por extenso. Ver [Linhas e complexidade](#linhas-e-complexidade-dos-métodos).
+- À direita de cada método vês as **linhas de código** (`74 l`), a **complexidade ciclomática** (`cx 18`), a
+  **complexidade cognitiva** (`cg 25`), os **parâmetros** (`p 3`) e o **aninhamento** (`n 2`; os três últimos só
+  aparecem quando não são zero); a dica mostra-os por extenso. Ver [Linhas e complexidade](#linhas-e-complexidade-dos-métodos).
 - Passa o rato por cima de um nome ou assinatura cortado com «…» para ver o texto completo.
 - A coluna da direita mostra as **estatísticas** (e a cobertura do plano, se houver) e as ações de **exportar e
   imprimir** a estrutura.
@@ -119,6 +119,19 @@ Cada método com corpo mostra duas medidas, calculadas só a partir do código (
 A cor da complexidade avisa: **até 10** é simples (cinzento), **11 a 20** é moderada (âmbar) e **mais de 20** é alta
 (vermelho). Métodos só declarados na interface, `forward` ou `external` não têm medida.
 
+A **complexidade cognitiva** (`cg`) mede o esforço de **ler** o método, e não apenas quantos caminhos tem. Segue as
+regras da SonarSource, aproximadas ao nível dos símbolos:
+
+- cada `if`, `while`, `for`, `repeat`, `case`, `except` e handler `on … do` soma **1 mais o nível de aninhamento** em
+  que está (um `if` dentro de um `for` dentro de um `if` soma 1 + 2 + 3);
+- `else` e `else if` somam 1, sem aninhamento (uma cadeia `else if` fica «plana»);
+- cada sequência seguida do mesmo `and`/`or` soma 1 (`a and b and c` = 1; `a and b or c` = 2);
+- os métodos anónimos aumentam o aninhamento do que têm lá dentro;
+- o `else` de um `case`, o `finally` e o `with` não somam; a recursão não é contada.
+
+Fica âmbar a partir de **16** e vermelha acima de **25** (o Sonar avisa a partir de 15). Dois métodos com a mesma
+complexidade ciclomática podem ter cognitivas muito diferentes: é a cognitiva que denuncia o código aninhado.
+
 Ao lado, o Mapa mostra duas medidas de forma (também na dica):
 
 - **Parâmetros:** quantos nomes o cabeçalho declara (`A, B: Integer; var C: string` são 3). Muitos parâmetros
@@ -130,9 +143,9 @@ Ao lado, o Mapa mostra duas medidas de forma (também na dica):
 As duas medidas avisam pela cor, como a complexidade: os **parâmetros** ficam âmbar a partir de 5 e vermelhos acima
 de 7; o **aninhamento**, âmbar a partir de 4 e vermelho acima de 5.
 
-O CSV e o JSON exportados levam estas duas medidas (colunas **Parâmetros** e **Aninhamento**; `parameters` e
-`nesting` no JSON). As **páginas HTML** do mapa e da checklist mostram as quatro (`74 l`, `cx 18`, `p 3`, `n 2`) à
-direita de cada método, com as mesmas cores de aviso, e a dica de cada uma diz o que significa (no idioma escolhido).
+O CSV e o JSON exportados levam estas medidas (colunas **Parâmetros**, **Aninhamento** e **Complexidade cognitiva**;
+`parameters`, `nesting` e `cognitive` no JSON). As **páginas HTML** do mapa e da checklist mostram todas
+(`74 l`, `cx 18`, `cg 25`, `p 3`, `n 2`) à direita de cada método, com as mesmas cores de aviso, e a dica de cada uma diz o que significa (no idioma escolhido).
 
 ## Checklist
 
@@ -320,6 +333,8 @@ Uma vista de conjunto, com gráficos que seguem o tema.
 - **Métodos mais complexos** (os 10 com maior complexidade ciclomática) e **Complexidade dos métodos** (quantos há
   em cada nível).
 - **Métodos com mais parâmetros** e **Métodos mais aninhados** (os 10 de cada, só com valor acima de zero).
+- **Métodos de maior complexidade cognitiva** (os 10 com mais) e **Complexidade cognitiva dos métodos** (quantos há em
+  cada nível: simples até 15, moderada até 25).
 - Passa o rato pelos gráficos para ver os valores.
 - Em janelas estreitas os cartões reorganizam-se em menos colunas.
 

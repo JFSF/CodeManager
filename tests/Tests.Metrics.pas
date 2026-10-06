@@ -15,6 +15,8 @@ type
   private
     function Find(const AMethods: TArray<TMethodInfo>; const AName: string): TMethodInfo;
     function Impl(const AInterface, AImplementation: string): TArray<TMethodInfo>;
+    // a complexidade cognitiva do corpo dado, posto dentro de TFoo.Bar(A: Integer)
+    function Cog(const ABody: string): Integer;
   public
     [Test] procedure SimpleMethodsGetLinesAndBaseComplexity;
     [Test] procedure DecisionsAddToTheComplexity;
@@ -43,6 +45,22 @@ type
     [Test] procedure NestingCountsInnerBlocksOnly;
     [Test] procedure RepeatCountsAsABlock;
     [Test] procedure ShapeTextDescribesParametersAndNesting;
+    [Test] procedure CognitiveIsZeroWithoutDecisions;
+    [Test] procedure CognitiveCountsEachControlStructure;
+    [Test] procedure CognitiveAddsTheNestingLevel;
+    [Test] procedure ElseIfChainsDoNotNest;
+    [Test] procedure ElseCountsOnceAndNestsItsBody;
+    [Test] procedure LoopsNestInsideEachOther;
+    [Test] procedure LogicalOperatorsCountPerSequence;
+    [Test] procedure CaseNestsItsBranchesAndItsElseIsFree;
+    [Test] procedure ExceptHandlersCountLikeCatch;
+    [Test] procedure BareExceptNestsItsBody;
+    [Test] procedure RepeatNestsItsBody;
+    [Test] procedure AnonymousMethodsNestTheirBody;
+    [Test] procedure SingleStatementBodiesAreFollowed;
+    [Test] procedure WithDoesNotCountNorNest;
+    [Test] procedure CognitiveLevelsAndText;
+    [Test] procedure CognitiveCountsAreKeptPerRoutine;
   end;
 
   [TestFixture]
@@ -531,6 +549,145 @@ begin
   Assert.AreEqual('sem parâmetros · aninhamento 0', ShapeText(5, 0, 0));
   Assert.AreEqual('1 parâmetro · aninhamento 2', ShapeText(5, 1, 2));
   Assert.AreEqual('3 parâmetros · aninhamento 1', ShapeText(5, 3, 1));
+end;
+
+function TMetricsTests.Cog(const ABody: string): Integer;
+var
+  M: TArray<TMethodInfo>;
+begin
+  M := Impl(ClassIntf,
+    'procedure TFoo.Bar(A: Integer);' + sLineBreak +
+    'begin' + sLineBreak +
+    ABody + sLineBreak +
+    'end;' + sLineBreak +
+    'function TFoo.Baz: Integer;' + sLineBreak +
+    'begin end;');
+  Result := Find(M, 'TFoo.Bar').Cognitive;
+end;
+
+procedure TMetricsTests.CognitiveIsZeroWithoutDecisions;
+begin
+  Assert.AreEqual(0, Cog('Inc(A);'));
+  Assert.AreEqual(0, Cog('Inc(A); Dec(A); Writeln(A);'));
+end;
+
+procedure TMetricsTests.CognitiveCountsEachControlStructure;
+begin
+  Assert.AreEqual(1, Cog('if A > 0 then Inc(A);'), 'if');
+  Assert.AreEqual(1, Cog('while A > 0 do Dec(A);'), 'while');
+  Assert.AreEqual(1, Cog('for A := 1 to 3 do Inc(A);'), 'for');
+  Assert.AreEqual(1, Cog('repeat Dec(A) until A < 0;'), 'repeat');
+  Assert.AreEqual(1, Cog('case A of 1: Inc(A); end;'), 'case');
+  Assert.AreEqual(2, Cog('if A > 0 then Inc(A); while A > 5 do Dec(A);'), 'em sequencia nao aninham');
+end;
+
+procedure TMetricsTests.CognitiveAddsTheNestingLevel;
+begin
+  Assert.AreEqual(3, Cog('if A > 0 then begin if A > 1 then Inc(A); end;'), '1 + (1+1)');
+  Assert.AreEqual(6, Cog('if A > 0 then begin if A > 1 then begin if A > 2 then Inc(A); end; end;'), '1 + 2 + 3');
+end;
+
+procedure TMetricsTests.ElseIfChainsDoNotNest;
+begin
+  Assert.AreEqual(3, Cog('if A = 1 then Inc(A) else if A = 2 then Dec(A) else A := 0;'), 'if + else if + else');
+  Assert.AreEqual(3, Cog('if A = 1 then begin Inc(A); end else if A = 2 then begin Dec(A); end else begin A := 0; end;'));
+  Assert.AreEqual(4, Cog('if A = 1 then A := 1 else if A = 2 then A := 2 else if A = 3 then A := 3 else A := 0;'));
+end;
+
+procedure TMetricsTests.ElseCountsOnceAndNestsItsBody;
+begin
+  Assert.AreEqual(4, Cog('if A > 0 then begin if A > 1 then Inc(A) else Dec(A); end;'), '1 + (1+1) + else');
+  Assert.AreEqual(4, Cog('if A > 0 then Inc(A) else begin if A > 1 then Dec(A); end;'), '1 + else + (1+1)');
+end;
+
+procedure TMetricsTests.LoopsNestInsideEachOther;
+begin
+  Assert.AreEqual(6, Cog('for A := 1 to 3 do while A < 9 do if A > 0 then Inc(A);'), '1 + 2 + 3');
+  Assert.AreEqual(5, Cog('for A := 1 to 3 do begin while A < 9 do Inc(A); if A > 0 then Dec(A); end;'), '1 + 2 + 2');
+end;
+
+procedure TMetricsTests.LogicalOperatorsCountPerSequence;
+begin
+  Assert.AreEqual(2, Cog('if (A > 0) and (A < 9) and (A <> 5) then Inc(A);'), 'if + uma sequencia de and');
+  Assert.AreEqual(3, Cog('if (A > 0) and (A < 9) or (A = 5) then Inc(A);'), 'if + and + or');
+  Assert.AreEqual(4, Cog('if (A > 0) and (A < 9) then Inc(A); if (A > 1) and (A < 8) then Dec(A);'), 'duas expressoes');
+  Assert.AreEqual(2, Cog('while (A > 0) or (A < -5) do Dec(A);'), 'tambem nos ciclos');
+end;
+
+procedure TMetricsTests.CaseNestsItsBranchesAndItsElseIsFree;
+begin
+  Assert.AreEqual(3, Cog('case A of 1: Inc(A); 2: if A > 0 then Dec(A); end;'), 'case + if aninhado');
+  Assert.AreEqual(3, Cog('case A of 1: Inc(A); 2: if A > 0 then Dec(A); else A := 0; end;'), 'o else do case nao conta');
+  Assert.AreEqual(1, Cog('case A of 1: begin Inc(A); end; else begin A := 0; end; end;'));
+end;
+
+procedure TMetricsTests.ExceptHandlersCountLikeCatch;
+begin
+  Assert.AreEqual(1, Cog('try Inc(A); except on E: Exception do Dec(A); end;'), 'um handler');
+  Assert.AreEqual(2, Cog('try Inc(A); except on E: EAbort do Dec(A); on E: Exception do Inc(A); end;'), 'dois handlers');
+  Assert.AreEqual(3, Cog('try Inc(A); except on E: Exception do begin if A > 0 then Dec(A); end; end;'), 'handler + if aninhado');
+end;
+
+procedure TMetricsTests.BareExceptNestsItsBody;
+begin
+  Assert.AreEqual(3, Cog('try Inc(A); except if A > 0 then Dec(A); end;'), 'except + (1+1)');
+  Assert.AreEqual(1, Cog('try Inc(A); finally if A > 0 then Dec(A); end;'), 'o finally nao conta nem aninha');
+end;
+
+procedure TMetricsTests.RepeatNestsItsBody;
+begin
+  Assert.AreEqual(3, Cog('repeat if A > 0 then Dec(A); until A < 0;'), '1 + (1+1)');
+end;
+
+procedure TMetricsTests.AnonymousMethodsNestTheirBody;
+begin
+  Assert.AreEqual(2, Cog('Foo(procedure begin if A > 0 then Dec(A); end);'), 'o if dentro do metodo anonimo: 1+1');
+  Assert.AreEqual(3, Cog('if A > 0 then Foo(procedure begin Inc(A); end); if A > 1 then Dec(A); while A > 3 do Dec(A);'),
+    'o metodo anonimo nao estraga a conta do que vem depois');
+end;
+
+procedure TMetricsTests.SingleStatementBodiesAreFollowed;
+begin
+  Assert.AreEqual(3, Cog('if A > 0 then if A > 1 then Inc(A);'), 'if sem begin dentro de if');
+  Assert.AreEqual(2, Cog('if A > 0 then Inc(A); if A > 1 then Dec(A);'), 'o ; fecha a instrucao');
+  Assert.AreEqual(3, Cog('if A > 0 then while A < 9 do Inc(A);'));
+  Assert.AreEqual(2, Cog('while A < 9 do Inc(A); if A > 0 then Dec(A);'));
+  Assert.AreEqual(4, Cog('if A > 0 then if A > 1 then Inc(A) else Dec(A);'), 'o else e do if mais proximo: 1 + 2 + else');
+end;
+
+procedure TMetricsTests.WithDoesNotCountNorNest;
+begin
+  Assert.AreEqual(1, Cog('with Self do if A > 0 then Inc(A);'));
+  Assert.AreEqual(0, Cog('with Self do Inc(A);'));
+end;
+
+procedure TMetricsTests.CognitiveLevelsAndText;
+begin
+  Assert.AreEqual(Ord(cxNone), Ord(CognitiveLevel(0)));
+  Assert.AreEqual(Ord(cxLow), Ord(CognitiveLevel(1)));
+  Assert.AreEqual(Ord(cxLow), Ord(CognitiveLevel(15)));
+  Assert.AreEqual(Ord(cxModerate), Ord(CognitiveLevel(16)));
+  Assert.AreEqual(Ord(cxModerate), Ord(CognitiveLevel(25)));
+  Assert.AreEqual(Ord(cxHigh), Ord(CognitiveLevel(26)));
+  Assert.AreEqual('', CognitiveText(0, 3), 'sem corpo');
+  Assert.AreEqual('complexidade cognitiva 4', CognitiveText(5, 4));
+end;
+
+procedure TMetricsTests.CognitiveCountsAreKeptPerRoutine;
+var
+  M: TArray<TMethodInfo>;
+begin
+  M := Impl(ClassIntf,
+    'procedure TFoo.Bar(A: Integer);' + sLineBreak +
+    'begin' + sLineBreak +
+    '  if A > 0 then begin if A > 1 then Inc(A); end;' + sLineBreak +
+    'end;' + sLineBreak +
+    'function TFoo.Baz: Integer;' + sLineBreak +
+    'begin' + sLineBreak +
+    '  Result := 1;' + sLineBreak +
+    'end;');
+  Assert.AreEqual(3, Find(M, 'TFoo.Bar').Cognitive);
+  Assert.AreEqual(0, Find(M, 'TFoo.Baz').Cognitive);
 end;
 
 { TMetricsRescanTests }

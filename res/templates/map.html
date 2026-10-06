@@ -328,7 +328,7 @@
   }
 
   function methodsOf(path) { return METHODS[path] || []; }
-  var MLABELS = ["Linhas de código", "Complexidade ciclomática", "Parâmetros", "Aninhamento"];
+  var MLABELS = ["Linhas de código", "Complexidade ciclomática", "Parâmetros", "Aninhamento", "Complexidade cognitiva"];
   // linhas, complexidade, parametros e aninhamento do metodo (so as medidas nao nulas); mm.lv traz o nivel de aviso
   function makeMetrics(mm) {
     if (!mm.l) return null;
@@ -343,6 +343,7 @@
     }
     add(mm.l + " l", MLABELS[0], 0);
     add("cx " + mm.cx, MLABELS[1], mm.lv[0]);
+    if (mm.g) add("cg " + mm.g, MLABELS[4], mm.lv[3]);
     if (mm.p) add("p " + mm.p, MLABELS[2], mm.lv[1]);
     if (mm.n) add("n " + mm.n, MLABELS[3], mm.lv[2]);
     return box;

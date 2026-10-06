@@ -22,6 +22,7 @@ type
     Complexity: Integer; // complexidade ciclomatica do corpo (0 = sem corpo)
     ParamCount: Integer; // parametros declarados (so tem sentido com corpo: Lines > 0)
     Nesting: Integer;    // blocos aninhados no corpo (begin/try/case/repeat; 0 = nenhum alem do corpo)
+    Cognitive: Integer;  // complexidade cognitiva do corpo (0 = nenhuma decisao, ou sem corpo)
   end;
 
   // estado de uma unit/metodo face ao plano (documento .md): so tem valor numa vista com plano
@@ -113,7 +114,7 @@ type
     Sig: string;
     Params: string;     // so os tipos dos parametros ('Integer, string'); '' = sem parametros
     Lines, Complexity: Integer;   // medidas do corpo (0 = ainda sem medida)
-    ParamCount, Nesting: Integer;
+    ParamCount, Nesting, Cognitive: Integer;
   end;
 
 var
@@ -719,6 +720,7 @@ begin
       Info.Complexity := R.Complexity;
       Info.ParamCount := R.ParamCount;
       Info.Nesting := R.Nesting;
+      Info.Cognitive := R.Cognitive;
       Items.Add(Info);
     end;
     Result := Items.ToArray;
@@ -756,6 +758,7 @@ begin
           Target.Complexity := Metric.Complexity;
           Target.ParamCount := Metric.Params;
           Target.Nesting := Metric.Nesting;
+          Target.Cognitive := Metric.Cognitive;
           ARaw[Idx] := Target;
         end;
       end;
@@ -1001,7 +1004,7 @@ begin
   for I := 0 to High(A) do
     if (A[I].Name <> B[I].Name) or (A[I].Sig <> B[I].Sig) or (A[I].Lines <> B[I].Lines) or
        (A[I].Complexity <> B[I].Complexity) or (A[I].ParamCount <> B[I].ParamCount) or
-       (A[I].Nesting <> B[I].Nesting) then
+       (A[I].Nesting <> B[I].Nesting) or (A[I].Cognitive <> B[I].Cognitive) then
       Exit(False);
   Result := True;
 end;

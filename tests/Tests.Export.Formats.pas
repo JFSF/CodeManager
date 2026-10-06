@@ -56,8 +56,8 @@ type
   [TestFixture]
   TBuildCsvTests = class
   public
-    [Test] procedure HeaderHasTenColumnsWithoutProgress;
-    [Test] procedure HeaderHasSixteenColumnsWithProgress;
+    [Test] procedure HeaderHasThirteenColumnsWithoutProgress;
+    [Test] procedure HeaderHasNineteenColumnsWithProgress;
     [Test] procedure ReviewColumnShowsTheReviewState;
     [Test] procedure MethodRowsCarryLinesAndComplexity;
     [Test] procedure FolderRowsAreSkipped;
@@ -494,7 +494,7 @@ begin
   raise Exception.CreateFmt('linha nao encontrada com o valor %s nalgum campo', [AValue]);
 end;
 
-procedure TBuildCsvTests.HeaderHasTenColumnsWithoutProgress;
+procedure TBuildCsvTests.HeaderHasThirteenColumnsWithoutProgress;
 var
   Scan: TProjectScan;
   St: TProgressState;
@@ -506,8 +506,8 @@ begin
   try
     Opt := Default(TExportOptions);
     Rows := CsvRows(BuildCsv(Scan, St, Opt));
-    Assert.AreEqual<NativeInt>(12, Length(Rows[0]));
-    Assert.AreEqual('Nível;Pasta;Ficheiro;Camada;Classe;Método;Tipo;Assinatura;Linhas;Complexidade;Parâmetros;Aninhamento',
+    Assert.AreEqual<NativeInt>(13, Length(Rows[0]));
+    Assert.AreEqual('Nível;Pasta;Ficheiro;Camada;Classe;Método;Tipo;Assinatura;Linhas;Complexidade;Parâmetros;Aninhamento;Complexidade cognitiva',
       string.Join(';', Rows[0]));
   finally
     St.Free;
@@ -515,7 +515,7 @@ begin
   end;
 end;
 
-procedure TBuildCsvTests.HeaderHasSixteenColumnsWithProgress;
+procedure TBuildCsvTests.HeaderHasNineteenColumnsWithProgress;
 var
   Scan: TProjectScan;
   St: TProgressState;
@@ -528,8 +528,8 @@ begin
     Opt := Default(TExportOptions);
     Opt.IncludeProgress := True;
     Rows := CsvRows(BuildCsv(Scan, St, Opt));
-    Assert.AreEqual<NativeInt>(18, Length(Rows[0]));
-    Assert.AreEqual('Concluído;Compila;Sonar;Prioritário;Nota;Revisão', string.Join(';', Copy(Rows[0], 12, 6)));
+    Assert.AreEqual<NativeInt>(19, Length(Rows[0]));
+    Assert.AreEqual('Concluído;Compila;Sonar;Prioritário;Nota;Revisão', string.Join(';', Copy(Rows[0], 13, 6)));
   finally
     St.Free;
     Scan.Free;
@@ -574,16 +574,19 @@ begin
     Scan.Units[0].Methods[0].Complexity := 3;
     Scan.Units[0].Methods[0].ParamCount := 2;
     Scan.Units[0].Methods[0].Nesting := 0;
+    Scan.Units[0].Methods[0].Cognitive := 5;
     Opt := Default(TExportOptions);
     Opt.IncludeMethods := True;
     Rows := CsvRows(BuildCsv(Scan, St, Opt));
     Row := FindCsvRow(Rows, 'TA.One');
-    Assert.AreEqual('12', Row[High(Row) - 3]);      // a assinatura tem ';' e o CsvRows divide por ele
-    Assert.AreEqual('3', Row[High(Row) - 2]);
-    Assert.AreEqual('2', Row[High(Row) - 1], 'parametros');
-    Assert.AreEqual('0', Row[High(Row)], 'aninhamento: zero e um valor valido');
+    Assert.AreEqual('12', Row[High(Row) - 4]);      // a assinatura tem ';' e o CsvRows divide por ele
+    Assert.AreEqual('3', Row[High(Row) - 3]);
+    Assert.AreEqual('2', Row[High(Row) - 2], 'parametros');
+    Assert.AreEqual('0', Row[High(Row) - 1], 'aninhamento: zero e um valor valido');
+    Assert.AreEqual('5', Row[High(Row)], 'complexidade cognitiva');
     Row := FindCsvRow(Rows, 'TA.Two');
-    Assert.AreEqual('', Row[High(Row) - 3], 'sem corpo medido');
+    Assert.AreEqual('', Row[High(Row) - 4], 'sem corpo medido');
+    Assert.AreEqual('', Row[High(Row) - 3]);
     Assert.AreEqual('', Row[High(Row) - 2]);
     Assert.AreEqual('', Row[High(Row) - 1]);
     Assert.AreEqual('', Row[High(Row)]);
@@ -626,7 +629,7 @@ begin
   try
     Opt := Default(TExportOptions);
     Row := FindCsvRow(CsvRows(BuildCsv(Scan, St, Opt)), 'a.pas');
-    Assert.AreEqual('Ficheiro;Core;a.pas;Core;;;;;;;;', string.Join(';', Row));
+    Assert.AreEqual('Ficheiro;Core;a.pas;Core;;;;;;;;;', string.Join(';', Row));
   finally
     St.Free;
     Scan.Free;
@@ -655,7 +658,7 @@ begin
     Opt := Default(TExportOptions);
     Opt.IncludeMethods := True;
     Row := FindCsvRow(CsvRows(BuildCsv(Scan, St, Opt)), 'TA.One');
-    Expected := CsvLine(['Método', 'Core', 'a.pas', 'Core', 'TA', 'TA.One', 'procedure', 'procedure TA.One;', '', '', '', '']);
+    Expected := CsvLine(['Método', 'Core', 'a.pas', 'Core', 'TA', 'TA.One', 'procedure', 'procedure TA.One;', '', '', '', '', '']);
     Assert.AreEqual(Expected.TrimRight([#13, #10]), RawLineOf(Row));
   finally
     St.Free;
@@ -679,7 +682,7 @@ begin
     Opt := Default(TExportOptions);
     Opt.IncludeProgress := True;
     Row := FindCsvRow(CsvRows(BuildCsv(Scan, St, Opt)), 'root.pas');
-    Assert.AreEqual('Ficheiro;;root.pas;Raiz;;;;;;;;;Sim;Não;Não;Sim;nota;Concluído', string.Join(';', Row));
+    Assert.AreEqual('Ficheiro;;root.pas;Raiz;;;;;;;;;;Sim;Não;Não;Sim;nota;Concluído', string.Join(';', Row));
   finally
     St.Free;
     Scan.Free;
@@ -702,7 +705,7 @@ begin
     Opt.IncludeProgress := True;
     Row := FindCsvRow(CsvRows(BuildCsv(Scan, St, Opt)), 'TA.One');
     Assert.AreEqual(
-      CsvLine(['Método', 'Core', 'a.pas', 'Core', 'TA', 'TA.One', 'procedure', 'procedure TA.One;', '', '', '', '',
+      CsvLine(['Método', 'Core', 'a.pas', 'Core', 'TA', 'TA.One', 'procedure', 'procedure TA.One;', '', '', '', '', '',
         'Sim', 'Não', 'Não', '', '', 'Concluído']).TrimRight([#13, #10]),
       RawLineOf(Row));
   finally
@@ -1076,9 +1079,11 @@ begin
       Assert.AreEqual(3, M1.GetValue<Integer>('complexity'));
       Assert.AreEqual(2, M1.GetValue<Integer>('parameters'));
       Assert.AreEqual(0, M1.GetValue<Integer>('nesting'));
+      Assert.AreEqual(0, M1.GetValue<Integer>('cognitive'));
       Assert.IsNull(M2.GetValue('lines'), 'sem corpo medido');
       Assert.IsNull(M2.GetValue('complexity'));
       Assert.IsNull(M2.GetValue('parameters'));
+      Assert.IsNull(M2.GetValue('cognitive'));
     finally
       Root.Free;
     end;

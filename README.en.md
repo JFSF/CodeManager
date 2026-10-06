@@ -21,7 +21,7 @@ a document describing what the project *should* contain, it compares the two.
 
 ## Features
 
-- **Map** — the folder → file → method tree, with search, statistics and the **lines, complexity, parameters and nesting** of each method.
+- **Map** — the folder → file → method tree, with search, statistics and the **lines, complexity (cyclomatic and cognitive), parameters and nesting** of each method.
 - **Checklist** — mark what you reviewed, what is under review or needs changes, what compiles, what passed Sonar, what is a priority; add notes. In a Git or Mercurial repository, or a Subversion working copy, it flags the files that changed since you reviewed them; SonarQube is optional and per user.
   A file is *done* when **all its methods** are reviewed.
 - **Graph** — a visual map of the dependencies between units (from the `uses` clauses): levels, layer colours, coupling, **cycles**, and an HTML (SVG map) or Markdown report.
@@ -91,7 +91,7 @@ What changed in **version 1.0.1** (the full history is in the [changelog](CHANGE
 - **About** — version, build, environment, useful links and «Copy information» for issues.
 
 **Improvements**
-- **More metrics per method** — number of parameters and block nesting (on the Map, in the tooltip, CSV, JSON and the HTML pages).
+- **More metrics per method** — cognitive complexity, number of parameters and block nesting (on the Map, in the tooltip, CSV, JSON and the HTML pages).
 - **SonarQube** — project and per-file measures (coverage, duplication, technical debt, A–E ratings), issue details and hotspots; shown in the Map, the Code page and the Dashboard.
 - **Subversion** — «changed since review» also works in Subversion working copies (besides Git).
 - **Languages** — Portuguese, English, French and German, including the exported HTML pages.

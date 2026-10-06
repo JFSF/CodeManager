@@ -18,7 +18,7 @@ O CodeManager lê as units de um projeto Delphi e dá-te uma forma simples de **
 foi visto** e **acompanhar o progresso ao longo do tempo** — sem alterar uma linha do teu código. Se tiveres um
 documento com o que o projeto *devia* ter, compara os dois.
 
-- 🗺️ **Mapa** — a árvore pastas → ficheiros → métodos, com pesquisa, estatísticas e as **linhas, a complexidade, os parâmetros e o aninhamento** de cada método.
+- 🗺️ **Mapa** — a árvore pastas → ficheiros → métodos, com pesquisa, estatísticas e as **linhas, a complexidade (ciclomática e cognitiva), os parâmetros e o aninhamento** de cada método.
 - ✅ **Checklist** — marca o que reviste, o que está em revisão ou precisa de alteração, o que compila, o que passou no Sonar, o que é prioritário; com notas.
 - 📊 **Painel** — números e gráficos do progresso e da distribuição do código, incluindo a evolução dia a dia.
 - 📝 **Plano em Markdown** — escreve a estrutura prevista num `.md` e vê o que está implementado, o que falta e o que sobra.
@@ -214,7 +214,7 @@ O que mudou na **versão 1.0.1** (a lista completa, versão a versão, está no 
 - **Acerca** — versão, compilação, ambiente, ligações úteis e «Copiar informação» para as *issues*.
 
 **Melhorias**
-- **Mais métricas por método** — número de parâmetros e aninhamento de blocos (no Mapa, na dica, no CSV, no JSON e nas páginas HTML).
+- **Mais métricas por método** — complexidade cognitiva, número de parâmetros e aninhamento de blocos (no Mapa, na dica, no Painel, no CSV, no JSON e nas páginas HTML).
 - **SonarQube** — medidas do projeto e de cada ficheiro (cobertura, duplicação, dívida técnica, classificações A–E), o detalhe dos problemas e os *hotspots*; vê-se no Mapa, na página Código e no Painel.
 - **Subversion** — «alterado desde a revisão» também em cópias de trabalho do Subversion (além do Git).
 - **Idiomas** — português, inglês, francês e alemão, incluindo as páginas HTML exportadas.
@@ -241,7 +241,7 @@ Versão **1.0.1**. Em desenvolvimento ativo, desenvolvido e testado em **Windows
 automáticos cobrem o motor, as exportações, o vigia e as regras de arquitetura; a interface é verificada com o
 [modo de desenvolvimento](docs/DESENVOLVIMENTO.md#modo-de-desenvolvimento---dev).
 
-Ideias para o futuro: mais métricas por método (complexidade cognitiva, profundidade de herança). Sugestões são bem-vindas.
+Ideias para o futuro: mais métricas por classe (profundidade de herança). Sugestões são bem-vindas.
 
 ## Contribuir
 

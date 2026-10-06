@@ -6,7 +6,7 @@
 interface
 
 const
-  LangRows: array[0..517] of array[0..3] of string = (
+  LangRows: array[0..524] of array[0..3] of string = (
   ('Projeto', 'Project', 'Projet', 'Projekt'),
   ('Mapa', 'Map', 'Carte', 'Karte'),
   ('Checklist', 'Checklist', 'Checklist', 'Checkliste'),
@@ -219,6 +219,13 @@ const
   ('Os %d com mais parâmetros', 'The %d with the most parameters', 'Les %d avec le plus de paramètres', 'Die %d mit den meisten Parametern'),
   ('Métodos mais aninhados', 'Most deeply nested methods', 'Méthodes les plus imbriquées', 'Am tiefsten verschachtelte Methoden'),
   ('Os %d com maior aninhamento de blocos', 'The %d with the deepest block nesting', 'Les %d à l''imbrication de blocs la plus profonde', 'Die %d mit der tiefsten Blockverschachtelung'),
+  ('complexidade cognitiva %d', 'cognitive complexity %d', 'complexité cognitive %d', 'kognitive Komplexität %d'),
+  ('Complexidade cognitiva', 'Cognitive complexity', 'Complexité cognitive', 'Kognitive Komplexität'),
+  ('Cognitiva', 'Cognitive', 'Cognitive', 'Kognitiv'),
+  ('Métodos de maior complexidade cognitiva', 'Methods with the highest cognitive complexity', 'Méthodes à la plus forte complexité cognitive', 'Methoden mit der höchsten kognitiven Komplexität'),
+  ('Os %d com maior complexidade cognitiva', 'The %d with the highest cognitive complexity', 'Les %d de plus forte complexité cognitive', 'Die %d mit der höchsten kognitiven Komplexität'),
+  ('Complexidade cognitiva dos métodos', 'Cognitive complexity of methods', 'Complexité cognitive des méthodes', 'Kognitive Komplexität der Methoden'),
+  ('Quantos métodos em cada nível (simples até 15, moderada até 25)', 'How many methods at each level (simple up to 15, moderate up to 25)', 'Combien de méthodes par niveau (simple jusqu''à 15, modérée jusqu''à 25)', 'Wie viele Methoden pro Stufe (einfach bis 15, mäßig bis 25)'),
   ('Complexidade', 'Complexity', 'Complexité', 'Komplexität'),
   ('Complexidade dos métodos', 'Method complexity', 'Complexité des méthodes', 'Methodenkomplexität'),
   ('Quantos métodos em cada nível (simples até 10, moderada até 20)', 'How many methods at each level (simple up to 10, moderate up to 20)', 'Combien de méthodes par niveau (simple jusqu''à 10, modérée jusqu''à 20)', 'Wie viele Methoden pro Stufe (einfach bis 10, mittel bis 20)'),
@@ -536,7 +543,7 @@ const
   );
 
   // trocos dos modelos HTML (res/templates), por ordem de leitura
-  HtmlRows: array[0..83] of array[0..3] of string = (
+  HtmlRows: array[0..84] of array[0..3] of string = (
   ('lang="pt-PT"', 'lang="en"', 'lang="fr"', 'lang="de"'),
   (' — Mapa de Código-Fonte</title>', ' — Source Code Map</title>', ' — Carte du code source</title>', ' — Quellcode-Karte</title>'),
   ('<span class="eyebrow">Mapa de código-fonte</span>', '<span class="eyebrow">Source code map</span>', '<span class="eyebrow">Carte du code source</span>', '<span class="eyebrow">Quellcode-Karte</span>'),
@@ -678,7 +685,8 @@ const
   ('"Linhas de código"', '"Lines of code"', '"Lignes de code"', '"Codezeilen"'),
   ('"Complexidade ciclomática"', '"Cyclomatic complexity"', '"Complexité cyclomatique"', '"Zyklomatische Komplexität"'),
   ('"Parâmetros"', '"Parameters"', '"Paramètres"', '"Parameter"'),
-  ('"Aninhamento"', '"Nesting"', '"Imbrication"', '"Verschachtelung"')
+  ('"Aninhamento"', '"Nesting"', '"Imbrication"', '"Verschachtelung"'),
+  ('"Complexidade cognitiva"', '"Cognitive complexity"', '"Complexité cognitive"', '"Kognitive Komplexität"')
   );
 
 implementation

@@ -868,7 +868,8 @@ function MethodHintText(const AMethod: TMethodInfo; const APlanText: string): st
 begin
   Result := MetricsText(AMethod.Lines, AMethod.Complexity);
   if Result <> '' then
-    Result := Result + sLineBreak + ShapeText(AMethod.Lines, AMethod.ParamCount, AMethod.Nesting);
+    Result := Result + sLineBreak + ShapeText(AMethod.Lines, AMethod.ParamCount, AMethod.Nesting) + sLineBreak +
+      CognitiveText(AMethod.Lines, AMethod.Cognitive);
   if (Result <> '') and (APlanText <> '') then
     Result := Result + sLineBreak;
   Result := Result + APlanText;
@@ -907,11 +908,13 @@ begin
   if AMethod.Lines <= 0 then
     Exit;
   Left := ARight;
-  // da direita para a esquerda: aninhamento, parametros, complexidade, linhas (so mostra os que nao sao zero)
+  // da direita para a esquerda: aninhamento, parametros, cognitiva, complexidade, linhas (so mostra os que nao sao zero)
   if AMethod.Nesting > 0 then
     Result := Result + DrawOne(Left, 'n ' + IntToStr(AMethod.Nesting), LevelColor(NestingLevel(AMethod.Nesting)));
   if AMethod.ParamCount > 0 then
     Result := Result + DrawOne(Left, 'p ' + IntToStr(AMethod.ParamCount), LevelColor(ParamsLevel(AMethod.ParamCount)));
+  if AMethod.Cognitive > 0 then
+    Result := Result + DrawOne(Left, 'cg ' + IntToStr(AMethod.Cognitive), LevelColor(CognitiveLevel(AMethod.Cognitive)));
   Result := Result + DrawOne(Left, 'cx ' + IntToStr(AMethod.Complexity), LevelColor(ComplexityLevel(AMethod.Complexity)));
   Result := Result + DrawOne(Left, IntToStr(AMethod.Lines) + ' l', Pal.TextFaint);
   Result := Result - Gap;

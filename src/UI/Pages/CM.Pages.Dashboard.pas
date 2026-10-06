@@ -23,9 +23,9 @@ type
     FKpiRow: TCMCardRow;
     FKpi: array[0..3] of TCMKpi;
     FEvoRow: TCMControl;
-    FRows: array[0..5] of TCMCardRow;           // a ultima so aparece quando ha plano
+    FRows: array[0..6] of TCMCardRow;           // a ultima so aparece quando ha plano
     FEvolution, FLayers, FStatus, FTop, FHist, FLayerMethods, FCompilaSonar: TChart4D;
-    FPlanLayers, FPlanOverview, FComplexTop, FComplexDist, FParamsTop, FNestingTop: TChart4D;
+    FPlanLayers, FPlanOverview, FComplexTop, FComplexDist, FParamsTop, FNestingTop, FCogTop, FCogDist: TChart4D;
     FSonarKpiRow: TCMCardRow;                   // so aparecem com medidas do SonarQube
     FSonarKpi: array[0..3] of TCMKpi;
     FSonarRow: TCMCardRow;
@@ -50,6 +50,7 @@ type
     procedure FillPlan;
     procedure FillComplexity;
     procedure FillShape;
+    procedure FillCognitive;
     // grafico de barras dos AN metodos com maior valor de uma medida (so conta metodos com corpo e valor > 0)
     procedure FillTopMethods(AChart: TChart4D; const ATitle, ASubtitle, ASeries: string; AColor: TAlphaColor;
       const AMeasure: TFunc<TMethodInfo, Integer>);
@@ -173,8 +174,10 @@ begin
   FComplexDist := AddChartCard(3);
   FParamsTop := AddChartCard(4);
   FNestingTop := AddChartCard(4);
-  FPlanLayers := AddChartCard(5);
-  FPlanOverview := AddChartCard(5);
+  FCogTop := AddChartCard(5);
+  FCogDist := AddChartCard(5);
+  FPlanLayers := AddChartCard(6);
+  FPlanOverview := AddChartCard(6);
   StyleAll;
   Relayout;
 end;
@@ -204,11 +207,11 @@ begin
     if Narrow then FRows[I].Columns := 1 else FRows[I].Columns := 2;
     FRows[I].Height := FRows[I].HeightFor(Cell);
   end;
-  FRows[5].Visible := FHost.HasPlan;
+  FRows[6].Visible := FHost.HasPlan;
   FBody.Height := FKpiRow.Height + FEvoRow.Height + FRows[0].Height + FRows[1].Height + FRows[2].Height;
-  FBody.Height := FBody.Height + FRows[3].Height + FRows[4].Height;
-  if FRows[5].Visible then
-    FBody.Height := FBody.Height + FRows[5].Height;
+  FBody.Height := FBody.Height + FRows[3].Height + FRows[4].Height + FRows[5].Height;
+  if FRows[6].Visible then
+    FBody.Height := FBody.Height + FRows[6].Height;
   if FSonarOn then
   begin
     if Narrow then FSonarKpiRow.Columns := 2 else FSonarKpiRow.Columns := 4;
@@ -245,7 +248,7 @@ procedure TDashboardPage.StyleAll;
 var
   C: TChart4D;
 begin
-  for C in [FEvolution, FLayers, FStatus, FTop, FHist, FLayerMethods, FCompilaSonar, FPlanLayers, FPlanOverview, FComplexTop, FComplexDist, FParamsTop, FNestingTop, FSonarDebt, FSonarTop] do
+  for C in [FEvolution, FLayers, FStatus, FTop, FHist, FLayerMethods, FCompilaSonar, FPlanLayers, FPlanOverview, FComplexTop, FComplexDist, FParamsTop, FNestingTop, FCogTop, FCogDist, FSonarDebt, FSonarTop] do
     C.Plot.Style := ThemedStyle;
 end;
 
@@ -317,6 +320,7 @@ begin
   FillCompilaSonar;
   FillComplexity;
   FillShape;
+  FillCognitive;
   FillPlan;
   FillSonar;
   Relayout;                // a linha do plano aparece ou desaparece conforme ha plano
@@ -670,6 +674,33 @@ begin
     begin
       Result := AMethod.Nesting;
     end);
+end;
+
+// complexidade cognitiva: os metodos mais dificeis de ler e quantos ha em cada nivel
+procedure TDashboardPage.FillCognitive;
+var
+  U: TUnitInfo;
+  M: TMethodInfo;
+  Levels: array[TComplexityLevel] of Integer;
+begin
+  FillChar(Levels, SizeOf(Levels), 0);
+  if FHost.CurrentScan <> nil then
+    for U in FHost.CurrentScan.Units do
+      for M in U.Methods do
+        if M.Lines > 0 then
+          Inc(Levels[CognitiveLevel(M.Cognitive)]);
+  FillTopMethods(FCogTop, Tr('Métodos de maior complexidade cognitiva'), Tr('Os %d com maior complexidade cognitiva'),
+    Tr('Cognitiva'), Pal.Danger,
+    function(AMethod: TMethodInfo): Integer
+    begin
+      Result := AMethod.Cognitive;
+    end);
+
+  Reset(FCogDist, TChartKind.Bar, Tr('Complexidade cognitiva dos métodos'),
+    Tr('Quantos métodos em cada nível (simples até 15, moderada até 25)'));
+  FCogDist.Plot.Categories := [Tr('Simples'), Tr('Moderada'), Tr('Alta')];
+  FCogDist.Plot.AddSeries(Tr('Métodos'),
+    [Levels[cxNone] + Levels[cxLow], Levels[cxModerate], Levels[cxHigh]]).Color := Pal.Accent;
 end;
 
 // cobertura do plano: por camada (ficheiros) e o total de ficheiros e metodos; so com plano

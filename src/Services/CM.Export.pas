@@ -571,6 +571,11 @@ begin
   if AMethod.Lines > 0 then Result := IntToStr(AMethod.Nesting) else Result := '';
 end;
 
+function CognitiveField(const AMethod: TMethodInfo): string;
+begin
+  if AMethod.Lines > 0 then Result := IntToStr(AMethod.Cognitive) else Result := '';
+end;
+
 function BuildCsv(AScan: TProjectScan; AState: TProgressState; const AOptions: TExportOptions): string;
 var
   SB: TStringBuilder;
@@ -583,7 +588,7 @@ begin
   Fields := TList<string>.Create;
   try
     Fields.AddRange([Tr('Nível'), Tr('Pasta'), Tr('Ficheiro'), Tr('Camada'), Tr('Classe'), Tr('Método'), Tr('Tipo'), Tr('Assinatura'), Tr('Linhas'),
-      Tr('Complexidade'), Tr('Parâmetros'), Tr('Aninhamento')]);
+      Tr('Complexidade'), Tr('Parâmetros'), Tr('Aninhamento'), Tr('Complexidade cognitiva')]);
     if AOptions.IncludeProgress then
       Fields.AddRange([Tr('Concluído'), Tr('Compila'), Tr('Sonar'), Tr('Prioritário'), Tr('Nota'), Tr('Revisão')]);
     SB.Append(CsvLine(Fields.ToArray));
@@ -594,12 +599,12 @@ begin
       P := RowProgress(R, AState);
       Fields.Clear;
       if R.Kind = xkFile then
-        Fields.AddRange([Tr('Ficheiro'), R.U.Dir, R.U.FileName, R.U.Layer, '', '', '', '', '', '', '', ''])
+        Fields.AddRange([Tr('Ficheiro'), R.U.Dir, R.U.FileName, R.U.Layer, '', '', '', '', '', '', '', '', ''])
       else
       begin
         M := R.U.Methods[R.MIndex];
         Fields.AddRange([Tr('Método'), R.U.Dir, R.U.FileName, R.U.Layer, M.Owner, M.Name, M.Kind, M.Sig,
-          MeasureField(M.Lines), MeasureField(M.Complexity), ParamsField(M), NestingField(M)]);
+          MeasureField(M.Lines), MeasureField(M.Complexity), ParamsField(M), NestingField(M), CognitiveField(M)]);
       end;
       if AOptions.IncludeProgress then
       begin
@@ -733,6 +738,7 @@ begin
               Obj.AddPair('complexity', TJSONNumber.Create(M.Complexity));
               Obj.AddPair('parameters', TJSONNumber.Create(M.ParamCount));
               Obj.AddPair('nesting', TJSONNumber.Create(M.Nesting));
+              Obj.AddPair('cognitive', TJSONNumber.Create(M.Cognitive));
             end;
             if AOptions.IncludeProgress then
               AddProgressJson(Obj, RowProgress(R, AState), False);

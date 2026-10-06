@@ -16,7 +16,12 @@
   Parametros: os nomes declarados no cabecalho ('A, B: Integer; var C: string' sao 3).
 
   Aninhamento: o maximo de blocos abertos dentro do corpo (begin, try, case, repeat, asm), sem contar o
-  proprio corpo: um corpo sem blocos interiores tem 0, um 'if ... then begin' dentro dele tem 1. }
+  proprio corpo: um corpo sem blocos interiores tem 0, um 'if ... then begin' dentro dele tem 1.
+
+  Complexidade cognitiva (regras da SonarSource, aproximadas ao nivel dos simbolos): cada if, while, for, repeat,
+  case, 'except' e handler 'on ... do' soma 1 mais o nivel de aninhamento em que esta; 'else' e 'else if' somam 1
+  (sem aninhamento); cada sequencia de and/or do mesmo operador soma 1; os metodos anonimos aumentam o
+  aninhamento. Nao conta a recursao. E mais fiel ao esforco de leitura do que a ciclomatica quando ha aninhamento. }
 
 interface
 
@@ -30,6 +35,7 @@ type
     Complexity: Integer;
     Params: Integer;
     Nesting: Integer;
+    Cognitive: Integer;
   end;
 
   // 1..10 simples, 11..20 moderada, acima disso alta (os limites habituais de McCabe)
@@ -40,10 +46,14 @@ function ComplexityLevel(AComplexity: Integer): TComplexityLevel;
 function ParamsLevel(AParams: Integer): TComplexityLevel;
 // aninhamento: 1..3 normal, 4..5 moderado, mais de 5 alto (cxNone sem blocos interiores)
 function NestingLevel(ANesting: Integer): TComplexityLevel;
+// cognitiva: 1..15 normal (o limite habitual do Sonar), 16..25 moderada, mais de 25 alta (cxNone sem decisoes)
+function CognitiveLevel(ACognitive: Integer): TComplexityLevel;
 // 'N linhas · complexidade M' (vazio sem corpo medido)
 function MetricsText(ALines, AComplexity: Integer): string;
 // 'N parametros · aninhamento M' (vazio sem corpo medido: ALines <= 0)
 function ShapeText(ALines, AParams, ANesting: Integer): string;
+// 'complexidade cognitiva N' (vazio sem corpo medido: ALines <= 0)
+function CognitiveText(ALines, ACognitive: Integer): string;
 // mede as rotinas com corpo de ACleanImpl (texto limpo da secao implementation)
 procedure MeasureRoutines(const ACleanImpl: string; AResult: TList<TRoutineMetric>);
 
@@ -60,6 +70,39 @@ type
     IsWord: Boolean;
   end;
 
+  // um nivel aberto na contagem cognitiva: uma instrucao controlada (corpo de then/else/do) ou um bloco
+  TCogFrame = record
+    IsStmt: Boolean;
+    IsThen: Boolean;         // corpo de um 'then' (pode seguir-se um 'else')
+    Done: Boolean;           // a instrucao ja terminou (so se liquida quando se sabe se vem um 'else')
+    AddsNest: Integer;       // blocos: 1 se o interior fica mais aninhado (case, repeat, except, metodo anonimo)
+  end;
+
+  // a complexidade cognitiva de um corpo; recebe os simbolos um a um (so os de dentro do corpo)
+  TCognitive = class
+  private
+    FFrames: TList<TCogFrame>;
+    FPending: TList<Char>;   // o que se espera a seguir: 't' = then, 'd' = do (conta aninhamento), 'w' = do de um with
+    FLastOp: string;         // ultimo operador logico da expressao ('' = nenhum)
+    FElseIf: Boolean;        // o proximo 'if' continua uma cadeia 'else if'
+    FAnon: Boolean;          // vem ai um metodo anonimo: o proximo 'begin' aumenta o aninhamento
+    FParen: Integer;
+    function Nest: Integer;
+    procedure PushStmt(AIsThen: Boolean);
+    procedure PushBlock(AAddsNest: Integer);
+    procedure MarkTopDone;
+    procedure PopStatements;
+    procedure PopBlock;
+    procedure Settle(const AToken: string);
+    procedure HandleElse(ATokens: TList<TToken>; AIndex: Integer);
+    procedure Structure;
+  public
+    Score: Integer;
+    constructor Create;
+    destructor Destroy; override;
+    procedure Feed(ATokens: TList<TToken>; AIndex: Integer);
+  end;
+
   // uma rotina em analise: o corpo comeca em 'begin' ou 'asm'
   TRoutine = class
   public
@@ -70,7 +113,9 @@ type
     Complexity: Integer;
     Repeats: Integer;        // 'repeat' abertos (fecham em 'until', que nao termina o corpo)
     MaxNest: Integer;        // maior numero de blocos abertos alem do proprio corpo
+    Cog: TCognitive;
     constructor Create;
+    destructor Destroy; override;
   end;
 
 function ComplexityLevel(AComplexity: Integer): TComplexityLevel;
@@ -109,6 +154,26 @@ begin
     Result := cxHigh;
 end;
 
+function CognitiveLevel(ACognitive: Integer): TComplexityLevel;
+begin
+  if ACognitive <= 0 then
+    Result := cxNone
+  else if ACognitive <= 15 then
+    Result := cxLow
+  else if ACognitive <= 25 then
+    Result := cxModerate
+  else
+    Result := cxHigh;
+end;
+
+function CognitiveText(ALines, ACognitive: Integer): string;
+begin
+  if ALines <= 0 then
+    Result := ''
+  else
+    Result := Format(Tr('complexidade cognitiva %d'), [ACognitive]);
+end;
+
 function MetricsText(ALines, AComplexity: Integer): string;
 begin
   if ALines <= 0 then
@@ -123,6 +188,13 @@ constructor TRoutine.Create;
 begin
   inherited;
   Complexity := 1;
+  Cog := TCognitive.Create;
+end;
+
+destructor TRoutine.Destroy;
+begin
+  Cog.Free;
+  inherited;
 end;
 
 function ShapeText(ALines, AParams, ANesting: Integer): string;
@@ -260,6 +332,232 @@ begin
   end;
 end;
 
+{ TCognitive }
+
+constructor TCognitive.Create;
+begin
+  inherited;
+  FFrames := TList<TCogFrame>.Create;
+  FPending := TList<Char>.Create;
+end;
+
+destructor TCognitive.Destroy;
+begin
+  FPending.Free;
+  FFrames.Free;
+  inherited;
+end;
+
+// o aninhamento actual: uma instrucao controlada e um bloco que aninha contam 1 cada
+function TCognitive.Nest: Integer;
+var
+  F: TCogFrame;
+begin
+  Result := 0;
+  for F in FFrames do
+    if F.IsStmt then
+      Inc(Result)
+    else
+      Inc(Result, F.AddsNest);
+end;
+
+procedure TCognitive.PushStmt(AIsThen: Boolean);
+var
+  F: TCogFrame;
+begin
+  F := Default(TCogFrame);
+  F.IsStmt := True;
+  F.IsThen := AIsThen;
+  FFrames.Add(F);
+end;
+
+procedure TCognitive.PushBlock(AAddsNest: Integer);
+var
+  F: TCogFrame;
+begin
+  F := Default(TCogFrame);
+  F.AddsNest := AAddsNest;
+  FFrames.Add(F);
+end;
+
+// a instrucao no topo terminou com o fim de um bloco: so se retira quando o simbolo seguinte mostrar que nao vem um
+// 'else' (um ';' fecha logo todas as instrucoes simples abertas)
+procedure TCognitive.MarkTopDone;
+var
+  F: TCogFrame;
+begin
+  if (FFrames.Count > 0) and FFrames.Last.IsStmt then
+  begin
+    F := FFrames.Last;
+    F.Done := True;
+    FFrames[FFrames.Count - 1] := F;
+  end;
+end;
+
+// 'end', 'until', 'except' e 'finally' fecham as instrucoes simples ainda abertas dentro do bloco
+procedure TCognitive.PopStatements;
+begin
+  while (FFrames.Count > 0) and FFrames.Last.IsStmt do
+    FFrames.Delete(FFrames.Count - 1);
+end;
+
+procedure TCognitive.PopBlock;
+begin
+  if FFrames.Count > 0 then
+    FFrames.Delete(FFrames.Count - 1);
+  MarkTopDone;                 // o bloco era a instrucao controlada de quem esta por baixo
+end;
+
+procedure TCognitive.Settle(const AToken: string);
+begin
+  while (FFrames.Count > 0) and FFrames.Last.IsStmt and FFrames.Last.Done do
+  begin
+    if (AToken = 'else') and FFrames.Last.IsThen then
+      Break;
+    FFrames.Delete(FFrames.Count - 1);
+    MarkTopDone;
+  end;
+end;
+
+procedure TCognitive.HandleElse(ATokens: TList<TToken>; AIndex: Integer);
+begin
+  // o 'else' pertence ao 'then' mais proximo; tudo o que esta por cima ja terminou
+  while (FFrames.Count > 0) and FFrames.Last.IsStmt and not FFrames.Last.IsThen do
+    FFrames.Delete(FFrames.Count - 1);
+  if (FFrames.Count > 0) and FFrames.Last.IsStmt and FFrames.Last.IsThen then
+  begin
+    FFrames.Delete(FFrames.Count - 1);
+    Inc(Score);
+    if (AIndex + 1 < ATokens.Count) and (ATokens[AIndex + 1].Text = 'if') then
+      FElseIf := True                    // 'else if' soma 1 no total e nao aninha
+    else
+      PushStmt(False);
+  end;
+  // senao e o 'else' de um case ou de um except: nao conta
+end;
+
+// uma estrutura de controlo soma 1 mais o aninhamento em que esta
+procedure TCognitive.Structure;
+begin
+  Inc(Score, 1 + Nest);
+end;
+
+procedure TCognitive.Feed(ATokens: TList<TToken>; AIndex: Integer);
+var
+  T: string;
+  F: TCogFrame;
+begin
+  T := ATokens[AIndex].Text;
+  Settle(T);
+  if T = '(' then
+    Inc(FParen)
+  else if T = ')' then
+    FParen := Max(0, FParen - 1)
+  else if T = 'if' then
+  begin
+    if FElseIf then
+      FElseIf := False
+    else
+      Structure;
+    FPending.Add('t');
+    FLastOp := '';
+  end
+  else if T = 'then' then
+  begin
+    if (FPending.Count > 0) and (FPending.Last = 't') then
+    begin
+      FPending.Delete(FPending.Count - 1);
+      PushStmt(True);
+    end;
+    FLastOp := '';
+  end
+  else if (T = 'while') or (T = 'for') then
+  begin
+    Structure;
+    FPending.Add('d');
+    FLastOp := '';
+  end
+  else if T = 'with' then
+    FPending.Add('w')
+  else if (T = 'on') and IsExceptionHandler(ATokens, AIndex) then
+  begin
+    Structure;
+    FPending.Add('d');
+  end
+  else if T = 'do' then
+  begin
+    if FPending.Count > 0 then
+    begin
+      if FPending.Last = 'd' then
+        PushStmt(False);
+      FPending.Delete(FPending.Count - 1);
+    end;
+    FLastOp := '';
+  end
+  else if T = 'else' then
+  begin
+    HandleElse(ATokens, AIndex);
+    FLastOp := '';
+  end
+  else if (T = 'repeat') or (T = 'case') then
+  begin
+    Structure;
+    PushBlock(1);
+    FLastOp := '';
+  end
+  else if T = 'try' then
+    PushBlock(0)
+  else if T = 'except' then
+  begin
+    PopStatements;
+    // com handlers 'on' cada um conta; sem eles o proprio 'except' conta e o seu interior fica aninhado
+    if not ((AIndex + 1 < ATokens.Count) and (ATokens[AIndex + 1].Text = 'on')) then
+    begin
+      Structure;
+      if FFrames.Count > 0 then
+      begin
+        F := FFrames.Last;
+        F.AddsNest := 1;
+        FFrames[FFrames.Count - 1] := F;
+      end;
+    end;
+  end
+  else if T = 'finally' then
+    PopStatements
+  else if (T = 'begin') or (T = 'asm') then
+  begin
+    if FAnon then
+      PushBlock(1)
+    else
+      PushBlock(0);
+    FAnon := False;
+    FLastOp := '';
+  end
+  else if (T = 'end') or (T = 'until') then
+  begin
+    PopStatements;
+    PopBlock;
+    FLastOp := '';
+  end
+  else if T = ';' then
+  begin
+    // um ';' termina todas as instrucoes simples abertas (um 'else' nunca vem depois dele)
+    if FParen = 0 then
+      PopStatements;
+    FLastOp := '';
+  end
+  else if (T = 'procedure') or (T = 'function') then
+    FAnon := True
+  else if (T = 'and') or (T = 'or') then
+  begin
+    if FLastOp <> T then
+      Inc(Score);
+    FLastOp := T;
+  end
+  else if (T = ',') or (T = ':') then
+    FLastOp := '';
+end;
+
 // numero de parametros declarados no cabecalho: so os nomes antes de ':' (a profundidade 1 de parenteses)
 function CountParams(const AHeader: string): Integer;
 var
@@ -382,6 +680,7 @@ begin
       if (R <> nil) and R.InBody then
       begin
         // dentro de um corpo: so conta decisoes e acompanha begin/end
+        R.Cog.Feed(Tokens, I);
         if (T.Text = 'begin') or (T.Text = 'try') or (T.Text = 'case') or (T.Text = 'asm') then
           Inc(R.Depth)
         else if T.Text = 'repeat' then
@@ -405,6 +704,7 @@ begin
             Metric.Complexity := R.Complexity;
             Metric.Params := CountParams(R.Header);
             Metric.Nesting := R.MaxNest;
+            Metric.Cognitive := R.Cog.Score;
             AResult.Add(Metric);
             Stack.Delete(Stack.Count - 1);
           end;

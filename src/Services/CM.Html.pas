@@ -124,9 +124,11 @@ begin
             .Append(',"cx":').Append(M.Complexity)
             .Append(',"p":').Append(M.ParamCount)
             .Append(',"n":').Append(M.Nesting)
+            .Append(',"g":').Append(M.Cognitive)
             .Append(',"lv":[').Append(Ord(ComplexityLevel(M.Complexity)))
             .Append(',').Append(Ord(ParamsLevel(M.ParamCount)))
-            .Append(',').Append(Ord(NestingLevel(M.Nesting))).Append(']');
+            .Append(',').Append(Ord(NestingLevel(M.Nesting)))
+            .Append(',').Append(Ord(CognitiveLevel(M.Cognitive))).Append(']');
         SB.Append('}');
       end;
       SB.Append(']');

@@ -274,8 +274,9 @@ begin
   FScan.Units[0].Methods[0].Complexity := 18;
   FScan.Units[0].Methods[0].ParamCount := 8;
   FScan.Units[0].Methods[0].Nesting := 2;
+  FScan.Units[0].Methods[0].Cognitive := 30;
   Html := Map;
-  Assert.IsTrue(Html.Contains('"sig":"' + M.Sig + '","l":74,"cx":18,"p":8,"n":2,"lv":[2,3,1]}'), 'medidas e niveis');
+  Assert.IsTrue(Html.Contains('"sig":"' + M.Sig + '","l":74,"cx":18,"p":8,"n":2,"g":30,"lv":[2,3,1,3]}'), 'medidas e niveis');
   Assert.IsTrue(Html.Contains('"sig":"procedure TA.Two;"}'), 'sem corpo, sem medidas');
 end;
 
