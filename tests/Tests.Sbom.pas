@@ -215,6 +215,7 @@ begin
     Assert.AreEqual(Ord(soProject), Ord(S.Components[0].Origin), 'as do projecto vem primeiro');
     Assert.AreEqual(Ord(seFile), Ord(S.Find('UI.Main').Evidence));
     Assert.AreEqual('UI', S.Find('UI.Main').Layer);
+    Assert.AreEqual('UI.Main.pas', S.Find('UI.Main').RelPath);
   finally
     S.Free;
   end;

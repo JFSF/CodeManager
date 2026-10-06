@@ -35,6 +35,7 @@ type
     Path: string;                  // ficheiro encontrado (completo); '' = nao se encontrou
     Hash: string;                  // SHA-256 em hexadecimal; '' = nao calculado
     Layer: string;                 // so as units do projecto
+    RelPath: string;               // so as units do projecto: caminho relativo a pasta do projecto, com '/'
     UsedBy: TArray<string>;        // units do projecto que a usam, por ordem alfabetica
     InMap: Boolean;                // confirmada no ficheiro .map (esta realmente ligada ao executavel)
   end;
@@ -289,6 +290,7 @@ begin
       C.Evidence := seFile;
       C.Confidence := scStrong;
       C.Layer := N.Layer;
+      C.RelPath := N.Path;
       for D in N.Dependents do
         AddUser(C, AGraph.Nodes[D].Name);
     end;

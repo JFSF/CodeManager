@@ -20,6 +20,7 @@ uses
   CM.WidthShare in 'src\Core\CM.WidthShare.pas',
   CM.Sbom in 'src\Core\CM.Sbom.pas',
   CM.Dproj in 'src\Core\CM.Dproj.pas',
+  CM.SbomResolve in 'src\Infrastructure\CM.SbomResolve.pas',
   CM.Vcs in 'src\Infrastructure\CM.Vcs.pas',
   CM.SysInfo in 'src\Infrastructure\CM.SysInfo.pas',
   CM.GitHub in 'src\Infrastructure\CM.GitHub.pas',
