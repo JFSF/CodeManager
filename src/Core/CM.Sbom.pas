@@ -75,6 +75,8 @@ type
     function CountOf(AOrigin: TSbomOrigin): Integer;
     function CountByConfidence(AConfidence: TSbomConfidence): Integer;
     function ResolvedCount: Integer;
+    // com um .map: quantos componentes nao aparecem nele (so se sabem pelas clausulas uses); 0 sem mapa
+    function NotLinkedCount: Integer;
     property Components: TObjectList<TSbomComponent> read FComponents;
     property Warnings: TList<string> read FWarnings;
   end;
@@ -86,6 +88,9 @@ function EvidenceName(AEvidence: TSbomEvidence): string;
 // a origem que o nome da unit sugere: bibliotecas da Embarcadero (por namespace e pelos nomes antigos, sem namespace)
 // ou, se nao se reconhece, terceiros
 function ClassifyUnitName(const AUnitName: string): TSbomOrigin;
+// junta ao SBOM as units de um .map: as que ja la estao ficam confirmadas (ligadas ao executavel) e as outras, que ninguem
+// nomeia no codigo do projecto, passam a componentes. AMapFile e o ficheiro usado (so o nome vai para os relatorios)
+procedure ApplyMapUnits(ASbom: TSbom; const AUnits: TArray<string>; const AMapFile: string);
 // monta o SBOM: um componente por unit de fora que o projecto usa e, se AIncludeProjectUnits, tambem as units do projecto
 function BuildSbom(AGraph: TDepGraph; const AProject: TSbomProject; AIncludeProjectUnits: Boolean): TSbom;
 
@@ -257,6 +262,44 @@ begin
   for C in FComponents do
     if C.Path <> '' then
       Inc(Result);
+end;
+
+function TSbom.NotLinkedCount: Integer;
+var
+  C: TSbomComponent;
+begin
+  Result := 0;
+  if MapFile = '' then
+    Exit;
+  for C in FComponents do
+    if not C.InMap then
+      Inc(Result);
+end;
+
+procedure ApplyMapUnits(ASbom: TSbom; const AUnits: TArray<string>; const AMapFile: string);
+var
+  Name: string;
+  C: TSbomComponent;
+  Created: Boolean;
+begin
+  if ASbom = nil then
+    Exit;
+  ASbom.MapFile := AMapFile;
+  for Name in AUnits do
+  begin
+    C := ASbom.Obtain(Name, Created);
+    if Created then
+    begin
+      C.Origin := ClassifyUnitName(Name);
+      if C.Origin = soThirdParty then
+        C.Confidence := scWeak
+      else
+        C.Confidence := scMedium;
+    end;
+    C.InMap := True;
+    C.Evidence := seMap;
+  end;
+  ASbom.SortComponents;
 end;
 
 procedure AddUser(AComponent: TSbomComponent; const AUser: string);

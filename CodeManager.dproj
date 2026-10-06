@@ -109,6 +109,7 @@
         <DCCReference Include="src\Infrastructure\CM.Hg.pas"/>
         <DCCReference Include="src\Core\CM.WidthShare.pas"/>
         <DCCReference Include="src\Core\CM.Sbom.pas"/>
+        <DCCReference Include="src\Core\CM.MapFile.pas"/>
         <DCCReference Include="src\Core\CM.Dproj.pas"/>
         <DCCReference Include="src\Infrastructure\CM.SbomResolve.pas"/>
         <DCCReference Include="src\Services\CM.SbomFormats.pas"/>

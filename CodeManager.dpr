@@ -19,6 +19,7 @@ uses
   CM.Hg in 'src\Infrastructure\CM.Hg.pas',
   CM.WidthShare in 'src\Core\CM.WidthShare.pas',
   CM.Sbom in 'src\Core\CM.Sbom.pas',
+  CM.MapFile in 'src\Core\CM.MapFile.pas',
   CM.Dproj in 'src\Core\CM.Dproj.pas',
   CM.SbomResolve in 'src\Infrastructure\CM.SbomResolve.pas',
   CM.SbomFormats in 'src\Services\CM.SbomFormats.pas',

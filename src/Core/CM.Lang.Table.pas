@@ -6,7 +6,7 @@
 interface
 
 const
-  LangRows: array[0..562] of array[0..3] of string = (
+  LangRows: array[0..564] of array[0..3] of string = (
   ('Projeto', 'Project', 'Projet', 'Projekt'),
   ('Mapa', 'Map', 'Carte', 'Karte'),
   ('Checklist', 'Checklist', 'Checklist', 'Checkliste'),
@@ -597,7 +597,9 @@ const
       'Le rapport provient de l''analyse du code source (clauses uses et .dproj), sans compiler : une unité référencée peut ne pas finir dans l''exécutable. Avec un fich'
     + 'ier .map, les unités réellement liées sont confirmées.', 
       'Der Bericht stammt aus der Analyse des Quellcodes (Uses-Klauseln und .dproj), ohne zu kompilieren: Eine referenzierte Unit landet möglicherweise nicht in der au'
-    + 'sführbaren Datei. Mit einer .map-Datei werden die tatsächlich gebundenen Units bestätigt.')
+    + 'sführbaren Datei. Mit einer .map-Datei werden die tatsächlich gebundenen Units bestätigt.'),
+  ('Fora do mapa', 'Not in the map', 'Hors de la map', 'Nicht in der Map'),
+  ('Referenciadas no código mas ausentes do mapa de ligação (podem não ficar no executável):', 'Referenced in the code but missing from the link map (they may not end up in the executable):', 'Référencées dans le code mais absentes de la map de liaison (elles peuvent ne pas finir dans l''exécutable) :', 'Im Code referenziert, aber in der Link-Map nicht vorhanden (sie landen möglicherweise nicht in der ausführbaren Datei):')
   );
 
   // trocos dos modelos HTML (res/templates), por ordem de leitura

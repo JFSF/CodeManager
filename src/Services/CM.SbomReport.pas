@@ -170,7 +170,10 @@ begin
     SB.Append('- ').Append(Tr('Da Embarcadero')).Append(': ').AppendLine(IntToStr(EmbarcaderoCount(ASbom)));
     SB.Append('- ').Append(Tr('De terceiros')).Append(': ').AppendLine(IntToStr(ASbom.CountOf(soThirdParty)));
     SB.Append('- ').Append(Tr('Do projeto')).Append(': ').AppendLine(IntToStr(ASbom.CountOf(soProject)));
-    SB.Append('- ').Append(Tr('Por confirmar')).Append(': ').AppendLine(IntToStr(Unconfirmed(ASbom))).AppendLine;
+    SB.Append('- ').Append(Tr('Por confirmar')).Append(': ').AppendLine(IntToStr(Unconfirmed(ASbom)));
+    if ASbom.MapFile <> '' then
+      SB.Append('- ').Append(Tr('Fora do mapa')).Append(': ').AppendLine(IntToStr(ASbom.NotLinkedCount));
+    SB.AppendLine;
 
     SB.Append('## ').AppendLine(Tr('Projeto')).AppendLine;
     SB.Append('| ').Append(Tr('Campo')).Append(' | ').Append(Tr('Valor')).AppendLine(' |');
@@ -218,9 +221,9 @@ begin
     SB.AppendLine;
 
     SB.Append('## ').AppendLine(Tr('Pontos de atenção')).AppendLine;
-    if Unconfirmed(ASbom) = 0 then
-      SB.AppendLine(Tr('Nada a assinalar: todos os componentes foram confirmados.')).AppendLine
-    else
+    if (Unconfirmed(ASbom) = 0) and (ASbom.NotLinkedCount = 0) then
+      SB.AppendLine(Tr('Nada a assinalar: todos os componentes foram confirmados.')).AppendLine;
+    if Unconfirmed(ASbom) > 0 then
     begin
       SB.AppendLine(Tr('Units de terceiros sem ficheiro encontrado: só se conhecem pelo nome. Acrescenta as pastas das bibliotecas aos caminhos de procura do projeto para as confirmar.')).AppendLine;
       Shown := 0;
@@ -233,6 +236,23 @@ begin
             Break;
           end;
           SB.Append('- `').Append(C.Name).Append('` — ').AppendLine(UserList(C, 4));
+          Inc(Shown);
+        end;
+      SB.AppendLine;
+    end;
+    if ASbom.NotLinkedCount > 0 then
+    begin
+      SB.AppendLine(Tr('Referenciadas no código mas ausentes do mapa de ligação (podem não ficar no executável):')).AppendLine;
+      Shown := 0;
+      for C in ASbom.Components do
+        if (C.Origin <> soProject) and not C.InMap then
+        begin
+          if Shown >= AttnLimit then
+          begin
+            SB.Append('- … ').AppendLine(IntToStr(ASbom.NotLinkedCount - AttnLimit));
+            Break;
+          end;
+          SB.Append('- `').Append(C.Name).AppendLine('`');
           Inc(Shown);
         end;
       SB.AppendLine;
@@ -314,6 +334,8 @@ begin
     Card('De terceiros', ASbom.CountOf(soThirdParty));
     Card('Do projeto', ASbom.CountOf(soProject));
     Card('Por confirmar', Unconfirmed(ASbom));
+    if ASbom.MapFile <> '' then
+      Card('Fora do mapa', ASbom.NotLinkedCount);
     SB.AppendLine('</div>');
 
     // projecto
@@ -349,9 +371,9 @@ begin
 
     // pontos de atencao
     SB.AppendLine(Tbl.El('h2', 'Pontos de atenção'));
-    if Unconfirmed(ASbom) = 0 then
-      SB.AppendLine(Tbl.El('p', 'Nada a assinalar: todos os componentes foram confirmados.', 'class="note"'))
-    else
+    if (Unconfirmed(ASbom) = 0) and (ASbom.NotLinkedCount = 0) then
+      SB.AppendLine(Tbl.El('p', 'Nada a assinalar: todos os componentes foram confirmados.', 'class="note"'));
+    if Unconfirmed(ASbom) > 0 then
     begin
       SB.AppendLine(Tbl.El('p', 'Units de terceiros sem ficheiro encontrado: só se conhecem pelo nome. Acrescenta as pastas das bibliotecas aos caminhos de procura do projeto para as confirmar.', 'class="note"'));
       SB.AppendLine('<ul class="attn">');
@@ -366,6 +388,24 @@ begin
           end;
           SB.Append('<li><span class="names">').Append(HtmlEscape(C.Name)).Append('</span> — ')
             .Append(HtmlEscape(UserList(C, 4))).AppendLine('</li>');
+          Inc(Shown);
+        end;
+      SB.AppendLine('</ul>');
+    end;
+    if ASbom.NotLinkedCount > 0 then
+    begin
+      SB.AppendLine(Tbl.El('p', 'Referenciadas no código mas ausentes do mapa de ligação (podem não ficar no executável):', 'class="note"'));
+      SB.AppendLine('<ul class="attn">');
+      Shown := 0;
+      for C in ASbom.Components do
+        if (C.Origin <> soProject) and not C.InMap then
+        begin
+          if Shown >= AttnLimit then
+          begin
+            SB.Append('<li>… ').Append(ASbom.NotLinkedCount - AttnLimit).AppendLine('</li>');
+            Break;
+          end;
+          SB.Append('<li><span class="names">').Append(HtmlEscape(C.Name)).AppendLine('</span></li>');
           Inc(Shown);
         end;
       SB.AppendLine('</ul>');

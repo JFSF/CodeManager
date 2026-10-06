@@ -13,7 +13,7 @@
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Generics.Collections, CM.Analyzer, CM.Sbom;
+  System.SysUtils, System.Classes, System.Generics.Collections, CM.Analyzer, CM.Sbom, CM.Dproj;
 
 type
   TSbomResolveOptions = record
@@ -34,6 +34,9 @@ function DelphiLibraryPaths(const ADelphiRoot, APlatform: string): TArray<string
 function FileSha256(const AFileName: string): string;
 // uma pasta esta dentro de outra (ou e a propria)?
 function IsUnderFolder(const APath, AFolder: string): Boolean;
+// o .map do projecto (se ja foi compilado com mapa): DCC_ExeOutput\<nome>.map, a pasta plataforma\configuracao ou a do
+// projecto; '' se nao existe
+function FindMapFile(const ADproj: TDprojInfo): string;
 // preenche o ficheiro, o hash, a origem e a confianca dos componentes
 procedure ResolveSbom(ASbom: TSbom; const AOptions: TSbomResolveOptions; const AProgress: TScanProgress = nil);
 
@@ -258,6 +261,34 @@ begin
   Result := P.StartsWith(F) or LowerCase(TPath.GetFullPath(APath)).StartsWith(F);
 end;
 
+function FindMapFile(const ADproj: TDprojInfo): string;
+var
+  Dir, Name, Candidate: string;
+  Candidates: TList<string>;
+begin
+  Result := '';
+  if not ADproj.Found then
+    Exit;
+  Dir := TPath.GetDirectoryName(ADproj.FileName);
+  Name := ADproj.ProjectName + '.map';
+  Candidates := TList<string>.Create;
+  try
+    if ADproj.ExeOutput <> '' then
+      Candidates.Add(TPath.Combine(TPath.Combine(Dir, ADproj.ExeOutput), Name));
+    Candidates.Add(TPath.Combine(TPath.Combine(TPath.Combine(Dir, ADproj.Platform), ADproj.Config), Name));
+    Candidates.Add(TPath.Combine(Dir, Name));
+    for Candidate in Candidates do
+      try
+        if TFile.Exists(TPath.GetFullPath(Candidate)) then
+          Exit(TPath.GetFullPath(Candidate));
+      except
+        on Exception do ;
+      end;
+  finally
+    Candidates.Free;
+  end;
+end;
+
 { resolucao }
 
 function AbsolutePath(const APath, ABase: string): string;
@@ -345,7 +376,8 @@ begin
       if Found <> '' then
       begin
         C.Path := Found;
-        C.Evidence := seFile;
+        if C.Evidence <> seMap then
+          C.Evidence := seFile;                // o mapa continua a ser a prova mais forte
         C.Confidence := scStrong;
         if C.Origin <> soProject then
           C.Origin := OriginOfPath(Found, C.Name, Base, AOptions.DelphiRoot);

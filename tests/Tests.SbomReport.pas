@@ -37,6 +37,8 @@ type
     [Test] procedure ReportFileNameFollowsTheLanguage;
     [Test] procedure EmptySbomStillMakesAReport;
     [Test] procedure LongListsOfUnconfirmedAreShortened;
+    [Test] procedure WithAMapTheReportsShowWhatIsOutsideIt;
+    [Test] procedure WithoutAMapThereIsNoOutsideSection;
   end;
 
 implementation
@@ -327,6 +329,35 @@ begin
   Assert.IsFalse(Attention.Contains('`Lib.U60`'), 'a lista de atencao corta nos 40');
   Assert.Contains(Attention, '- … 21');
   Assert.Contains(Md, '| `Lib.U60` |', 'a tabela dos componentes leva-os todos');
+end;
+
+procedure TSbomReportTests.WithAMapTheReportsShowWhatIsOutsideIt;
+var
+  Md, Html: string;
+begin
+  ApplyMapUnits(FSbom, ['System.SysUtils', 'Main'], 'C:\out\Demo.map');
+  Md := SbomMarkdown(FSbom, '');
+  Assert.Contains(Md, '- Fora do mapa: 3');
+  Assert.Contains(Md, 'Referenciadas no código mas ausentes do mapa de ligação');
+  Assert.Contains(Md, '- `Vcl.Forms`');
+  Assert.Contains(Md, '| Mapa de ligação | Demo.map |');
+  Assert.IsFalse(Md.Contains('C:\out'), 'so o nome do mapa vai para o relatorio');
+  Html := SbomHtml(FSbom, '');
+  Assert.AreEqual(7, Count(Html, '<div class="card">'));
+  Assert.Contains(Html, 'Fora do mapa');
+  Assert.Contains(Html, '<li><span class="names">Vcl.Forms</span></li>');
+  SetLang(lgEn);
+  Assert.Contains(SbomMarkdown(FSbom, ''), '- Not in the map: 3');
+end;
+
+procedure TSbomReportTests.WithoutAMapThereIsNoOutsideSection;
+var
+  Md: string;
+begin
+  Md := SbomMarkdown(FSbom, '');
+  Assert.IsFalse(Md.Contains('Fora do mapa'));
+  Assert.IsFalse(Md.Contains('ausentes do mapa'));
+  Assert.AreEqual(6, Count(SbomHtml(FSbom, ''), '<div class="card">'));
 end;
 
 end.
