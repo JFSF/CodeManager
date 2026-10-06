@@ -6,6 +6,10 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
 
 ## [Não lançado]
 
+## [1.0.2] - 2026-10-06
+
+Mercurial, complexidade cognitiva, mais métricas por método e relatório de dependências em quatro idiomas.
+
 ### Funcionalidades
 
 - **Mercurial:** a deteção de «alterado desde a revisão» funciona também em repositórios Mercurial (com o `hg` da
@@ -112,6 +116,7 @@ Primeira versão pública.
 - Mais de 490 testes DUnitX (incluindo os da integração com o Git, contra um repositório temporário real).
 - Contraste do texto com pelo menos 4,5:1 nos dois temas.
 
-[Não lançado]: https://github.com/JFSF/CodeManager/compare/v1.0.1...HEAD
+[Não lançado]: https://github.com/JFSF/CodeManager/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/JFSF/CodeManager/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/JFSF/CodeManager/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/JFSF/CodeManager/releases/tag/v1.0.0

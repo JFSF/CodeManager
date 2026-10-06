@@ -205,24 +205,20 @@ aplicação **só lê** os ficheiros do projeto analisado.
 
 ## Alterações
 
-O que mudou na **versão 1.0.1** (a lista completa, versão a versão, está no [registo de alterações](CHANGELOG.md)):
+O que mudou na **versão 1.0.2** (a lista completa, versão a versão, está no [registo de alterações](CHANGELOG.md)):
 
-**Novas páginas**
-- **Grafo** — o mapa visual de quem usa quem (cláusulas `uses`), com acoplamento, instabilidade, ciclos e relatório em HTML ou Markdown.
-- **Código** — leitura do código em separadores, aberta por duplo clique no Grafo, no Mapa ou na Checklist; realce Delphi, salto para o método e fonte moderna com ligaduras.
-- **Aspeto** — cor de destaque, fontes, escala do texto e tamanho do código, só para ti.
-- **Acerca** — versão, compilação, ambiente, ligações úteis e «Copiar informação» para as *issues*.
+**Novidades**
+- **Mercurial** — «alterado desde a revisão» também em repositórios Mercurial (com o `hg` da linha de comandos, por exemplo o do TortoiseHg), além do Git e do Subversion.
+- **Complexidade cognitiva** — nova medida por método (`cg`), que mede o esforço de *ler* o código e não só quantos caminhos tem; no Mapa, na Checklist, na dica, no Painel, nas páginas HTML, no CSV e no JSON.
+- **Relatório de dependências em quatro idiomas** — a página HTML leva as frases em português, inglês, francês e alemão e troca de idioma na própria página.
 
 **Melhorias**
-- **Mais métricas por método** — complexidade cognitiva, número de parâmetros e aninhamento de blocos (no Mapa, na dica, no Painel, no CSV, no JSON e nas páginas HTML).
-- **SonarQube** — medidas do projeto e de cada ficheiro (cobertura, duplicação, dívida técnica, classificações A–E), o detalhe dos problemas e os *hotspots*; vê-se no Mapa, na página Código e no Painel.
-- **Subversion** — «alterado desde a revisão» também em cópias de trabalho do Subversion (além do Git).
-- **Idiomas** — português, inglês, francês e alemão, incluindo as páginas HTML exportadas; o relatório de dependências troca de idioma na própria página.
-- **Repositórios do GitHub** — analisar um repositório em vez de uma pasta (só leitura).
+- **Parâmetros e aninhamento** — agora também ao lado das linhas e da complexidade no Mapa e na Checklist (com cor de aviso), nas páginas HTML exportadas e em dois gráficos novos do Painel.
+- **Idiomas revistos** — alemão e francês página a página: botões de texto comprido já não ficam cortados, o eixo do Painel escreve os meses no idioma ativo e há menos texto por traduzir.
 
 **Nos bastidores**
-- Cerca de 200 testes automáticos novos (agora mais de 740), incluindo testes contra um repositório Subversion real.
-- Gerador de traduções corrigido, e documentação e imagens atualizadas.
+- Cerca de 60 testes novos (agora mais de 740), incluindo testes contra um repositório Mercurial real.
+- Documentação e imagens atualizadas.
 
 ## Documentação
 
@@ -237,7 +233,7 @@ O que mudou na **versão 1.0.1** (a lista completa, versão a versão, está no 
 
 ## Estado do projeto
 
-Versão **1.0.1**. Em desenvolvimento ativo, desenvolvido e testado em **Windows / Win64** com **Delphi 13**. Mais de 740 testes
+Versão **1.0.2**. Em desenvolvimento ativo, desenvolvido e testado em **Windows / Win64** com **Delphi 13**. Mais de 740 testes
 automáticos cobrem o motor, as exportações, o vigia e as regras de arquitetura; a interface é verificada com o
 [modo de desenvolvimento](docs/DESENVOLVIMENTO.md#modo-de-desenvolvimento---dev).
 

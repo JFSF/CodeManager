@@ -82,24 +82,20 @@ the theme. The application **only reads** the project it analyses. Your progress
 
 ## Changes
 
-What changed in **version 1.0.1** (the full history is in the [changelog](CHANGELOG.md), in Portuguese):
+What changed in **version 1.0.2** (the full history is in the [changelog](CHANGELOG.md), in Portuguese):
 
-**New pages**
-- **Graph** — a visual map of which unit uses which (from the `uses` clauses), with coupling, instability, cycles and an HTML or Markdown report.
-- **Code** — read the source in tabs, opened by double-clicking in the Graph, the Map or the Checklist; Delphi syntax colouring, jump to the method and a modern font with ligatures.
-- **Appearance** — accent colour, fonts, text scale and code size, just for you.
-- **About** — version, build, environment, useful links and «Copy information» for issues.
+**New**
+- **Mercurial** — «changed since review» also works in Mercurial repositories (with the command-line `hg`, for example the one from TortoiseHg), besides Git and Subversion.
+- **Cognitive complexity** — a new per-method measure (`cg`) of how hard the code is to *read*, not just how many paths it has; on the Map, the Checklist, the tooltip, the Dashboard, the HTML pages, CSV and JSON.
+- **Dependency report in four languages** — the HTML page carries its phrases in Portuguese, English, French and German and switches language inside the page.
 
 **Improvements**
-- **More metrics per method** — cognitive complexity, number of parameters and block nesting (on the Map, in the tooltip, CSV, JSON and the HTML pages).
-- **SonarQube** — project and per-file measures (coverage, duplication, technical debt, A–E ratings), issue details and hotspots; shown in the Map, the Code page and the Dashboard.
-- **Subversion** — «changed since review» also works in Subversion working copies (besides Git).
-- **Languages** — Portuguese, English, French and German, including the exported HTML pages; the dependency report even switches language inside the page.
-- **GitHub repositories** — analyse a repository instead of a folder (read-only).
+- **Parameters and nesting** — now also next to the lines and complexity on the Map and the Checklist (with a warning colour), in the exported HTML pages and in two new Dashboard charts.
+- **Languages reviewed** — German and French, page by page: long button labels are no longer cut off, the Dashboard axis writes the months in the active language and less text is left untranslated.
 
 **Behind the scenes**
-- About 200 new automated tests (now over 740), including tests against a real Subversion repository.
-- Fixed translation generator, updated documentation and images.
+- About 60 new automated tests (now over 740), including tests against a real Mercurial repository.
+- Updated documentation and images.
 
 ## Documentation (Portuguese)
 

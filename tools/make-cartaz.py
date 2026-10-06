@@ -1,7 +1,7 @@
 """Gera o cartaz de divulgacao (1600 x 900) a partir das capturas de docs/images.
 
-    python tools/make-cartaz.py 1.0.1 pt     -> docs/divulgacao/cartaz-1.0.1.png
-    python tools/make-cartaz.py 1.0.1 en     -> docs/divulgacao/cartaz-1.0.1-en.png
+    python tools/make-cartaz.py 1.0.2 pt     -> docs/divulgacao/cartaz-1.0.2.png
+    python tools/make-cartaz.py 1.0.2 en     -> docs/divulgacao/cartaz-1.0.2-en.png
 
 Precisa do Pillow e das fontes Segoe UI do Windows. Os textos de cada idioma estao em TEXTS; ao mudar de versao
 actualiza-os (as novidades vem do CHANGELOG) e escolhe as duas capturas em SHOTS.
@@ -16,31 +16,31 @@ FONTS = r'C:\Windows\Fonts'
 W, H = 1600, 900
 
 # a captura de tras e a da frente (dentro de docs/images)
-SHOTS = ('13-grafo.png', '14-codigo.png')
+SHOTS = ('10-mapa-metricas.png', '20-relatorio-dependencias.png')
 
 TEXTS = {
     'pt': {
-        'subtitle': 'Novas páginas e mais integrações',
+        'subtitle': 'Mais métricas e o Mercurial',
         'headline': ['Mapa e checklist de', 'código-fonte Delphi'],
         'bullets': [
-            'Grafo de dependências entre as units',
-            'Leitura do código, com realce e ligaduras',
-            'SonarQube: cobertura, dívida e problemas',
-            'Git e Subversion: o que mudou desde a revisão',
-            'Aspeto à tua maneira · PT · EN · FR · DE',
+            'Complexidade cognitiva por método',
+            'Parâmetros e aninhamento no Mapa e no Painel',
+            'Mercurial, Git e Subversion: o que mudou',
+            'Relatório de dependências em 4 idiomas',
+            'Traduções revistas · PT · EN · FR · DE',
         ],
         'footer': ['Windows 10/11', 'gratuito', 'código aberto'],
         'suffix': '',
     },
     'en': {
-        'subtitle': 'New pages and more integrations',
+        'subtitle': 'More metrics and Mercurial',
         'headline': ['Delphi source-code', 'map and checklist'],
         'bullets': [
-            'Dependency graph between units',
-            'Code reading, with highlighting and ligatures',
-            'SonarQube: coverage, debt and issues',
-            'Git and Subversion: what changed since review',
-            'Your own look · PT · EN · FR · DE',
+            'Cognitive complexity per method',
+            'Parameters and nesting on Map and Dashboard',
+            'Mercurial, Git and Subversion: what changed',
+            'Dependency report in 4 languages',
+            'Translations reviewed · PT · EN · FR · DE',
         ],
         'footer': ['Windows 10/11', 'free', 'open source'],
         'suffix': '-en',
@@ -81,7 +81,7 @@ def card(path, width):
 
 
 def main():
-    version = sys.argv[1] if len(sys.argv) > 1 else '1.0.1'
+    version = sys.argv[1] if len(sys.argv) > 1 else '1.0.2'
     lang = sys.argv[2] if len(sys.argv) > 2 else 'pt'
     t = TEXTS[lang]
     img = gradient().convert('RGBA')
