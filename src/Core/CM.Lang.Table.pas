@@ -6,7 +6,7 @@
 interface
 
 const
-  LangRows: array[0..516] of array[0..3] of string = (
+  LangRows: array[0..517] of array[0..3] of string = (
   ('Projeto', 'Project', 'Projet', 'Projekt'),
   ('Mapa', 'Map', 'Carte', 'Karte'),
   ('Checklist', 'Checklist', 'Checklist', 'Checkliste'),
@@ -516,6 +516,7 @@ const
   ('Sistema', 'System', 'Système', 'System'),
   ('Git', 'Git', 'Git', 'Git'),
   ('Subversion', 'Subversion', 'Subversion', 'Subversion'),
+  ('Mercurial', 'Mercurial', 'Mercurial', 'Mercurial'),
   ('disponível', 'available', 'disponible', 'verfügbar'),
   ('não encontrado', 'not found', 'introuvable', 'nicht gefunden'),
   ('Pasta de dados', 'Data folder', 'Dossier de données', 'Datenordner'),

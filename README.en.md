@@ -22,7 +22,7 @@ a document describing what the project *should* contain, it compares the two.
 ## Features
 
 - **Map** — the folder → file → method tree, with search, statistics and the **lines, complexity, parameters and nesting** of each method.
-- **Checklist** — mark what you reviewed, what is under review or needs changes, what compiles, what passed Sonar, what is a priority; add notes. In a Git repository or a Subversion working copy it flags the files that changed since you reviewed them; SonarQube is optional and per user.
+- **Checklist** — mark what you reviewed, what is under review or needs changes, what compiles, what passed Sonar, what is a priority; add notes. In a Git or Mercurial repository, or a Subversion working copy, it flags the files that changed since you reviewed them; SonarQube is optional and per user.
   A file is *done* when **all its methods** are reviewed.
 - **Graph** — a visual map of the dependencies between units (from the `uses` clauses): levels, layer colours, coupling, **cycles**, and an HTML (SVG map) or Markdown report.
 - **Code** — double-click a unit in the Graph, or a file or method in the Map or the Checklist, to read its code in a read-only tab (line numbers, Delphi syntax colouring, a modern font with ligatures; a method jumps to its line).
@@ -98,7 +98,7 @@ What changed in **version 1.0.1** (the full history is in the [changelog](CHANGE
 - **GitHub repositories** — analyse a repository instead of a folder (read-only).
 
 **Behind the scenes**
-- About 200 new automated tests (now over 690), including tests against a real Subversion repository.
+- About 200 new automated tests (now over 710), including tests against a real Subversion repository.
 - Fixed translation generator, updated documentation and images.
 
 ## Documentation (Portuguese)

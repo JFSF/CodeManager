@@ -552,6 +552,8 @@ begin
   FGitTitle.Text := VcsName(Kind);
   if Kind = vkSvn then
     Current := KV(Tr('Revisão atual'), 'r' + AHead)
+  else if Kind = vkHg then
+    Current := KV(Tr('Revisão atual'), Copy(AHead, 1, 12))
   else
     Current := KV(Tr('Commit atual'), Copy(AHead, 1, 8));
   FGitInfo.SetRows([

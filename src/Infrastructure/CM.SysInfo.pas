@@ -22,7 +22,7 @@ function CollectAboutInfo(const ALanguage, ATheme, ADataDir: string): TAboutInfo
 implementation
 
 uses
-  System.SysUtils, System.IOUtils, Winapi.Windows, CM.Git, CM.Svn;
+  System.SysUtils, System.IOUtils, Winapi.Windows, CM.Git, CM.Svn, CM.Hg;
 
 function ExeVersionText: string;
 var
@@ -106,6 +106,7 @@ begin
   Result.DataDir := ADataDir;
   Result.GitAvailable := GitAvailable;
   Result.SvnAvailable := SvnAvailable;
+  Result.HgAvailable := HgAvailable;
 end;
 
 end.

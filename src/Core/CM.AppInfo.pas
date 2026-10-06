@@ -23,7 +23,7 @@ type
     Language: string;
     Theme: string;
     DataDir: string;
-    GitAvailable, SvnAvailable: Boolean;
+    GitAvailable, SvnAvailable, HgAvailable: Boolean;
   end;
 
 const
@@ -125,7 +125,8 @@ begin
     'Idioma: ' + AInfo.Language + sLineBreak +
     'Tema: ' + AInfo.Theme + sLineBreak +
     'Dados: ' + AInfo.DataDir + sLineBreak +
-    'Git: ' + YesNo(AInfo.GitAvailable) + ' · Subversion: ' + YesNo(AInfo.SvnAvailable);
+    'Git: ' + YesNo(AInfo.GitAvailable) + ' · Subversion: ' + YesNo(AInfo.SvnAvailable) +
+    ' · Mercurial: ' + YesNo(AInfo.HgAvailable);
 end;
 
 end.

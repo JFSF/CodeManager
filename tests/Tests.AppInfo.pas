@@ -124,6 +124,7 @@ begin
   Result.DataDir := 'C:\Users\x\AppData\Roaming\CodeManager';
   Result.GitAvailable := True;
   Result.SvnAvailable := False;
+  Result.HgAvailable := True;
 end;
 
 procedure TAppInfoTests.AboutTextListsOneInfoPerLine;
@@ -146,10 +147,11 @@ var
   I: TAboutInfo;
 begin
   I := SampleInfo;
-  Assert.IsTrue(BuildAboutText(I).EndsWith('Git: sim · Subversion: não'));
+  Assert.IsTrue(BuildAboutText(I).EndsWith('Git: sim · Subversion: não · Mercurial: sim'));
   I.GitAvailable := False;
   I.SvnAvailable := True;
-  Assert.IsTrue(BuildAboutText(I).EndsWith('Git: não · Subversion: sim'));
+  I.HgAvailable := False;
+  Assert.IsTrue(BuildAboutText(I).EndsWith('Git: não · Subversion: sim · Mercurial: não'));
 end;
 
 procedure TAppInfoTests.TheAddressesPointToTheRepository;

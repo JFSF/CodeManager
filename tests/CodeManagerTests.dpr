@@ -25,6 +25,7 @@ uses
   CM.Proc in '..\src\Infrastructure\CM.Proc.pas',
   CM.Git in '..\src\Infrastructure\CM.Git.pas',
   CM.Svn in '..\src\Infrastructure\CM.Svn.pas',
+  CM.Hg in '..\src\Infrastructure\CM.Hg.pas',
   CM.Vcs in '..\src\Infrastructure\CM.Vcs.pas',
   CM.SysInfo in '..\src\Infrastructure\CM.SysInfo.pas',
   CM.GitHub in '..\src\Infrastructure\CM.GitHub.pas',
@@ -67,6 +68,7 @@ uses
   Tests.Clicks in 'Tests.Clicks.pas',
   Tests.SonarMeasures in 'Tests.SonarMeasures.pas',
   Tests.Svn in 'Tests.Svn.pas',
+  Tests.Hg in 'Tests.Hg.pas',
   Tests.Colors in 'Tests.Colors.pas',
   Tests.Appearance in 'Tests.Appearance.pas',
   Tests.AppInfo in 'Tests.AppInfo.pas';

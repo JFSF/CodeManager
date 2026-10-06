@@ -106,7 +106,7 @@ Painel ganham as medidas do servidor: cobertura, duplicação, dívida técnica,
 
 A **Checklist** agrupa os ficheiros por pasta. Um ficheiro fica concluído quando **todos os métodos** estão revistos;
 podes marcar prioridades ★, escrever notas, filtrar por camada e dar a cada método um **estado de revisão**
-(por rever, em revisão, precisa de alteração, concluído). Num repositório **Git** ou numa cópia de trabalho **Subversion**, vês que ficheiros mudaram desde
+(por rever, em revisão, precisa de alteração, concluído). Num repositório **Git** ou **Mercurial**, ou numa cópia de trabalho **Subversion**, vês que ficheiros mudaram desde
 a revisão e podes voltar a pô-los «por rever». Se quiseres, ligas o **SonarQube** (opcional, por utilizador)
 para veres os problemas abertos por ficheiro. O progresso exporta-se em JSON, no mesmo formato
 das páginas HTML offline.
@@ -221,7 +221,7 @@ O que mudou na **versão 1.0.1** (a lista completa, versão a versão, está no 
 - **Repositórios do GitHub** — analisar um repositório em vez de uma pasta (só leitura).
 
 **Nos bastidores**
-- Cerca de 200 testes automáticos novos (agora mais de 690), incluindo testes contra um repositório Subversion real.
+- Cerca de 200 testes automáticos novos (agora mais de 710), incluindo testes contra um repositório Subversion real.
 - Gerador de traduções corrigido, e documentação e imagens atualizadas.
 
 ## Documentação
@@ -237,11 +237,11 @@ O que mudou na **versão 1.0.1** (a lista completa, versão a versão, está no 
 
 ## Estado do projeto
 
-Versão **1.0.1**. Em desenvolvimento ativo, desenvolvido e testado em **Windows / Win64** com **Delphi 13**. Mais de 690 testes
+Versão **1.0.1**. Em desenvolvimento ativo, desenvolvido e testado em **Windows / Win64** com **Delphi 13**. Mais de 710 testes
 automáticos cobrem o motor, as exportações, o vigia e as regras de arquitetura; a interface é verificada com o
 [modo de desenvolvimento](docs/DESENVOLVIMENTO.md#modo-de-desenvolvimento---dev).
 
-Ideias para o futuro: o Mercurial como sistema de controlo de versões. Sugestões são bem-vindas.
+Ideias para o futuro: mais métricas por método (complexidade cognitiva, profundidade de herança). Sugestões são bem-vindas.
 
 ## Contribuir
 

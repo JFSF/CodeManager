@@ -16,6 +16,7 @@ uses
   CM.Proc in 'src\Infrastructure\CM.Proc.pas',
   CM.Git in 'src\Infrastructure\CM.Git.pas',
   CM.Svn in 'src\Infrastructure\CM.Svn.pas',
+  CM.Hg in 'src\Infrastructure\CM.Hg.pas',
   CM.Vcs in 'src\Infrastructure\CM.Vcs.pas',
   CM.SysInfo in 'src\Infrastructure\CM.SysInfo.pas',
   CM.GitHub in 'src\Infrastructure\CM.GitHub.pas',

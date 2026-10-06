@@ -6,6 +6,13 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
 
 ## [Não lançado]
 
+### Funcionalidades
+
+- **Mercurial:** a deteção de «alterado desde a revisão» funciona também em repositórios Mercurial (com o `hg` da
+  linha de comandos, por exemplo o do TortoiseHg): guarda o identificador completo do conjunto de alterações, junta
+  o que foi gravado depois com o que ainda não foi, e a dica mostra os conjuntos que tocaram no ficheiro. A página
+  Acerca indica se o `hg` foi encontrado. O Git e o Subversion continuam como antes.
+
 ### Melhorias
 
 - **Mapa:** os **parâmetros** (`p 3`) e o **aninhamento** (`n 2`) de cada método aparecem ao lado das linhas e da

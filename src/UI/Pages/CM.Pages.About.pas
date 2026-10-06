@@ -196,6 +196,7 @@ begin
     KV(Tr('Idioma'), LangNames[CurrentLang]),
     KV(Tr('Git'), IfThenYes(I.GitAvailable)),
     KV(Tr('Subversion'), IfThenYes(I.SvnAvailable)),
+    KV(Tr('Mercurial'), IfThenYes(I.HgAvailable)),
     KV(Tr('Pasta de dados'), I.DataDir),
     KV(Tr('Licença'), LicenseName)]);
   FCards[1].Height := 16 + 16 + 28 + 8 + FInfo.Height + 14;

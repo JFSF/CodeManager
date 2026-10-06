@@ -11,6 +11,9 @@ uses
 
 // "texto" entre aspas, para a linha de comandos
 function QuoteArg(const AText: string): string;
+// o texto escrito por um programa: UTF-8 e, se os bytes nao forem UTF-8 valido (o Mercurial escreve os nomes de ficheiros
+// na pagina de codigo do Windows), essa pagina de codigo
+function DecodeOutput(const AData: TBytes): string;
 // corre ACmdLine (programa e argumentos) na pasta AWorkDir ('' = a actual); True se terminou com codigo 0
 function RunProcess(const ACmdLine, AWorkDir: string; out AOutput: string; ATimeoutMs: Integer = 20000): Boolean;
 
@@ -19,6 +22,16 @@ implementation
 function QuoteArg(const AText: string): string;
 begin
   Result := '"' + AText.Replace('"', '\"') + '"';
+end;
+
+function DecodeOutput(const AData: TBytes): string;
+begin
+  try
+    Result := TEncoding.UTF8.GetString(AData);
+  except
+    on EEncodingError do
+      Result := TEncoding.ANSI.GetString(AData);
+  end;
 end;
 
 function RunProcess(const ACmdLine, AWorkDir: string; out AOutput: string; ATimeoutMs: Integer): Boolean;
@@ -100,7 +113,7 @@ begin
     if NulIn <> INVALID_HANDLE_VALUE then
       CloseHandle(NulIn);
   end;
-  AOutput := TEncoding.UTF8.GetString(Data);
+  AOutput := DecodeOutput(Data);
 end;
 
 end.
