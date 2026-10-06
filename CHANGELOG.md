@@ -6,6 +6,12 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
 
 ## [Não lançado]
 
+### Melhorias
+
+- **Mapa:** os **parâmetros** (`p 3`) e o **aninhamento** (`n 2`) de cada método aparecem ao lado das linhas e da
+  complexidade (só quando não são zero), com cor de aviso: parâmetros âmbar a partir de 5 e vermelho acima de 7;
+  aninhamento âmbar a partir de 4 e vermelho acima de 5.
+
 ## [1.0.1] - 2026-10-03
 
 Novas páginas (Grafo, Código, Aspeto, Acerca), mais métricas por método, mais do SonarQube, Subversion, quatro idiomas e

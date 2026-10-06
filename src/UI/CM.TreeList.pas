@@ -115,7 +115,7 @@ type
     // etiqueta de contorno encostada a direita; devolve a largura ocupada
     function DrawTag(ARight, ACenterY: Single; const AText: string; AColor: TAlphaColor): Single;
     function StaleHintFor(const ARow: TRow): string;
-    // linhas e complexidade do metodo, encostadas a direita em ARight; devolve a largura ocupada
+    // linhas, complexidade, parametros e aninhamento do metodo, encostados a direita em ARight; devolve a largura ocupada
     function DrawMetrics(ARight, ACenterY: Single; const AMethod: TMethodInfo): Single;
     procedure DrawFlag(const ARect: TRectF; const ALabel: string; AChecked: Boolean; AColor: TAlphaColor);
     procedure DrawCheckbox(const ARect: TRectF; AChecked, APending: Boolean; AColor: TAlphaColor);
@@ -877,30 +877,44 @@ end;
 function TCMTreeList.DrawMetrics(ARight, ACenterY: Single; const AMethod: TMethodInfo): Single;
 const
   Gap = 6;
+
+  function LevelColor(ALevel: TComplexityLevel): TAlphaColor;
+  begin
+    case ALevel of
+      cxHigh: Result := Pal.Danger;
+      cxModerate: Result := Pal.Pending;
+    else
+      Result := Pal.TextFaint;
+    end;
+  end;
+
+  // desenha uma medida encostada a direita e devolve a largura que ocupou (com o espaco que a separa da seguinte)
+  function DrawOne(var ALeft: Single; const AText: string; AColor: TAlphaColor): Single;
+  var
+    W: Single;
+  begin
+    W := MeasureText(AText, 10.5, MonoFont);
+    DrawTextRect(Canvas, TRectF.Create(ALeft - W, ACenterY - 9, ALeft, ACenterY + 9), AText, AColor, 10.5, MonoFont, [],
+      TTextAlign.Trailing);
+    ALeft := ALeft - W - Gap;
+    Result := W + Gap;
+  end;
+
 var
-  LinesTxt, CxTxt: string;
-  CxColor: TAlphaColor;
-  CxW, LinesW: Single;
-  R: TRectF;
+  Left: Single;
 begin
   Result := 0;
   if AMethod.Lines <= 0 then
     Exit;
-  LinesTxt := IntToStr(AMethod.Lines) + ' l';
-  CxTxt := 'cx ' + IntToStr(AMethod.Complexity);
-  case ComplexityLevel(AMethod.Complexity) of
-    cxHigh: CxColor := Pal.Danger;
-    cxModerate: CxColor := Pal.Pending;
-  else
-    CxColor := Pal.TextFaint;
-  end;
-  CxW := MeasureText(CxTxt, 10.5, MonoFont);
-  LinesW := MeasureText(LinesTxt, 10.5, MonoFont);
-  R := TRectF.Create(ARight - CxW, ACenterY - 9, ARight, ACenterY + 9);
-  DrawTextRect(Canvas, R, CxTxt, CxColor, 10.5, MonoFont, [], TTextAlign.Trailing);
-  R := TRectF.Create(R.Left - Gap - LinesW, ACenterY - 9, R.Left - Gap, ACenterY + 9);
-  DrawTextRect(Canvas, R, LinesTxt, Pal.TextFaint, 10.5, MonoFont, [], TTextAlign.Trailing);
-  Result := CxW + Gap + LinesW;
+  Left := ARight;
+  // da direita para a esquerda: aninhamento, parametros, complexidade, linhas (so mostra os que nao sao zero)
+  if AMethod.Nesting > 0 then
+    Result := Result + DrawOne(Left, 'n ' + IntToStr(AMethod.Nesting), LevelColor(NestingLevel(AMethod.Nesting)));
+  if AMethod.ParamCount > 0 then
+    Result := Result + DrawOne(Left, 'p ' + IntToStr(AMethod.ParamCount), LevelColor(ParamsLevel(AMethod.ParamCount)));
+  Result := Result + DrawOne(Left, 'cx ' + IntToStr(AMethod.Complexity), LevelColor(ComplexityLevel(AMethod.Complexity)));
+  Result := Result + DrawOne(Left, IntToStr(AMethod.Lines) + ' l', Pal.TextFaint);
+  Result := Result - Gap;
 end;
 
 // etiqueta (contorno) encostada a direita em ARight; devolve a largura ocupada (0 = sem etiqueta)

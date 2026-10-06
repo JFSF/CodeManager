@@ -36,6 +36,10 @@ type
   TComplexityLevel = (cxNone, cxLow, cxModerate, cxHigh);
 
 function ComplexityLevel(AComplexity: Integer): TComplexityLevel;
+// parametros: 1..4 normal, 5..7 moderado, mais de 7 alto (cxNone sem parametros)
+function ParamsLevel(AParams: Integer): TComplexityLevel;
+// aninhamento: 1..3 normal, 4..5 moderado, mais de 5 alto (cxNone sem blocos interiores)
+function NestingLevel(ANesting: Integer): TComplexityLevel;
 // 'N linhas · complexidade M' (vazio sem corpo medido)
 function MetricsText(ALines, AComplexity: Integer): string;
 // 'N parametros · aninhamento M' (vazio sem corpo medido: ALines <= 0)
@@ -76,6 +80,30 @@ begin
   else if AComplexity <= 10 then
     Result := cxLow
   else if AComplexity <= 20 then
+    Result := cxModerate
+  else
+    Result := cxHigh;
+end;
+
+function ParamsLevel(AParams: Integer): TComplexityLevel;
+begin
+  if AParams <= 0 then
+    Result := cxNone
+  else if AParams <= 4 then
+    Result := cxLow
+  else if AParams <= 7 then
+    Result := cxModerate
+  else
+    Result := cxHigh;
+end;
+
+function NestingLevel(ANesting: Integer): TComplexityLevel;
+begin
+  if ANesting <= 0 then
+    Result := cxNone
+  else if ANesting <= 3 then
+    Result := cxLow
+  else if ANesting <= 5 then
     Result := cxModerate
   else
     Result := cxHigh;

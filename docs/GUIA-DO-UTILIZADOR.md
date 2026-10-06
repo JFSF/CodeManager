@@ -98,8 +98,9 @@ A árvore do projeto: **pastas → ficheiros → métodos**.
   **Expandir tudo**, **Colapsar tudo**, **Abrir métodos** e **Fechar métodos** fazem-no de uma vez.
 - As caixas **C** (*Compila*) e **S** (*Sonar*) assinalam, por ficheiro ou por método, que compila sem erros e que
   passou na análise do SonarQube.
-- À direita de cada método vês as **linhas de código** (`74 l`) e a **complexidade ciclomática** (`cx 18`); a dica
-  mostra-as por extenso. Ver [Linhas e complexidade](#linhas-e-complexidade-dos-métodos).
+- À direita de cada método vês as **linhas de código** (`74 l`), a **complexidade ciclomática** (`cx 18`), os
+  **parâmetros** (`p 3`) e o **aninhamento** (`n 2`; os dois últimos só aparecem quando não são zero); a dica mostra-os
+  por extenso. Ver [Linhas e complexidade](#linhas-e-complexidade-dos-métodos).
 - Passa o rato por cima de um nome ou assinatura cortado com «…» para ver o texto completo.
 - A coluna da direita mostra as **estatísticas** (e a cobertura do plano, se houver) e as ações de **exportar e
   imprimir** a estrutura.
@@ -118,13 +119,16 @@ Cada método com corpo mostra duas medidas, calculadas só a partir do código (
 A cor da complexidade avisa: **até 10** é simples (cinzento), **11 a 20** é moderada (âmbar) e **mais de 20** é alta
 (vermelho). Métodos só declarados na interface, `forward` ou `external` não têm medida.
 
-A dica de cada método mostra ainda duas medidas de forma:
+Ao lado, o Mapa mostra duas medidas de forma (também na dica):
 
 - **Parâmetros:** quantos nomes o cabeçalho declara (`A, B: Integer; var C: string` são 3). Muitos parâmetros
   costumam pedir um registo ou um objeto.
 - **Aninhamento:** o máximo de blocos abertos dentro do corpo (`begin`, `try`, `case`, `repeat`, `asm`), sem contar o
   próprio corpo. Um corpo sem blocos interiores tem 0; um `if … then begin` tem 1; um `try` com um `case` lá dentro
   e tudo dentro desse `if`, 3. Não conta um `if` sem `begin`.
+
+As duas medidas avisam pela cor, como a complexidade: os **parâmetros** ficam âmbar a partir de 5 e vermelhos acima
+de 7; o **aninhamento**, âmbar a partir de 4 e vermelho acima de 5.
 
 O CSV e o JSON exportados levam estas duas medidas (colunas **Parâmetros** e **Aninhamento**; `parameters` e
 `nesting` no JSON).

@@ -36,6 +36,7 @@ type
     [Test] procedure UnbalancedTextDoesNotRaise;
     [Test] procedure MeasureRoutinesWorksOnCleanText;
     [Test] procedure ComplexityLevelsUseTheUsualLimits;
+    [Test] procedure ParamsAndNestingLevelsUseTheirLimits;
     [Test] procedure MetricsTextIsEmptyWithoutABody;
     [Test] procedure MetricsTextPluralises;
     [Test] procedure ParametersAreCountedByName;
@@ -431,6 +432,20 @@ begin
   Assert.AreEqual(Ord(cxModerate), Ord(ComplexityLevel(11)));
   Assert.AreEqual(Ord(cxModerate), Ord(ComplexityLevel(20)));
   Assert.AreEqual(Ord(cxHigh), Ord(ComplexityLevel(21)));
+end;
+
+procedure TMetricsTests.ParamsAndNestingLevelsUseTheirLimits;
+begin
+  Assert.AreEqual(Ord(cxNone), Ord(ParamsLevel(0)));
+  Assert.AreEqual(Ord(cxLow), Ord(ParamsLevel(4)));
+  Assert.AreEqual(Ord(cxModerate), Ord(ParamsLevel(5)));
+  Assert.AreEqual(Ord(cxModerate), Ord(ParamsLevel(7)));
+  Assert.AreEqual(Ord(cxHigh), Ord(ParamsLevel(8)));
+  Assert.AreEqual(Ord(cxNone), Ord(NestingLevel(0)));
+  Assert.AreEqual(Ord(cxLow), Ord(NestingLevel(3)));
+  Assert.AreEqual(Ord(cxModerate), Ord(NestingLevel(4)));
+  Assert.AreEqual(Ord(cxModerate), Ord(NestingLevel(5)));
+  Assert.AreEqual(Ord(cxHigh), Ord(NestingLevel(6)));
 end;
 
 procedure TMetricsTests.MetricsTextIsEmptyWithoutABody;

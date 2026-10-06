@@ -214,7 +214,7 @@ O que mudou na **versão 1.0.1** (a lista completa, versão a versão, está no 
 - **Acerca** — versão, compilação, ambiente, ligações úteis e «Copiar informação» para as *issues*.
 
 **Melhorias**
-- **Mais métricas por método** — número de parâmetros e aninhamento de blocos (dica, CSV e JSON).
+- **Mais métricas por método** — número de parâmetros e aninhamento de blocos (no Mapa, na dica, no CSV e no JSON).
 - **SonarQube** — medidas do projeto e de cada ficheiro (cobertura, duplicação, dívida técnica, classificações A–E), o detalhe dos problemas e os *hotspots*; vê-se no Mapa, na página Código e no Painel.
 - **Subversion** — «alterado desde a revisão» também em cópias de trabalho do Subversion (além do Git).
 - **Idiomas** — português, inglês, francês e alemão, incluindo as páginas HTML exportadas.

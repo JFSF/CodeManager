@@ -91,7 +91,7 @@ What changed in **version 1.0.1** (the full history is in the [changelog](CHANGE
 - **About** — version, build, environment, useful links and «Copy information» for issues.
 
 **Improvements**
-- **More metrics per method** — number of parameters and block nesting (tooltip, CSV and JSON).
+- **More metrics per method** — number of parameters and block nesting (on the Map, in the tooltip, CSV and JSON).
 - **SonarQube** — project and per-file measures (coverage, duplication, technical debt, A–E ratings), issue details and hotspots; shown in the Map, the Code page and the Dashboard.
 - **Subversion** — «changed since review» also works in Subversion working copies (besides Git).
 - **Languages** — Portuguese, English, French and German, including the exported HTML pages.
