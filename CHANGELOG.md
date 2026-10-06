@@ -13,6 +13,7 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
   aninhamento âmbar a partir de 4 e vermelho acima de 5.
 - **Páginas HTML exportadas:** o mapa e a checklist mostram as linhas, a complexidade, os parâmetros e o
   aninhamento de cada método, com as mesmas cores de aviso e dicas traduzidas.
+- **Painel:** dois gráficos novos, **Métodos com mais parâmetros** e **Métodos mais aninhados** (os 10 de cada).
 
 ## [1.0.1] - 2026-10-03
 

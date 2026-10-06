@@ -316,6 +316,7 @@ Uma vista de conjunto, com gráficos que seguem o tema.
   camada**, **Métodos por ficheiro** (histograma) e **Compila e Sonar por camada**.
 - **Métodos mais complexos** (os 10 com maior complexidade ciclomática) e **Complexidade dos métodos** (quantos há
   em cada nível).
+- **Métodos com mais parâmetros** e **Métodos mais aninhados** (os 10 de cada, só com valor acima de zero).
 - Passa o rato pelos gráficos para ver os valores.
 - Em janelas estreitas os cartões reorganizam-se em menos colunas.
 

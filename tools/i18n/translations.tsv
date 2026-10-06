@@ -216,6 +216,10 @@ Compila e Sonar por camada	Builds and Sonar by layer	Compile et Sonar par couche
 Ficheiros com cada marca	Files with each mark	Fichiers avec chaque marque	Dateien mit jeder Markierung
 Métodos mais complexos	Most complex methods	Méthodes les plus complexes	Komplexeste Methoden
 Os %d com maior complexidade ciclomática	The %d with the highest cyclomatic complexity	Les %d de plus forte complexité cyclomatique	Die %d mit der höchsten zyklomatischen Komplexität
+Métodos com mais parâmetros	Methods with the most parameters	Méthodes avec le plus de paramètres	Methoden mit den meisten Parametern
+Os %d com mais parâmetros	The %d with the most parameters	Les %d avec le plus de paramètres	Die %d mit den meisten Parametern
+Métodos mais aninhados	Most deeply nested methods	Méthodes les plus imbriquées	Am tiefsten verschachtelte Methoden
+Os %d com maior aninhamento de blocos	The %d with the deepest block nesting	Les %d à l'imbrication de blocs la plus profonde	Die %d mit der tiefsten Blockverschachtelung
 Complexidade	Complexity	Complexité	Komplexität
 Complexidade dos métodos	Method complexity	Complexité des méthodes	Methodenkomplexität
 Quantos métodos em cada nível (simples até 10, moderada até 20)	How many methods at each level (simple up to 10, moderate up to 20)	Combien de méthodes par niveau (simple jusqu'à 10, modérée jusqu'à 20)	Wie viele Methoden pro Stufe (einfach bis 10, mittel bis 20)
