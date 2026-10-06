@@ -189,6 +189,8 @@ begin
 end;
 
 // os ficheiros do .git sao so de leitura no Windows: sem isto a pasta nao se apaga
+// (a aplicacao e so para Windows, por isso o aviso de simbolo especifico de plataforma nao interessa aqui)
+{$WARN SYMBOL_PLATFORM OFF}
 procedure DeleteTree(const ADir: string);
 var
   F: string;
@@ -199,6 +201,7 @@ begin
     FileSetAttr(F, faNormal);
   TDirectory.Delete(ADir, True);
 end;
+{$WARN SYMBOL_PLATFORM ON}
 
 // uma frase util do que o git escreveu: a ultima linha com "fatal:" / "error:", ou a ultima linha
 function GitFailure(const AOutput: string): string;
