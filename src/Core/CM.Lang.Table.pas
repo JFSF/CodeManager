@@ -6,7 +6,7 @@
 interface
 
 const
-  LangRows: array[0..525] of array[0..3] of string = (
+  LangRows: array[0..562] of array[0..3] of string = (
   ('Projeto', 'Project', 'Projet', 'Projekt'),
   ('Mapa', 'Map', 'Carte', 'Karte'),
   ('Checklist', 'Checklist', 'Checklist', 'Checkliste'),
@@ -540,7 +540,64 @@ const
   ('Testes: DUnitX (Apache 2.0).', 'Tests: DUnitX (Apache 2.0).', 'Tests : DUnitX (Apache 2.0).', 'Tests: DUnitX (Apache 2.0).'),
   ('Ícones: Material Design Icons (Apache 2.0).', 'Icons: Material Design Icons (Apache 2.0).', 'Icônes : Material Design Icons (Apache 2.0).', 'Symbole: Material Design Icons (Apache 2.0).'),
   ('Mapa de dependências inspirado no DelphiNodeEditor (MIT, HemulGM).', 'Dependency map inspired by DelphiNodeEditor (MIT, HemulGM).', 'Carte des dépendances inspirée de DelphiNodeEditor (MIT, HemulGM).', 'Abhängigkeitskarte angelehnt an DelphiNodeEditor (MIT, HemulGM).'),
-  ('Os avisos completos estão em THIRD-PARTY-NOTICES.md, no repositório.', 'The full notices are in THIRD-PARTY-NOTICES.md, in the repository.', 'Les avis complets sont dans THIRD-PARTY-NOTICES.md, dans le dépôt.', 'Die vollständigen Hinweise stehen in THIRD-PARTY-NOTICES.md im Repository.')
+  ('Os avisos completos estão em THIRD-PARTY-NOTICES.md, no repositório.', 'The full notices are in THIRD-PARTY-NOTICES.md, in the repository.', 'Les avis complets sont dans THIRD-PARTY-NOTICES.md, dans le dépôt.', 'Die vollständigen Hinweise stehen in THIRD-PARTY-NOTICES.md im Repository.'),
+  ('Lista de materiais de software (SBOM)', 'Software bill of materials (SBOM)', 'Nomenclature logicielle (SBOM)', 'Software-Stückliste (SBOM)'),
+  ('Componentes', 'Components', 'Composants', 'Komponenten'),
+  ('Com ficheiro encontrado', 'With file found', 'Avec fichier trouvé', 'Mit gefundener Datei'),
+  ('Da Embarcadero', 'From Embarcadero', 'D''Embarcadero', 'Von Embarcadero'),
+  ('De terceiros', 'Third-party', 'Tiers', 'Von Drittanbietern'),
+  ('Do projeto', 'From the project', 'Du projet', 'Aus dem Projekt'),
+  ('Por confirmar', 'Unconfirmed', 'Non confirmés', 'Unbestätigt'),
+  ('Campo', 'Field', 'Champ', 'Feld'),
+  ('Valor', 'Value', 'Valeur', 'Wert'),
+  ('Nome', 'Name', 'Nom', 'Name'),
+  ('Empresa', 'Company', 'Société', 'Firma'),
+  ('Descrição', 'Description', 'Description', 'Beschreibung'),
+  ('Plataforma', 'Platform', 'Plateforme', 'Plattform'),
+  ('Configuração de compilação', 'Build configuration', 'Configuration de build', 'Build-Konfiguration'),
+  ('Mapa de ligação', 'Link map', 'Fichier map', 'Link-Map'),
+  ('Resumo por origem', 'Summary by origin', 'Résumé par origine', 'Zusammenfassung nach Herkunft'),
+  ('Origem', 'Origin', 'Origine', 'Herkunft'),
+  ('Evidência', 'Evidence', 'Preuve', 'Nachweis'),
+  ('Confiança', 'Confidence', 'Confiance', 'Vertrauen'),
+  ('Pontos de atenção', 'Points of attention', 'Points d''attention', 'Hinweise'),
+  ('Projeto local', 'Local project', 'Projet local', 'Lokales Projekt'),
+  ('RTL da Embarcadero', 'Embarcadero RTL', 'RTL d''Embarcadero', 'Embarcadero-RTL'),
+  ('VCL da Embarcadero', 'Embarcadero VCL', 'VCL d''Embarcadero', 'Embarcadero-VCL'),
+  ('FMX da Embarcadero', 'Embarcadero FMX', 'FMX d''Embarcadero', 'Embarcadero-FMX'),
+  ('Terceiros', 'Third party', 'Tiers', 'Drittanbieter'),
+  ('Forte', 'Strong', 'Forte', 'Hoch'),
+  ('Média', 'Medium', 'Moyenne', 'Mittel'),
+  ('Fraca', 'Weak', 'Faible', 'Niedrig'),
+  ('Cláusula uses', 'Uses clause', 'Clause uses', 'Uses-Klausel'),
+  ('Filtrar por unit ou origem…', 'Filter by unit or origin…', 'Filtrer par unité ou origine…', 'Nach Unit oder Herkunft filtern…'),
+  ('-sbom-relatorio', '-sbom-report', '-sbom-rapport', '-sbom-bericht'),
+  ('Nada a assinalar: todos os componentes foram confirmados.', 'Nothing to flag: every component has been confirmed.', 'Rien à signaler : tous les composants sont confirmés.', 'Nichts zu beanstanden: Alle Komponenten wurden bestätigt.'),
+  ('Units de terceiros sem ficheiro encontrado: só se conhecem pelo nome. Acrescenta as pastas das bibliotecas aos caminhos de procura do projeto para as confirmar.', 'Third-party units with no file found: they are only known by name. Add the library folders to the project search paths to confirm them.', 
+      'Unités tierces sans fichier trouvé : on ne les connaît que par leur nom. Ajoute les dossiers des bibliothèques aux chemins de recherche du projet pour les confi'
+    + 'rmer.', 
+      'Drittanbieter-Units ohne gefundene Datei: Sie sind nur dem Namen nach bekannt. Füge die Bibliotheksordner zu den Suchpfaden des Projekts hinzu, um sie zu bestät'
+    + 'igen.'),
+  ('Como ler este relatório', 'How to read this report', 'Comment lire ce rapport', 'So lesen Sie diesen Bericht'),
+  ('Um SBOM lista o que entra no teu software: aqui, as units que o projeto usa e de onde vêm.', 'An SBOM lists what goes into your software: here, the units the project uses and where they come from.', 'Une SBOM liste ce qui entre dans ton logiciel : ici, les unités que le projet utilise et d''où elles viennent.', 'Eine SBOM listet auf, was in deiner Software steckt: hier die Units, die das Projekt verwendet, und woher sie stammen.'),
+  (
+      'Confiança forte: o ficheiro da unit foi encontrado (e tem hash SHA-256). Média: só se conhece pelo nome, mas é uma biblioteca da Embarcadero. Fraca: só se conhe'
+    + 'ce pelo nome e não se sabe de onde vem.', 
+      'Strong confidence: the unit file was found (and has a SHA-256 hash). Medium: it is only known by name, but it is an Embarcadero library. Weak: it is only known '
+    + 'by name and where it comes from is unknown.', 
+      'Confiance forte : le fichier de l''unité a été trouvé (et a un hash SHA-256). Moyenne : on ne la connaît que par son nom, mais c''est une bibliothèque d''Embarcade'
+    + 'ro. Faible : on ne la connaît que par son nom et on ignore d''où elle vient.', 
+      'Hohes Vertrauen: Die Datei der Unit wurde gefunden (und hat einen SHA-256-Hash). Mittel: Sie ist nur dem Namen nach bekannt, aber eine Embarcadero-Bibliothek. N'
+    + 'iedrig: Sie ist nur dem Namen nach bekannt, ihre Herkunft ist unbekannt.'),
+  (
+      'O relatório vem da análise do código-fonte (cláusulas uses e .dproj), sem compilar: uma unit referenciada pode não ficar no executável. Com um ficheiro .map as '
+    + 'units realmente ligadas ficam confirmadas.', 
+      'The report comes from analysing the source code (uses clauses and .dproj), without compiling: a referenced unit may not end up in the executable. With a .map fi'
+    + 'le, the units actually linked are confirmed.', 
+      'Le rapport provient de l''analyse du code source (clauses uses et .dproj), sans compiler : une unité référencée peut ne pas finir dans l''exécutable. Avec un fich'
+    + 'ier .map, les unités réellement liées sont confirmées.', 
+      'Der Bericht stammt aus der Analyse des Quellcodes (Uses-Klauseln und .dproj), ohne zu kompilieren: Eine referenzierte Unit landet möglicherweise nicht in der au'
+    + 'sführbaren Datei. Mit einer .map-Datei werden die tatsächlich gebundenen Units bestätigt.')
   );
 
   // trocos dos modelos HTML (res/templates), por ordem de leitura

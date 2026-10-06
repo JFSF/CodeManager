@@ -19,7 +19,7 @@ implementation
 
 uses
   System.Classes, System.IOUtils, System.Math, System.Generics.Collections, System.Generics.Defaults,
-  CM.Lang, CM.Analyzer;
+  CM.Lang, CM.Analyzer, CM.HtmlLang;
 
 const
   // medidas do mapa em SVG (as mesmas do mapa da aplicacao)
@@ -231,115 +231,6 @@ end;
 
 { HTML + SVG }
 
-type
-  // as frases fixas da pagina: cada elemento traduzivel leva data-k com o indice da frase na tabela, e a tabela com a
-  // frase nos quatro idiomas vai embutida na pagina (o seletor de idioma troca o texto sem recarregar)
-  TStrTable = class
-  private
-    FKeys: TList<string>;
-  public
-    constructor Create;
-    destructor Destroy; override;
-    function Idx(const APt: string): Integer;
-    // <ATag ...AAttrs data-k="n">frase no idioma activo</ATag>
-    function El(const ATag, APt: string; const AAttrs: string = ''): string;
-    // data-k="n" para um elemento cujo texto o chamador escreve
-    function Attr(const APt: string): string;
-    // {"pt":[...],"en":[...],"fr":[...],"de":[...]} (JavaScript)
-    function Json: string;
-  end;
-
-constructor TStrTable.Create;
-begin
-  inherited;
-  FKeys := TList<string>.Create;
-end;
-
-destructor TStrTable.Destroy;
-begin
-  FKeys.Free;
-  inherited;
-end;
-
-function TStrTable.Idx(const APt: string): Integer;
-begin
-  Result := FKeys.IndexOf(APt);
-  if Result < 0 then
-    Result := FKeys.Add(APt);
-end;
-
-function TStrTable.Attr(const APt: string): string;
-begin
-  Result := 'data-k="' + IntToStr(Idx(APt)) + '"';
-end;
-
-function TStrTable.El(const ATag, APt, AAttrs: string): string;
-begin
-  Result := '<' + ATag + ' ';
-  if AAttrs <> '' then
-    Result := Result + AAttrs + ' ';
-  Result := Result + Attr(APt) + '>' + HtmlEsc(Tr(APt)) + '</' + ATag + '>';
-end;
-
-// texto entre aspas para JavaScript (e sem nenhum "<" para nunca fechar o <script>)
-function JsLit(const AText: string): string;
-var
-  C: Char;
-  SB: TStringBuilder;
-begin
-  SB := TStringBuilder.Create;
-  try
-    SB.Append('"');
-    for C in AText do
-      case C of
-        '"': SB.Append('\"');
-        '\': SB.Append('\\');
-        #10: SB.Append('\n');
-        #13: SB.Append('\r');
-        #9: SB.Append('\t');
-        '<': SB.Append('\u003c');
-      else
-        if C < ' ' then
-          SB.Append('\u').Append(IntToHex(Ord(C), 4))
-        else
-          SB.Append(C);
-      end;
-    SB.Append('"');
-    Result := SB.ToString;
-  finally
-    SB.Free;
-  end;
-end;
-
-function TStrTable.Json: string;
-var
-  SB: TStringBuilder;
-  L: TLang;
-  I: Integer;
-begin
-  SB := TStringBuilder.Create;
-  try
-    SB.Append('{');
-    for L := Low(TLang) to High(TLang) do
-    begin
-      if L > Low(TLang) then
-        SB.Append(',');
-      SB.Append('"').Append(LangCodes[L]).Append('":[');
-      for I := 0 to FKeys.Count - 1 do
-      begin
-        if I > 0 then
-          SB.Append(',');
-        SB.Append(JsLit(TranslateTo(L, FKeys[I])));
-      end;
-      SB.Append(']');
-    end;
-    SB.Append('}');
-    Result := SB.ToString;
-  finally
-    SB.Free;
-  end;
-end;
-
 const
   HtmlCss =
     ':root{--bg:#f6f7f4;--surface:#fff;--surface2:#eef0eb;--border:#dcded7;--text:#1b1d1a;--dim:#5a5f58;--faint:#8b908a;' +
@@ -371,11 +262,8 @@ const
     'svg.sel .node.on,svg.sel .node.src,svg.sel .node.dst{opacity:1}svg .edge.out{stroke:var(--accent);stroke-opacity:1;stroke-width:2.2}' +
     'svg .edge.in{stroke:var(--blue);stroke-opacity:1;stroke-width:2.2}svg .node.on rect.b{stroke:var(--accent);stroke-width:2}' +
     'svg .node.src rect.b{stroke:var(--blue);stroke-width:2}svg .node.dst rect.b{stroke:var(--accent);stroke-width:2}' +
-    '.names{color:var(--dim);font-family:Consolas,monospace;font-size:12.5px}' +
-    '.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}' +
-    '.lang{display:flex;gap:4px}.lang button{font:600 12px "Segoe UI",system-ui,sans-serif;padding:4px 10px;' +
-    'border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--dim);cursor:pointer}' +
-    '.lang button.on{background:var(--accent2);border-color:var(--accent);color:var(--accent)}';
+    '.names{color:var(--dim);font-family:Consolas,monospace;font-size:12.5px}';
+
 
   HtmlJs =
     '(function(){var svg=document.getElementById("g");if(!svg)return;var N=svg.querySelectorAll(".node"),E=svg.querySelectorAll(".edge");' +
@@ -393,17 +281,6 @@ const
     'rows.forEach(function(r){t.tBodies[0].appendChild(r)})})})});' +
     'var f=document.getElementById("flt");if(f)f.addEventListener("input",function(){var q=f.value.toLowerCase();' +
     'document.querySelectorAll("#all tbody tr").forEach(function(r){r.style.display=r.textContent.toLowerCase().indexOf(q)<0?"none":""})});})();';
-
-  // seletor de idioma: o objecto T (frases nos quatro idiomas) e o idioma inicial vao antes deste texto
-  HtmlLangJs =
-    '(function(){function fmt(s,a){var k=0;return s.replace(/%(?:(\d+):)?d/g,function(m,i){return a[i!==undefined?+i:k++]})}' +
-    'var bs=document.querySelectorAll(".lang button");' +
-    'function ap(l){var tr=T[l];if(!tr)return;document.documentElement.lang=l;' +
-    'document.querySelectorAll("[data-k]").forEach(function(e){var s=tr[+e.dataset.k];' +
-    'if(e.dataset.a)s=fmt(s,e.dataset.a.split(","));e.textContent=(e.dataset.pre||"")+s+(e.dataset.suf||"")});' +
-    'document.querySelectorAll("[data-ph]").forEach(function(e){e.placeholder=tr[+e.dataset.ph]});' +
-    'bs.forEach(function(b){b.classList.toggle("on",b.dataset.l===l)})}' +
-    'bs.forEach(function(b){b.addEventListener("click",function(){ap(b.dataset.l)})})})();';
 
 function NodeX(N: TDepNode): Integer;
 begin
@@ -541,7 +418,6 @@ var
   MaxFan: Integer;
   Fmt: TFormatSettings;
   Tbl: TStrTable;
-  L: TLang;
 begin
   Fmt := TFormatSettings.Invariant;
   MaxFan := 1;
@@ -555,23 +431,16 @@ begin
     SB.Append('<title ').Append(Tbl.Attr('Dependências entre units')).Append(' data-pre="')
       .Append(HtmlEsc(AProjectName + ' — ')).Append('">').Append(HtmlEsc(AProjectName)).Append(' — ')
       .Append(HtmlEsc(Tr('Dependências entre units'))).AppendLine('</title>');
-    SB.Append('<style>').Append(HtmlCss).AppendLine('</style></head><body><div class="wrap">');
+    SB.Append('<style>').Append(HtmlCss).Append(LangBarCss).AppendLine('</style></head><body><div class="wrap">');
     SB.AppendLine('<div class="top"><div>');
     SB.Append('<h1 ').Append(Tbl.Attr('Dependências entre units')).Append(' data-suf="')
       .Append(HtmlEsc(' — ' + AProjectName)).Append('">').Append(HtmlEsc(Tr('Dependências entre units'))).Append(' — ')
       .Append(HtmlEsc(AProjectName)).AppendLine('</h1>');
     SB.Append('<p class="sub">').Append(Tbl.El('span', 'Gerado em: ')).Append(FormatDateTime('yyyy-mm-dd hh:nn', Now))
       .Append(' · ').Append(HtmlEsc(ARootDisplay)).AppendLine('</p>');
-    SB.AppendLine('</div><div class="lang">');
-    for L := Low(TLang) to High(TLang) do
-    begin
-      SB.Append('<button type="button" data-l="').Append(LangCodes[L]).Append('" title="').Append(HtmlEsc(LangNames[L]))
-        .Append('"');
-      if L = CurrentLang then
-        SB.Append(' class="on"');
-      SB.Append('>').Append(UpperCase(LangCodes[L])).AppendLine('</button>');
-    end;
-    SB.AppendLine('</div></div>');
+    SB.AppendLine('</div>');
+    SB.AppendLine(LangButtonsHtml);
+    SB.AppendLine('</div>');
 
     SB.AppendLine('<div class="cards">');
     AppendCard(SB, Tbl, 'Units', AGraph.Nodes.Count);
@@ -709,7 +578,7 @@ begin
         .Append(Length(N.External)).AppendLine('</td></tr>');
     end;
     SB.AppendLine('</tbody></table>');
-    SB.Append('</div><script>var T=').Append(Tbl.Json).Append(';').Append(HtmlLangJs).Append(HtmlJs)
+    SB.Append('</div><script>var T=').Append(Tbl.Json).Append(';').Append(LangSwitchJs).Append(HtmlJs)
       .AppendLine('</script></body></html>');
     Result := SB.ToString;
   finally

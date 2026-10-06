@@ -31,6 +31,8 @@ uses
   CM.Dproj in '..\src\Core\CM.Dproj.pas',
   CM.SbomResolve in '..\src\Infrastructure\CM.SbomResolve.pas',
   CM.SbomFormats in '..\src\Services\CM.SbomFormats.pas',
+  CM.HtmlLang in '..\src\Services\CM.HtmlLang.pas',
+  CM.SbomReport in '..\src\Services\CM.SbomReport.pas',
   CM.Vcs in '..\src\Infrastructure\CM.Vcs.pas',
   CM.SysInfo in '..\src\Infrastructure\CM.SysInfo.pas',
   CM.GitHub in '..\src\Infrastructure\CM.GitHub.pas',
@@ -79,6 +81,7 @@ uses
   Tests.Dproj in 'Tests.Dproj.pas',
   Tests.SbomResolve in 'Tests.SbomResolve.pas',
   Tests.SbomFormats in 'Tests.SbomFormats.pas',
+  Tests.SbomReport in 'Tests.SbomReport.pas',
   Tests.Colors in 'Tests.Colors.pas',
   Tests.Appearance in 'Tests.Appearance.pas',
   Tests.AppInfo in 'Tests.AppInfo.pas';
