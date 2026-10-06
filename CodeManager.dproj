@@ -108,6 +108,7 @@
         <DCCReference Include="src\Infrastructure\CM.Svn.pas"/>
         <DCCReference Include="src\Infrastructure\CM.Hg.pas"/>
         <DCCReference Include="src\Core\CM.WidthShare.pas"/>
+        <DCCReference Include="src\Core\CM.Sbom.pas"/>
         <DCCReference Include="src\Infrastructure\CM.Vcs.pas"/>
         <DCCReference Include="src\Infrastructure\CM.SysInfo.pas"/>
         <DCCReference Include="src\Infrastructure\CM.GitHub.pas"/>
