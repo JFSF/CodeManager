@@ -6,6 +6,10 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
 
 ## [Não lançado]
 
+## [1.0.3] - 2026-10-06
+
+Lista de materiais de software (SBOM) em CycloneDX e SPDX.
+
 ### Funcionalidades
 
 - **SBOM:** nova página que gera a **lista de materiais de software** do projeto a partir do código-fonte e do `.dproj`
@@ -126,7 +130,8 @@ Primeira versão pública.
 - Mais de 490 testes DUnitX (incluindo os da integração com o Git, contra um repositório temporário real).
 - Contraste do texto com pelo menos 4,5:1 nos dois temas.
 
-[Não lançado]: https://github.com/JFSF/CodeManager/compare/v1.0.2...HEAD
+[Não lançado]: https://github.com/JFSF/CodeManager/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/JFSF/CodeManager/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/JFSF/CodeManager/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/JFSF/CodeManager/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/JFSF/CodeManager/releases/tag/v1.0.0

@@ -83,19 +83,14 @@ the theme. The application **only reads** the project it analyses. Your progress
 
 ## Changes
 
-What changed in **version 1.0.2** (the full history is in the [changelog](CHANGELOG.md), in Portuguese):
+What changed in **version 1.0.3** (the full history is in the [changelog](CHANGELOG.md), in Portuguese):
 
 **New**
-- **Mercurial** — «changed since review» also works in Mercurial repositories (with the command-line `hg`, for example the one from TortoiseHg), besides Git and Subversion.
-- **Cognitive complexity** — a new per-method measure (`cg`) of how hard the code is to *read*, not just how many paths it has; on the Map, the Checklist, the tooltip, the Dashboard, the HTML pages, CSV and JSON.
-- **Dependency report in four languages** — the HTML page carries its phrases in Portuguese, English, French and German and switches language inside the page.
-
-**Improvements**
-- **Parameters and nesting** — now also next to the lines and complexity on the Map and the Checklist (with a warning colour), in the exported HTML pages and in two new Dashboard charts.
-- **Languages reviewed** — German and French, page by page: long button labels are no longer cut off, the Dashboard axis writes the months in the active language and less text is left untranslated.
+- **SBOM** — a new page with the project's **software bill of materials**: the outside units it uses, where each one comes from (Embarcadero or third party), how sure we are about each, and the **SHA-256** of the files. It starts from the source code and the `.dproj`, without compiling, and uses the `.map` file if there is one. It exports **CycloneDX 1.5** and **SPDX 2.3** (JSON) and a report in HTML (four languages, with a switcher in the page) or Markdown. Adapts ideas from [DX.Comply](https://github.com/omonien/DX.Comply) (MIT, Olaf Monien).
 
 **Behind the scenes**
-- About 60 new automated tests (now over 740), including tests against a real Mercurial repository.
+- About 130 new automated tests (now over 870), including reading the `.dproj` and the `.map`, resolving files, and the writers and validators of the formats.
+- The dependency report and the SBOM share the four-language phrase mechanism.
 - Updated documentation and images.
 
 ## Documentation (Portuguese)

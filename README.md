@@ -215,19 +215,14 @@ aplicação **só lê** os ficheiros do projeto analisado.
 
 ## Alterações
 
-O que mudou na **versão 1.0.2** (a lista completa, versão a versão, está no [registo de alterações](CHANGELOG.md)):
+O que mudou na **versão 1.0.3** (a lista completa, versão a versão, está no [registo de alterações](CHANGELOG.md)):
 
-**Novidades**
-- **Mercurial** — «alterado desde a revisão» também em repositórios Mercurial (com o `hg` da linha de comandos, por exemplo o do TortoiseHg), além do Git e do Subversion.
-- **Complexidade cognitiva** — nova medida por método (`cg`), que mede o esforço de *ler* o código e não só quantos caminhos tem; no Mapa, na Checklist, na dica, no Painel, nas páginas HTML, no CSV e no JSON.
-- **Relatório de dependências em quatro idiomas** — a página HTML leva as frases em português, inglês, francês e alemão e troca de idioma na própria página.
-
-**Melhorias**
-- **Parâmetros e aninhamento** — agora também ao lado das linhas e da complexidade no Mapa e na Checklist (com cor de aviso), nas páginas HTML exportadas e em dois gráficos novos do Painel.
-- **Idiomas revistos** — alemão e francês página a página: botões de texto comprido já não ficam cortados, o eixo do Painel escreve os meses no idioma ativo e há menos texto por traduzir.
+**Novidade**
+- **SBOM** — nova página com a **lista de materiais de software** do projeto: as units de fora que usa, de onde vem cada uma (Embarcadero ou terceiros), a confiança de cada uma e o **SHA-256** dos ficheiros. Parte do código-fonte e do `.dproj`, sem compilar, e usa o ficheiro `.map` se existir. Exporta **CycloneDX 1.5** e **SPDX 2.3** (JSON) e um relatório em HTML (quatro idiomas, com seletor na página) ou Markdown. Adapta ideias do [DX.Comply](https://github.com/omonien/DX.Comply) (MIT, Olaf Monien).
 
 **Nos bastidores**
-- Cerca de 60 testes novos (agora mais de 740), incluindo testes contra um repositório Mercurial real.
+- Cerca de 130 testes novos (agora mais de 870), incluindo a leitura do `.dproj` e do `.map`, a resolução de ficheiros e os escritores e validadores dos formatos.
+- O relatório de dependências e a SBOM partilham o mecanismo de frases em quatro idiomas.
 - Documentação e imagens atualizadas.
 
 ## Documentação
@@ -243,7 +238,7 @@ O que mudou na **versão 1.0.2** (a lista completa, versão a versão, está no 
 
 ## Estado do projeto
 
-Versão **1.0.2**. Em desenvolvimento ativo, desenvolvido e testado em **Windows / Win64** com **Delphi 13**. Mais de 740 testes
+Versão **1.0.3**. Em desenvolvimento ativo, desenvolvido e testado em **Windows / Win64** com **Delphi 13**. Mais de 870 testes
 automáticos cobrem o motor, as exportações, o vigia e as regras de arquitetura; a interface é verificada com o
 [modo de desenvolvimento](docs/DESENVOLVIMENTO.md#modo-de-desenvolvimento---dev).
 

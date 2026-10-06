@@ -1,7 +1,7 @@
 """Gera o cartaz de divulgacao (1600 x 900) a partir das capturas de docs/images.
 
-    python tools/make-cartaz.py 1.0.2 pt     -> docs/divulgacao/cartaz-1.0.2.png
-    python tools/make-cartaz.py 1.0.2 en     -> docs/divulgacao/cartaz-1.0.2-en.png
+    python tools/make-cartaz.py 1.0.3 pt     -> docs/divulgacao/cartaz-1.0.3.png
+    python tools/make-cartaz.py 1.0.3 en     -> docs/divulgacao/cartaz-1.0.3-en.png
 
 Precisa do Pillow e das fontes Segoe UI do Windows. Os textos de cada idioma estao em TEXTS; ao mudar de versao
 actualiza-os (as novidades vem do CHANGELOG) e escolhe as duas capturas em SHOTS.
@@ -16,31 +16,31 @@ FONTS = r'C:\Windows\Fonts'
 W, H = 1600, 900
 
 # a captura de tras e a da frente (dentro de docs/images)
-SHOTS = ('10-mapa-metricas.png', '20-relatorio-dependencias.png')
+SHOTS = ('21-sbom.png', '22-sbom-relatorio.png')
 
 TEXTS = {
     'pt': {
-        'subtitle': 'Mais métricas e o Mercurial',
+        'subtitle': 'Lista de materiais de software',
         'headline': ['Mapa e checklist de', 'código-fonte Delphi'],
         'bullets': [
-            'Complexidade cognitiva por método',
-            'Parâmetros e aninhamento no Mapa e no Painel',
-            'Mercurial, Git e Subversion: o que mudou',
-            'Relatório de dependências em 4 idiomas',
-            'Traduções revistas · PT · EN · FR · DE',
+            'SBOM: CycloneDX 1.5 e SPDX 2.3',
+            'Origem e confiança de cada unit',
+            'SHA-256 dos ficheiros achados',
+            'Usa o ficheiro .map, se existir',
+            'Relatório em PT · EN · FR · DE',
         ],
         'footer': ['Windows 10/11', 'gratuito', 'código aberto'],
         'suffix': '',
     },
     'en': {
-        'subtitle': 'More metrics and Mercurial',
+        'subtitle': 'Software bill of materials',
         'headline': ['Delphi source-code', 'map and checklist'],
         'bullets': [
-            'Cognitive complexity per method',
-            'Parameters and nesting on Map and Dashboard',
-            'Mercurial, Git and Subversion: what changed',
-            'Dependency report in 4 languages',
-            'Translations reviewed · PT · EN · FR · DE',
+            'SBOM: CycloneDX 1.5 and SPDX 2.3',
+            'Origin and confidence of each unit',
+            'SHA-256 of the files found',
+            'Uses the .map file, if any',
+            'Report in PT · EN · FR · DE',
         ],
         'footer': ['Windows 10/11', 'free', 'open source'],
         'suffix': '-en',
@@ -81,7 +81,7 @@ def card(path, width):
 
 
 def main():
-    version = sys.argv[1] if len(sys.argv) > 1 else '1.0.2'
+    version = sys.argv[1] if len(sys.argv) > 1 else '1.0.3'
     lang = sys.argv[2] if len(sys.argv) > 2 else 'pt'
     t = TEXTS[lang]
     img = gradient().convert('RGBA')
