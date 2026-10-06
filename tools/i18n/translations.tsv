@@ -617,6 +617,31 @@ Não se encontrou o ficheiro .dproj: a versão e os caminhos de procura ficam po
 Não se encontrou a instalação do Delphi: as units da Embarcadero só se reconhecem pelo nome.	The Delphi installation was not found: Embarcadero units are only recognised by name.	L'installation de Delphi est introuvable : les unités d'Embarcadero ne sont reconnues que par leur nom.	Die Delphi-Installation wurde nicht gefunden: Embarcadero-Units werden nur am Namen erkannt.
 Não se encontrou o ficheiro .map: compila o projeto com o mapa «Detailed» para confirmar as units ligadas.	The .map file was not found: build the project with a "Detailed" map to confirm the linked units.	Le fichier .map est introuvable : compile le projet avec une map « Detailed » pour confirmer les unités liées.	Die .map-Datei wurde nicht gefunden: Kompiliere das Projekt mit einer „Detailed“-Map, um die gebundenen Units zu bestätigen.
 SBOM inspirado no DX.Comply (MIT, Olaf Monien).	SBOM inspired by DX.Comply (MIT, Olaf Monien).	SBOM inspirée de DX.Comply (MIT, Olaf Monien).	SBOM inspiriert von DX.Comply (MIT, Olaf Monien).
+# --- Classes e heranca
+classe	class	classe	Klasse
+interface	interface	interface	Schnittstelle
+objeto	object	objet	Objekt
+record	record	record	Record
+Profundidade	Depth	Profondeur	Tiefe
+Filhas	Children	Filles	Unterklassen
+Classes e herança	Classes and inheritance	Classes et héritage	Klassen und Vererbung
+Classes	Classes	Classes	Klassen
+Interfaces	Interfaces	Interfaces	Schnittstellen
+Records	Records	Records	Records
+Profundidade máxima	Maximum depth	Profondeur maximale	Maximale Tiefe
+Profundidade média	Average depth	Profondeur moyenne	Durchschnittliche Tiefe
+Com profundidade mínima (cadeia externa desconhecida)	With a minimum depth (unknown external chain)	Avec une profondeur minimale (chaîne externe inconnue)	Mit Mindesttiefe (unbekannte externe Kette)
+Classes mais profundas	Deepest classes	Classes les plus profondes	Tiefste Klassen
+Classes com mais filhas	Classes with the most children	Classes avec le plus de filles	Klassen mit den meisten Unterklassen
+Árvore de herança	Inheritance tree	Arbre d'héritage	Vererbungsbaum
+Um «>=» na profundidade quer dizer que a classe herda de uma classe de fora do projeto de que não se conhece a cadeia: a profundidade real é, pelo menos, essa.	A «>=» in the depth means the class inherits from a class outside the project whose chain is unknown: the real depth is at least that.	Un «>=» dans la profondeur signifie que la classe hérite d'une classe extérieure au projet dont la chaîne est inconnue : la profondeur réelle est au moins celle-ci.	Ein «>=» bei der Tiefe bedeutet, dass die Klasse von einer Klasse außerhalb des Projekts erbt, deren Kette unbekannt ist: die tatsächliche Tiefe ist mindestens so groß.
+sim	yes	oui	ja
+não	no	non	nein
+Ancestral	Ancestor	Ancêtre	Vorfahre
+Exata	Exact	Exacte	Exakt
+Profundidade no projeto	Depth in the project	Profondeur dans le projet	Tiefe im Projekt
+Descendentes	Descendants	Descendants	Nachfahren
+Linha	Line	Ligne	Zeile
 #!html
 # Textos dos modelos HTML (res\templates): cada chave e um troco exacto do modelo; so se aplicam ao modelo, antes de
 # se preencherem os marcadores __XXX__. Nas traducoes nao se usam aspas ASCII duplas (estao em strings JS e atributos).

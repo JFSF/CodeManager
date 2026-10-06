@@ -116,6 +116,7 @@
         <DCCReference Include="src\Infrastructure\CM.SbomResolve.pas"/>
         <DCCReference Include="src\Services\CM.SbomFormats.pas"/>
         <DCCReference Include="src\Services\CM.HtmlLang.pas"/>
+        <DCCReference Include="src\Services\CM.ClassReport.pas"/>
         <DCCReference Include="src\Services\CM.SbomReport.pas"/>
         <DCCReference Include="src\Services\CM.SbomService.pas"/>
         <DCCReference Include="src\Infrastructure\CM.Vcs.pas"/>

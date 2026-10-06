@@ -26,6 +26,7 @@ uses
   CM.SbomResolve in 'src\Infrastructure\CM.SbomResolve.pas',
   CM.SbomFormats in 'src\Services\CM.SbomFormats.pas',
   CM.HtmlLang in 'src\Services\CM.HtmlLang.pas',
+  CM.ClassReport in 'src\Services\CM.ClassReport.pas',
   CM.SbomReport in 'src\Services\CM.SbomReport.pas',
   CM.SbomService in 'src\Services\CM.SbomService.pas',
   CM.Vcs in 'src\Infrastructure\CM.Vcs.pas',
