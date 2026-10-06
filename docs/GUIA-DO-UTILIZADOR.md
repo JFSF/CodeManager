@@ -302,6 +302,88 @@ A página HTML nasce no idioma da aplicação, mas leva as frases em **portuguê
 filtro), sem recarregar e sem servidor. Os nomes das units, das camadas e do projeto não se traduzem. Assim podes
 enviar o relatório a quem lê noutro idioma. O Markdown continua a seguir só o idioma da aplicação.
 
+## SBOM
+
+Uma **SBOM** (*software bill of materials*, lista de materiais de software) lista o que entra no teu programa. A página
+**SBOM** mostra as units de fora que o projeto usa (da Embarcadero e de terceiros), de onde vem cada uma e com que
+confiança, e exporta-as nos formatos padrão. Serve auditorias e o **Cyber Resilience Act** da União Europeia, que pede
+esta documentação a quem fabrica software.
+
+![SBOM do próprio CodeManager](images/21-sbom.png)
+
+### O que mostra
+
+- A **lista** de componentes: a unit, a **origem** (RTL, VCL ou FMX da Embarcadero, ou de terceiros), a **confiança**,
+  quantas units do projeto a usam e o início do SHA-256 do ficheiro. A dica de cada linha traz os pormenores (quem a usa,
+  a evidência, o ficheiro, o hash completo). A pesquisa (tecla `/`) filtra por unit ou origem.
+- O **resumo**: componentes, quantos têm ficheiro encontrado, da Embarcadero, de terceiros, do projeto, por confirmar e,
+  com mapa, os que ficam fora dele.
+
+### De onde vem a informação
+
+O CodeManager **não compila** nada. Parte do código-fonte:
+
+1. As **cláusulas `uses`** (as mesmas do Grafo) dizem que units de fora o projeto usa.
+2. O **`.dproj`** (procurado na pasta do projeto e nas de cima) dá o nome, a versão (`FileVersion`), a empresa, a
+   configuração (a que se entrega: `Release`), a plataforma, os caminhos de procura e os espaços de nomes. As variáveis
+   `$(Nome)` expandem-se com o ambiente, as **variáveis do IDE** (Ferramentas › Opções › Variáveis de ambiente) e os
+   valores por omissão que o próprio `.dproj` define.
+3. Cada unit procura-se nos caminhos do `.dproj`, nas **fontes do Delphi** (`source\`) e nos caminhos da biblioteca do
+   IDE. A instalação do Delphi vem da variável `BDS` ou, se não existir, do registo (a mais recente). Uma unit achada
+   fica com o ficheiro e o **SHA-256**; uma biblioteca copiada para a pasta do projeto (`libs\`, `modules\`) conta como
+   terceiros, não como código do projeto. O DUnitX, o Indy e o Skia, apesar de virem com o Delphi, também são de terceiros.
+
+A **confiança** diz quanto se sabe de cada componente:
+
+| Confiança | Quer dizer |
+|---|---|
+| **Forte** | o ficheiro da unit foi encontrado (e tem hash) |
+| **Média** | só se conhece pelo nome, mas é uma biblioteca da Embarcadero |
+| **Fraca** | só se conhece pelo nome e não se sabe de onde vem (acrescenta a pasta da biblioteca aos caminhos de procura) |
+
+### O ficheiro `.map` (opcional)
+
+Sem compilar, a lista pode incluir units que não chegam ao executável e não tem as que as bibliotecas usam entre si. Um
+**mapa detalhado** resolve isso: compila o projeto uma vez com **Projeto › Opções › Compilador Delphi › Ligação ›
+Ficheiro de mapa: Detalhado** (ou `DCC_MapFile=3`). O CodeManager procura-o em `DCC_ExeOutput\<nome>.map` (ou na pasta da
+plataforma e da configuração). Com ele, o SBOM:
+
+- **confirma** as units realmente ligadas ao executável (a evidência passa a *Mapa de ligação*);
+- **acrescenta** as units que ninguém nomeia no código (o que a RTL e as bibliotecas usam entre si);
+- assinala as units referenciadas que **ficam fora do mapa** (podem não estar no executável).
+
+### Opções
+
+| Opção | O que faz |
+|---|---|
+| **Incluir as units do projeto** | lista também o teu próprio código (por omissão não: o SBOM é das dependências) |
+| **Confirmar com o ficheiro .map** | usa o mapa, se existir |
+| **Calcular os hashes SHA-256** | desliga-se para uma geração mais rápida |
+| **Gerar de novo** | volta a gerar (também acontece sozinho quando a análise ou as opções mudam) |
+
+### Exportar
+
+- **CycloneDX (JSON)** — CycloneDX 1.5 (`.cdx.json`).
+- **SPDX (JSON)** — SPDX 2.3 (`.spdx.json`).
+- **Relatório HTML** — uma página autónoma com o resumo, os pontos de atenção e todos os componentes (tabela ordenável e
+  filtro), **nos quatro idiomas** com um seletor na própria página.
+- **Markdown** — o mesmo relatório em texto.
+
+![Relatório HTML da SBOM](images/22-sbom-relatorio.png)
+
+Os dois ficheiros JSON são **validados** antes de se gravarem (campos obrigatórios, referências, identificadores únicos e
+hashes). **Nenhum caminho completo** vai para os ficheiros (só nomes de ficheiros e, nas units do projeto, o caminho
+relativo), para não mostrar a estrutura das tuas pastas.
+
+### Limites
+
+- O SBOM é de **units**, não de pacotes: o Delphi não guarda versões nem licenças nas units, por isso o fornecedor só se
+  indica para a Embarcadero e as licenças ficam `NOASSERTION` (não declaradas).
+- Sem `.map` a lista vem das cláusulas `uses` e pode não coincidir exatamente com o executável.
+- É só leitura: nunca altera o projeto.
+
+A ideia e as regras de classificação adaptam o [DX.Comply](https://github.com/omonien/DX.Comply) (MIT, Olaf Monien).
+
 ## Código
 
 Lê o código-fonte de uma unit sem sair da aplicação, em **modo de leitura** (nunca edita nada).
@@ -420,8 +502,8 @@ A última opção da barra lateral, **Acerca** (o «i»), mostra a aplicação p
 - **Copiar informação** põe na área de transferência um texto de diagnóstico (versão, compilação, sistema, idioma,
   tema, pasta de dados, Git, Subversion e Mercurial) para colares numa *issue*. Não leva nomes de projetos, caminhos de código
   nem credenciais.
-- **Licença e créditos:** a licença MIT e o software de terceiros (Chart4D, DUnitX, ícones Material Design e o
-  DelphiNodeEditor, que inspirou o Grafo); os avisos completos estão em `THIRD-PARTY-NOTICES.md`.
+- **Licença e créditos:** a licença MIT e o software de terceiros (Chart4D, DUnitX, ícones Material Design, o
+  DelphiNodeEditor, que inspirou o Grafo, e o DX.Comply, que inspirou a SBOM); os avisos completos estão em `THIRD-PARTY-NOTICES.md`.
 
 ## Tema claro e escuro
 

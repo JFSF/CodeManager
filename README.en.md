@@ -22,6 +22,7 @@ a document describing what the project *should* contain, it compares the two.
 ## Features
 
 - **Map** — the folder → file → method tree, with search, statistics and the **lines, complexity (cyclomatic and cognitive), parameters and nesting** of each method.
+- **SBOM** — the project's software bill of materials (which outside units it uses, where they come from and how sure we are), exported as **CycloneDX** and **SPDX**, plus a report in four languages.
 - **Checklist** — mark what you reviewed, what is under review or needs changes, what compiles, what passed Sonar, what is a priority; add notes. In a Git or Mercurial repository, or a Subversion working copy, it flags the files that changed since you reviewed them; SonarQube is optional and per user.
   A file is *done* when **all its methods** are reviewed.
 - **Graph** — a visual map of the dependencies between units (from the `uses` clauses): levels, layer colours, coupling, **cycles**, and an HTML (SVG map) or Markdown report.

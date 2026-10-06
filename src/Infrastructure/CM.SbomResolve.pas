@@ -336,6 +336,21 @@ begin
   end;
 end;
 
+const
+  // bibliotecas de terceiros que vem dentro da instalacao do Delphi (pastas de source\): continuam a ser de terceiros
+  ShippedThirdParty: array[0..6] of string = ('dunitx', 'dunit', 'indy10', 'indy', 'indyimpl', 'skia', 'flatbox2d');
+
+function IsShippedThirdParty(const APath: string): Boolean;
+var
+  Lower, Folder: string;
+begin
+  Lower := LowerCase(APath);
+  for Folder in ShippedThirdParty do
+    if Pos('\source\' + Folder + '\', Lower) > 0 then
+      Exit(True);
+  Result := False;
+end;
+
 // de quem e uma unit de fora do codigo analisado: da Embarcadero (se o ficheiro esta dentro da instalacao) ou de terceiros.
 // As units do proprio projecto ja estao no grafo; uma que apareca noutra pasta, mesmo dentro da do projecto (uma biblioteca
 // copiada para libs\ ou modules\), e uma dependencia
@@ -343,7 +358,7 @@ function OriginOfPath(const APath, AUnitName, ADelphiRoot: string): TSbomOrigin;
 var
   Lower: string;
 begin
-  if IsUnderFolder(APath, ADelphiRoot) then
+  if IsUnderFolder(APath, ADelphiRoot) and not IsShippedThirdParty(APath) then
   begin
     Lower := LowerCase(APath);
     if SameText(Copy(AUnitName, 1, 4), 'Vcl.') or (Pos('\source\vcl\', Lower) > 0) then

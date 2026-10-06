@@ -6,7 +6,7 @@
 interface
 
 const
-  LangRows: array[0..584] of array[0..3] of string = (
+  LangRows: array[0..585] of array[0..3] of string = (
   ('Projeto', 'Project', 'Projet', 'Projekt'),
   ('Mapa', 'Map', 'Carte', 'Karte'),
   ('Checklist', 'Checklist', 'Checklist', 'Checkliste'),
@@ -619,7 +619,8 @@ const
   ('Aguarde: o SBOM ainda não está pronto.', 'Wait: the SBOM is not ready yet.', 'Patiente : la SBOM n''est pas encore prête.', 'Bitte warten: Die SBOM ist noch nicht fertig.'),
   ('Não se encontrou o ficheiro .dproj: a versão e os caminhos de procura ficam por preencher.', 'The .dproj file was not found: the version and the search paths stay empty.', 'Le fichier .dproj est introuvable : la version et les chemins de recherche restent vides.', 'Die .dproj-Datei wurde nicht gefunden: Version und Suchpfade bleiben leer.'),
   ('Não se encontrou a instalação do Delphi: as units da Embarcadero só se reconhecem pelo nome.', 'The Delphi installation was not found: Embarcadero units are only recognised by name.', 'L''installation de Delphi est introuvable : les unités d''Embarcadero ne sont reconnues que par leur nom.', 'Die Delphi-Installation wurde nicht gefunden: Embarcadero-Units werden nur am Namen erkannt.'),
-  ('Não se encontrou o ficheiro .map: compila o projeto com o mapa «Detailed» para confirmar as units ligadas.', 'The .map file was not found: build the project with a "Detailed" map to confirm the linked units.', 'Le fichier .map est introuvable : compile le projet avec une map « Detailed » pour confirmer les unités liées.', 'Die .map-Datei wurde nicht gefunden: Kompiliere das Projekt mit einer „Detailed“-Map, um die gebundenen Units zu bestätigen.')
+  ('Não se encontrou o ficheiro .map: compila o projeto com o mapa «Detailed» para confirmar as units ligadas.', 'The .map file was not found: build the project with a "Detailed" map to confirm the linked units.', 'Le fichier .map est introuvable : compile le projet avec une map « Detailed » pour confirmer les unités liées.', 'Die .map-Datei wurde nicht gefunden: Kompiliere das Projekt mit einer „Detailed“-Map, um die gebundenen Units zu bestätigen.'),
+  ('SBOM inspirado no DX.Comply (MIT, Olaf Monien).', 'SBOM inspired by DX.Comply (MIT, Olaf Monien).', 'SBOM inspirée de DX.Comply (MIT, Olaf Monien).', 'SBOM inspiriert von DX.Comply (MIT, Olaf Monien).')
   );
 
   // trocos dos modelos HTML (res/templates), por ordem de leitura

@@ -6,6 +6,16 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
 
 ## [Não lançado]
 
+### Funcionalidades
+
+- **SBOM:** nova página que gera a **lista de materiais de software** do projeto a partir do código-fonte e do `.dproj`
+  (sem compilar): as units de fora que o projeto usa, a origem de cada uma (RTL, VCL, FMX da Embarcadero ou terceiros), a
+  evidência e a confiança (forte, média, fraca) e o SHA-256 dos ficheiros achados. Usa o ficheiro `.map` se existir
+  (confirma as units ligadas, acrescenta as que só o mapa conhece e assinala as que ficam fora). Exporta **CycloneDX 1.5**
+  e **SPDX 2.3** (JSON, validados antes de gravar) e um **relatório** HTML (quatro idiomas, com seletor na página) ou
+  Markdown. Nenhum caminho completo vai para os ficheiros. Adapta ideias e regras do
+  [DX.Comply](https://github.com/omonien/DX.Comply) (MIT, Olaf Monien).
+
 ## [1.0.2] - 2026-10-06
 
 Mercurial, complexidade cognitiva, mais métricas por método e relatório de dependências em quatro idiomas.

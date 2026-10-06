@@ -24,6 +24,7 @@ type
     [Test] procedure EmbarcaderoUnitsAreFoundInTheDelphiSource;
     [Test] procedure VclAndFmxAreToldApartByNameOrFolder;
     [Test] procedure OldNamesWithoutNamespaceUseTheScopes;
+    [Test] procedure LibrariesShippedWithDelphiStayThirdParty;
     [Test] procedure ThirdPartyIsFoundInTheProjectSearchPaths;
     [Test] procedure PasIsPreferredOverDcu;
     [Test] procedure DcuIsTheFallback;
@@ -141,6 +142,25 @@ begin
   FOptions.Namespaces := ['Vcl'];
   ResolveSbom(FSbom, FOptions);
   Assert.AreEqual(FDir.Full('delphi/source/vcl/Vcl.Forms.pas'), C.Path);
+end;
+
+procedure TSbomResolveTests.LibrariesShippedWithDelphiStayThirdParty;
+var
+  C: TSbomComponent;
+begin
+  // o DUnitX e o Indy vem na instalacao do Delphi, mas nao sao da Embarcadero
+  FDir.Write('delphi/source/DunitX/DUnitX.TestFramework.pas', 'unit DUnitX.TestFramework;');
+  FDir.Write('delphi/source/Indy10/IdGlobal.pas', 'unit IdGlobal;');
+  Add('DUnitX.TestFramework', soThirdParty);
+  Add('IdGlobal', soThirdParty);
+  Add('System.SysUtils', soRtl);
+  ResolveSbom(FSbom, FOptions);
+  C := FSbom.Find('DUnitX.TestFramework');
+  Assert.AreNotEqual('', C.Path);
+  Assert.AreEqual(Ord(soThirdParty), Ord(C.Origin));
+  Assert.AreEqual(Ord(scStrong), Ord(C.Confidence));
+  Assert.AreEqual(Ord(soThirdParty), Ord(FSbom.Find('IdGlobal').Origin));
+  Assert.AreEqual(Ord(soRtl), Ord(FSbom.Find('System.SysUtils').Origin), 'a RTL continua da Embarcadero');
 end;
 
 procedure TSbomResolveTests.ThirdPartyIsFoundInTheProjectSearchPaths;

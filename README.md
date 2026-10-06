@@ -20,6 +20,7 @@ documento com o que o projeto *devia* ter, compara os dois.
 
 - 🗺️ **Mapa** — a árvore pastas → ficheiros → métodos, com pesquisa, estatísticas e as **linhas, a complexidade (ciclomática e cognitiva), os parâmetros e o aninhamento** de cada método.
 - ✅ **Checklist** — marca o que reviste, o que está em revisão ou precisa de alteração, o que compila, o que passou no Sonar, o que é prioritário; com notas.
+- 🧾 **SBOM** — a lista de materiais de software do projeto (que units de fora usa, de onde vêm e com que confiança) em **CycloneDX** e **SPDX**, mais um relatório em quatro idiomas.
 - 📊 **Painel** — números e gráficos do progresso e da distribuição do código, incluindo a evolução dia a dia.
 - 📝 **Plano em Markdown** — escreve a estrutura prevista num `.md` e vê o que está implementado, o que falta e o que sobra.
 - 👀 **Acompanha o IDE** — reanalisa sozinho o que mudas e grava.
@@ -84,6 +85,15 @@ O **Grafo** desenha quem usa quem, a partir das cláusulas `uses`: colunas por n
 (usa / usada por), **ciclos** assinalados e um relatório em HTML (com o mapa em SVG) ou Markdown.
 
 ![Grafo de dependências](docs/images/13-grafo.png)
+
+### Lista de materiais de software (SBOM)
+
+A página **SBOM** lista as units de fora que o projeto usa, de onde vem cada uma (Embarcadero ou terceiros) e com que
+confiança, com o **SHA-256** de cada ficheiro. Exporta **CycloneDX 1.5** e **SPDX 2.3** (JSON) e um relatório em HTML
+(nos quatro idiomas) ou Markdown. Parte do código-fonte e do `.dproj`, sem compilar, e usa o ficheiro `.map` se existir.
+Adapta ideias do [DX.Comply](https://github.com/omonien/DX.Comply).
+
+![SBOM](docs/images/21-sbom.png)
 
 ### Ler o código
 

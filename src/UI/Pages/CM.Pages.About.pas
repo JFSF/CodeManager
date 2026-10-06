@@ -124,7 +124,7 @@ begin
   TCMButton.Make(FLinks, Tr('Copiar informação'), icCopy, bkSecondary, CopyClick);
 
   // 4) creditos
-  FCards[3] := NewCard(Self, FBody, 240);
+  FCards[3] := NewCard(Self, FBody, 264);
   TCMLabel.Make(FCards[3], Tr('Licença e créditos'), 15, True).Align := TAlignLayout.Top;
   Lbl := TCMLabel.Make(FCards[3], Tr('Distribuído sob a licença MIT. © 2026 João Ferreira.'), 12.5, False, lcDim);
   Lbl.Align := TAlignLayout.Top;
@@ -140,6 +140,9 @@ begin
   Lbl.Align := TAlignLayout.Top;
   Lbl.Height := 22;
   Lbl := TCMLabel.Make(FCards[3], Tr('Mapa de dependências inspirado no DelphiNodeEditor (MIT, HemulGM).'), 12.5, False, lcDim);
+  Lbl.Align := TAlignLayout.Top;
+  Lbl.Height := 22;
+  Lbl := TCMLabel.Make(FCards[3], Tr('SBOM inspirado no DX.Comply (MIT, Olaf Monien).'), 12.5, False, lcDim);
   Lbl.Align := TAlignLayout.Top;
   Lbl.Height := 22;
   Lbl := TCMLabel.Make(FCards[3], Tr('Os avisos completos estão em THIRD-PARTY-NOTICES.md, no repositório.'), 12.5, False,

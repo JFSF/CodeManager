@@ -163,6 +163,7 @@ $steps = @(
   'size:1344,3700;wait:2;shot:{IMG}\06-painel-completo.png'
   'size:1344,821;wait:1'
   'page:4;wait:4;click:1070,117;wait:1;shot:{IMG}\13-grafo.png'
+  'size:1344,1000;page:8;wait:12;shot:{IMG}\21-sbom.png;exportsbom:html,{WORK}\sbom.html;size:1344,821;wait:1'
   'code:src/Core/CM.Highlight.pas#FindRoutineLine;wait:2;shot:{IMG}\14-codigo.png'
   'theme:dark;wait:2;shot:{IMG}\07-painel-escuro.png'
   'page:2;wait:1;shot:{IMG}\08-checklist-escuro.png'
@@ -197,6 +198,17 @@ $g.Dispose(); $pen.Dispose()
 $imgs | ForEach-Object { $_.Dispose() }
 $bmp.Save((Join-Path $Out 'hero.png'), [System.Drawing.Imaging.ImageFormat]::Png)
 $bmp.Dispose()
+
+# ------------------------------------------------------------------ relatorio do SBOM (pagina HTML, com o Chrome ou o Edge)
+$browser = @("$env:ProgramFiles\Google\Chrome\Application\chrome.exe", "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
+  "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+$sbomHtml = Join-Path $Work 'sbom.html'
+if ($browser -and (Test-Path $sbomHtml)) {
+  $url = 'file:///' + ($sbomHtml -replace '\\', '/')
+  $prev = $ErrorActionPreference; $ErrorActionPreference = 'Continue'      # o navegador escreve avisos no stderr
+  & $browser --headless=new --disable-gpu --window-size=1300,900 --virtual-time-budget=6000 --run-all-compositor-stages-before-draw "--screenshot=$(Join-Path $Out '22-sbom-relatorio.png')" $url 2>&1 | Out-Null
+  $ErrorActionPreference = $prev
+}
 
 Remove-Item $Work -Recurse -Force
 Write-Host "Imagens gravadas em $Out"
