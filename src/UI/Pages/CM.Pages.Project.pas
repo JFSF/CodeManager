@@ -191,11 +191,11 @@ begin
     LangBtn.OnClick := LanguageClick;
   end;
 
-  Card := NewCard(Self, Right, 656);
+  Card := NewCard(Self, Right, 674);
   TCMLabel.Make(Card, Tr('Configuração'), 15, True).Align := TAlignLayout.Top;
   FNameIn := AddField(Self, Card, Tr('Nome do projeto'), Tr('ex.: AssisTEC'), False);
   FRootIn := AddField(Self, Card, Tr('Localização do projeto (pasta raiz a analisar)'), 'C:\Projetos\MeuProjeto', True);
-  FRepoIn := AddField(Self, Card, Tr('Ou um repositório do GitHub (opcional, só leitura)'), 'https://github.com/utilizador/repositorio', False);
+  FRepoIn := AddField(Self, Card, Tr('Ou um repositório do GitHub (opcional, só leitura)'), Tr('https://github.com/utilizador/repositorio'), False);
   FOutIn := AddField(Self, Card, Tr('Pasta onde guardar as páginas HTML'), 'C:\Projetos\MeuProjeto\docs', True);
   FPlanIn := AddField(Self, Card, Tr('Documento do plano (.md) — opcional: estrutura e código previstos'),
     'C:\Projetos\MeuProjeto\docs\plano.md', True);
@@ -215,6 +215,8 @@ begin
   Sub := TCMLabel.Make(Card, Tr('Em branco = predefinidas. Analisa .pas, .dpr e .dpk. Com pasta e plano, o Mapa mostra o que falta e o que sobra.'),
     11.5, False, lcFaint, True);
   Sub.Align := TAlignLayout.Top;
+  Sub.Wrap := True;                  // em alemao a frase ocupa duas linhas
+  Sub.Height := 34;
   Sub.Margins.Top := 10;
   FNameIn.OnChangeText := FieldChanged;
   FRootIn.OnChangeText := FieldChanged;

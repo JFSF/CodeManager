@@ -8,7 +8,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math,
   FMX.Types, FMX.Controls, FMX.Graphics, FMX.Layouts,
-  CM.Theme, CM.Controls;
+  CM.Theme, CM.Controls, CM.WidthShare;
 
 type
   TCMButtonRow = class(TCMControl)
@@ -68,7 +68,7 @@ function NewButtonRow(AOwner: TComponent; AParent: TFmxObject): TCMButtonRow;
 
 implementation
 
-{ TCMButtonRow: divide a largura por igual entre os botoes }
+{ TCMButtonRow: divide a largura entre os botoes (por igual; os de texto comprido ficam com a largura natural) }
 
 procedure TCMButtonRow.ResizeWrapped;
 const
@@ -131,8 +131,10 @@ end;
 procedure TCMButtonRow.Resize;
 var
   I, N: Integer;
-  W: Single;
+  X: Single;
   B: TCMButton;
+  Natural, Widths: TArray<Single>;
+  Btns: TArray<TCMButton>;
 begin
   inherited;
   if FWrap then
@@ -140,21 +142,31 @@ begin
     ResizeWrapped;
     Exit;
   end;
-  N := 0;
-  for I := 0 to ChildrenCount - 1 do
-    if Children[I] is TCMButton then
-      Inc(N);
-  if N = 0 then
-    Exit;
-  W := (Width - (N - 1) * 8) / N;
-  N := 0;
+  Btns := nil;
   for I := 0 to ChildrenCount - 1 do
     if Children[I] is TCMButton then
     begin
-      B := TCMButton(Children[I]);
-      B.SetBounds(N * (W + 8), 0, W, Height);
-      Inc(N);
+      SetLength(Btns, Length(Btns) + 1);
+      Btns[High(Btns)] := TCMButton(Children[I]);
     end;
+  N := Length(Btns);
+  if N = 0 then
+    Exit;
+  // parte igual para todos; quem tem um texto que nao cabe (idiomas mais compridos) fica com a largura natural
+  SetLength(Natural, N);
+  for I := 0 to N - 1 do
+    if Btns[I].IconOnly then
+      Natural[I] := 0
+    else
+      Natural[I] := Btns[I].NaturalWidth;
+  Widths := ShareWidths(Width - (N - 1) * 8, Natural);
+  X := 0;
+  for I := 0 to N - 1 do
+  begin
+    B := Btns[I];
+    B.SetBounds(X, 0, Widths[I], Height);
+    X := X + Widths[I] + 8;
+  end;
 end;
 
 { TCMFadeScroll }

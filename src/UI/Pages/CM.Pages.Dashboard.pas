@@ -370,7 +370,7 @@ begin
   FEvolution.Plot.YAxis := Axis;
   Axis := FEvolution.Plot.XAxis;
   Axis.DateMode := TAxisDateMode.Auto;
-  Axis.LocaleName := 'pt-PT';             // meses em portugues no eixo
+  Axis.LocaleName := LangLocales[CurrentLang];     // os meses no idioma activo
   FEvolution.Plot.XAxis := Axis;
 end;
 

@@ -104,6 +104,7 @@ type
     property Icon: TIconKind read FIcon write SetIcon;
     property Kind: TButtonKind read FKind write FKind;
     property Active: Boolean read FActive write SetActive;
+    property IconOnly: Boolean read FIconOnly;
   end;
 
   TCMNavButton = class(TCMControl)

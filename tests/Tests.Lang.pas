@@ -29,6 +29,7 @@ type
     [Test] procedure FormatSpecifiersMatchThePortugueseKey;
     [Test] procedure EveryMarkedTextInTheSourceIsInTheTable;
     [Test] procedure MonthNamesFollowTheLanguage;
+    [Test] procedure EveryLanguageHasALocaleNameForTheChartAxes;
     [Test] procedure SourceFilesWithAccentsStartWithAUtf8Bom;
   end;
 
@@ -213,6 +214,15 @@ begin
     Missing.Free;
     Known.Free;
   end;
+end;
+
+procedure TLangTests.EveryLanguageHasALocaleNameForTheChartAxes;
+var
+  L: TLang;
+begin
+  // o eixo de datas do Painel usa este nome: tem de ser o do idioma (e nao um fixo em portugues)
+  for L := Low(TLang) to High(TLang) do
+    Assert.IsTrue(LangLocales[L].StartsWith(LangCodes[L] + '-'), 'locale de ' + LangCodes[L] + ': ' + LangLocales[L]);
 end;
 
 procedure TLangTests.MonthNamesFollowTheLanguage;

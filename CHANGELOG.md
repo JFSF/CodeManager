@@ -22,6 +22,15 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
   um seletor **PT · EN · FR · DE**; troca o texto na própria página (título, cartões, tabelas, dicas do mapa e filtro),
   sem recarregar. Nasce no idioma ativo da aplicação.
 
+### Correções
+
+- **Idiomas:** revistos página a página em alemão e francês (e as exportações nos três idiomas).
+  - Os botões de texto comprido já não ficam cortados («Vereinfachen», «Anpassen» no Grafo; «HTML exportieren» na
+    Checklist): uma linha de botões dá agora a largura natural a quem precisa e reparte o resto pelos outros.
+  - O eixo de datas do Painel já escreve os meses no idioma ativo (estava fixo em português: «6 out» em alemão).
+  - O exemplo de endereço do repositório GitHub está traduzido e a linha de ajuda da página Projeto quebra em duas
+    linhas em vez de ser cortada.
+
 ### Melhorias
 
 - **Mapa:** os **parâmetros** (`p 3`) e o **aninhamento** (`n 2`) de cada método aparecem ao lado das linhas e da

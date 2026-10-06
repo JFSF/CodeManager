@@ -17,6 +17,7 @@ uses
   CM.Git in 'src\Infrastructure\CM.Git.pas',
   CM.Svn in 'src\Infrastructure\CM.Svn.pas',
   CM.Hg in 'src\Infrastructure\CM.Hg.pas',
+  CM.WidthShare in 'src\Core\CM.WidthShare.pas',
   CM.Vcs in 'src\Infrastructure\CM.Vcs.pas',
   CM.SysInfo in 'src\Infrastructure\CM.SysInfo.pas',
   CM.GitHub in 'src\Infrastructure\CM.GitHub.pas',

@@ -14,6 +14,8 @@ const
   LangCodes: array[TLang] of string = ('pt', 'en', 'fr', 'de');
   // o nome de cada idioma na sua propria lingua
   LangNames: array[TLang] of string = ('Português', 'English', 'Français', 'Deutsch');
+  // nome de locale de cada idioma (os eixos de datas dos graficos escrevem os meses com ele)
+  LangLocales: array[TLang] of string = ('pt-PT', 'en-US', 'fr-FR', 'de-DE');
 
 function CurrentLang: TLang;
 procedure SetLang(ALang: TLang);
