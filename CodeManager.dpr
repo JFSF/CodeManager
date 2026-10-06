@@ -18,6 +18,8 @@ uses
   CM.Svn in 'src\Infrastructure\CM.Svn.pas',
   CM.Hg in 'src\Infrastructure\CM.Hg.pas',
   CM.WidthShare in 'src\Core\CM.WidthShare.pas',
+  CM.Classes in 'src\Core\CM.Classes.pas',
+  CM.ClassHierarchy in 'src\Core\CM.ClassHierarchy.pas',
   CM.Sbom in 'src\Core\CM.Sbom.pas',
   CM.MapFile in 'src\Core\CM.MapFile.pas',
   CM.Dproj in 'src\Core\CM.Dproj.pas',

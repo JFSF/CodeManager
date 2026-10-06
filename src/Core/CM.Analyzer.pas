@@ -8,7 +8,7 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.Generics.Collections, System.Generics.Defaults,
-  System.RegularExpressions, System.IOUtils, CM.Metrics;
+  System.RegularExpressions, System.IOUtils, CM.Metrics, CM.Classes;
 
 type
   TMethodInfo = record
@@ -38,6 +38,7 @@ type
     FileName: string;
     Layer: string;      // nome da pasta imediata ('Raiz' na raiz)
     Methods: TArray<TMethodInfo>;
+    Classes: TArray<TClassInfo>;     // as classes, interfaces e records declarados na unit
     function BaseName: string;
     function Ext: string;
     function MethodStatus(AIndex: Integer): TPlanStatus;
@@ -88,9 +89,12 @@ function RescanFile(AScan: TProjectScan; const ARelPath: string; out AChange: TS
 procedure ReconcileScan(AScan: TProjectScan; AChanges: TList<TScanChange>);
 // o caminho relativo passa por uma pasta ignorada?
 function IsPathExcluded(AScan: TProjectScan; const ARelPath: string): Boolean;
-function ExtractMethods(const AFilePath: string): TArray<TMethodInfo>;
+function ExtractMethods(const AFilePath: string): TArray<TMethodInfo>; overload;
+// o mesmo, e devolve tambem as classes que a unit declara
+function ExtractMethods(const AFilePath: string; out AClasses: TArray<TClassInfo>): TArray<TMethodInfo>; overload;
 // o mesmo a partir de texto Delphi; sem "interface" o texto e tratado como declaracoes da interface
-function ExtractMethodsFromText(const AText: string): TArray<TMethodInfo>;
+function ExtractMethodsFromText(const AText: string): TArray<TMethodInfo>; overload;
+function ExtractMethodsFromText(const AText: string; out AClasses: TArray<TClassInfo>): TArray<TMethodInfo>; overload;
 // preenche Path/Dir/FileName/Layer de uma unit a partir do caminho relativo ('a/b/x.pas')
 procedure SetUnitPath(U: TUnitInfo; const ARel: string);
 // recalcula Folders/TotalMethods/UnitsWithMethods
@@ -785,16 +789,31 @@ begin
 end;
 
 function ExtractMethods(const AFilePath: string): TArray<TMethodInfo>;
+var
+  Classes: TArray<TClassInfo>;
 begin
-  Result := ExtractMethodsFromText(ReadSourceText(AFilePath));
+  Result := ExtractMethods(AFilePath, Classes);
+end;
+
+function ExtractMethods(const AFilePath: string; out AClasses: TArray<TClassInfo>): TArray<TMethodInfo>;
+begin
+  Result := ExtractMethodsFromText(ReadSourceText(AFilePath), AClasses);
 end;
 
 function ExtractMethodsFromText(const AText: string): TArray<TMethodInfo>;
+var
+  Classes: TArray<TClassInfo>;
+begin
+  Result := ExtractMethodsFromText(AText, Classes);
+end;
+
+function ExtractMethodsFromText(const AText: string; out AClasses: TArray<TClassInfo>): TArray<TMethodInfo>;
 var
   Clean, Iface, Impl, Bodies: string;
   Raw: TList<TRawMethod>;
 begin
   Clean := CleanUnitText(AText);
+  AClasses := ExtractClasses(Clean);
   Bodies := '';
   if not GReInterface.IsMatch(Clean) then
   begin
@@ -977,10 +996,13 @@ begin
         Result.Units.Add(U);
         SetUnitPath(U, Rel);
         try
-          U.Methods := ExtractMethods(TPath.Combine(Root, Rel.Replace('/', PathDelim)));
+          U.Methods := ExtractMethods(TPath.Combine(Root, Rel.Replace('/', PathDelim)), U.Classes);
         except
           on E: Exception do
+          begin
             U.Methods := nil;   // unit ilegivel: fica sem metodos, como nos scripts originais
+            U.Classes := nil;
+          end;
         end;
         if Assigned(AProgress) then
           AProgress(Tr('A analisar metodos... ') + Rel, I + 1, Rels.Count);
@@ -1025,6 +1047,7 @@ var
   Full: string;
   U: TUnitInfo;
   Old, NewMethods: TArray<TMethodInfo>;
+  NewClasses: TArray<TClassInfo>;
   Readable, Found: Boolean;
   Names: TList<string>;
 begin
@@ -1037,12 +1060,13 @@ begin
   begin
     Readable := True;
     try
-      NewMethods := ExtractMethods(Full);
+      NewMethods := ExtractMethods(Full, NewClasses);
     except
       on E: Exception do
       begin
         Readable := False;      // p.ex. o IDE ainda esta a gravar o ficheiro
         NewMethods := nil;
+        NewClasses := nil;
       end;
     end;
     if Idx < 0 then
@@ -1050,6 +1074,7 @@ begin
       U := TUnitInfo.Create;
       SetUnitPath(U, ARelPath);
       U.Methods := NewMethods;
+      U.Classes := NewClasses;
       Pos := 0;                 // a lista esta ordenada por caminho, como na analise completa
       while (Pos < AScan.Units.Count) and (CompareText(AScan.Units[Pos].Path, ARelPath) < 0) do
         Inc(Pos);
@@ -1059,7 +1084,8 @@ begin
       for I := 0 to High(NewMethods) do
         AChange.NewMethods[I] := NewMethods[I].Name;
     end
-    else if Readable and not SameMethods(AScan.Units[Idx].Methods, NewMethods) then
+    else if Readable and not (SameMethods(AScan.Units[Idx].Methods, NewMethods) and
+                              SameClasses(AScan.Units[Idx].Classes, NewClasses)) then
     begin
       Old := AScan.Units[Idx].Methods;
       Names := TList<string>.Create;
@@ -1081,6 +1107,7 @@ begin
         Names.Free;
       end;
       AScan.Units[Idx].Methods := NewMethods;
+      AScan.Units[Idx].Classes := NewClasses;
       Result := rcChanged;
     end;
   end
