@@ -15,6 +15,10 @@ function SbomMarkdown(ASbom: TSbom; const ARootDisplay: string): string;
 function SbomHtml(ASbom: TSbom; const ARootDisplay: string): string;
 // <nome-do-projecto>-sbom-relatorio.html / .md
 function SbomReportFileName(const AProjectName, AExt: string): string;
+// os nomes da origem, da confianca e da evidencia no idioma activo (para as listas da interface)
+function OriginText(AOrigin: TSbomOrigin): string;
+function ConfidenceText(AConfidence: TSbomConfidence): string;
+function EvidenceText(AEvidence: TSbomEvidence): string;
 
 implementation
 
@@ -87,6 +91,21 @@ begin
   else
     Result := 'Cláusula uses';
   end;
+end;
+
+function OriginText(AOrigin: TSbomOrigin): string;
+begin
+  Result := Tr(OriginKey(AOrigin));
+end;
+
+function ConfidenceText(AConfidence: TSbomConfidence): string;
+begin
+  Result := Tr(ConfidenceKey(AConfidence));
+end;
+
+function EvidenceText(AEvidence: TSbomEvidence): string;
+begin
+  Result := Tr(EvidenceKey(AEvidence));
 end;
 
 function MdCell(const AText: string): string;

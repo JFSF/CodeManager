@@ -6,7 +6,7 @@
 interface
 
 const
-  LangRows: array[0..564] of array[0..3] of string = (
+  LangRows: array[0..584] of array[0..3] of string = (
   ('Projeto', 'Project', 'Projet', 'Projekt'),
   ('Mapa', 'Map', 'Carte', 'Karte'),
   ('Checklist', 'Checklist', 'Checklist', 'Checkliste'),
@@ -599,7 +599,27 @@ const
       'Der Bericht stammt aus der Analyse des Quellcodes (Uses-Klauseln und .dproj), ohne zu kompilieren: Eine referenzierte Unit landet möglicherweise nicht in der au'
     + 'sführbaren Datei. Mit einer .map-Datei werden die tatsächlich gebundenen Units bestätigt.'),
   ('Fora do mapa', 'Not in the map', 'Hors de la map', 'Nicht in der Map'),
-  ('Referenciadas no código mas ausentes do mapa de ligação (podem não ficar no executável):', 'Referenced in the code but missing from the link map (they may not end up in the executable):', 'Référencées dans le code mais absentes de la map de liaison (elles peuvent ne pas finir dans l''exécutable) :', 'Im Code referenziert, aber in der Link-Map nicht vorhanden (sie landen möglicherweise nicht in der ausführbaren Datei):')
+  ('Referenciadas no código mas ausentes do mapa de ligação (podem não ficar no executável):', 'Referenced in the code but missing from the link map (they may not end up in the executable):', 'Référencées dans le code mais absentes de la map de liaison (elles peuvent ne pas finir dans l''exécutable) :', 'Im Code referenziert, aber in der Link-Map nicht vorhanden (sie landen möglicherweise nicht in der ausführbaren Datei):'),
+  ('SBOM', 'SBOM', 'SBOM', 'SBOM'),
+  ('SBOM: lista de materiais de software', 'SBOM: software bill of materials', 'SBOM : nomenclature logicielle', 'SBOM: Software-Stückliste'),
+  ('Filtrar por unit ou origem…   ( / )', 'Filter by unit or origin…   ( / )', 'Filtrer par unité ou origine…   ( / )', 'Nach Unit oder Herkunft filtern…   ( / )'),
+  ('Opções', 'Options', 'Options', 'Optionen'),
+  ('Incluir as units do projeto', 'Include the project units', 'Inclure les unités du projet', 'Units des Projekts einbeziehen'),
+  ('Confirmar com o ficheiro .map', 'Confirm with the .map file', 'Confirmer avec le fichier .map', 'Mit der .map-Datei bestätigen'),
+  ('Calcular os hashes SHA-256', 'Compute the SHA-256 hashes', 'Calculer les hashes SHA-256', 'SHA-256-Hashes berechnen'),
+  ('Gerar de novo', 'Generate again', 'Générer à nouveau', 'Neu erzeugen'),
+  ('CycloneDX (JSON)', 'CycloneDX (JSON)', 'CycloneDX (JSON)', 'CycloneDX (JSON)'),
+  ('SPDX (JSON)', 'SPDX (JSON)', 'SPDX (JSON)', 'SPDX (JSON)'),
+  ('Relatório HTML', 'HTML report', 'Rapport HTML', 'HTML-Bericht'),
+  ('Analise um projeto para gerar o SBOM.', 'Analyse a project to generate the SBOM.', 'Analyse un projet pour générer la SBOM.', 'Analysiere ein Projekt, um die SBOM zu erzeugen.'),
+  ('A gerar o SBOM…', 'Generating the SBOM…', 'Génération de la SBOM…', 'SBOM wird erzeugt…'),
+  ('Não foi possível gerar o SBOM: ', 'Could not generate the SBOM: ', 'Impossible de générer la SBOM : ', 'Die SBOM konnte nicht erzeugt werden: '),
+  ('Este projeto não tem componentes para mostrar.', 'This project has no components to show.', 'Ce projet n''a aucun composant à afficher.', 'Dieses Projekt hat keine Komponenten zum Anzeigen.'),
+  ('Sem ficheiro encontrado', 'No file found', 'Aucun fichier trouvé', 'Keine Datei gefunden'),
+  ('Aguarde: o SBOM ainda não está pronto.', 'Wait: the SBOM is not ready yet.', 'Patiente : la SBOM n''est pas encore prête.', 'Bitte warten: Die SBOM ist noch nicht fertig.'),
+  ('Não se encontrou o ficheiro .dproj: a versão e os caminhos de procura ficam por preencher.', 'The .dproj file was not found: the version and the search paths stay empty.', 'Le fichier .dproj est introuvable : la version et les chemins de recherche restent vides.', 'Die .dproj-Datei wurde nicht gefunden: Version und Suchpfade bleiben leer.'),
+  ('Não se encontrou a instalação do Delphi: as units da Embarcadero só se reconhecem pelo nome.', 'The Delphi installation was not found: Embarcadero units are only recognised by name.', 'L''installation de Delphi est introuvable : les unités d''Embarcadero ne sont reconnues que par leur nom.', 'Die Delphi-Installation wurde nicht gefunden: Embarcadero-Units werden nur am Namen erkannt.'),
+  ('Não se encontrou o ficheiro .map: compila o projeto com o mapa «Detailed» para confirmar as units ligadas.', 'The .map file was not found: build the project with a "Detailed" map to confirm the linked units.', 'Le fichier .map est introuvable : compile le projet avec une map « Detailed » pour confirmer les unités liées.', 'Die .map-Datei wurde nicht gefunden: Kompiliere das Projekt mit einer „Detailed“-Map, um die gebundenen Units zu bestätigen.')
   );
 
   // trocos dos modelos HTML (res/templates), por ordem de leitura

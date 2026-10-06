@@ -53,6 +53,8 @@ uses
   CM.Pages.Checklist in 'src\UI\Pages\CM.Pages.Checklist.pas',
   CM.Pages.Dashboard in 'src\UI\Pages\CM.Pages.Dashboard.pas',
   CM.Pages.Graph in 'src\UI\Pages\CM.Pages.Graph.pas',
+  CM.Pages.Sbom in 'src\UI\Pages\CM.Pages.Sbom.pas',
+  CM.SbomView in 'src\UI\CM.SbomView.pas',
   CM.Pages.Code in 'src\UI\Pages\CM.Pages.Code.pas',
   CM.Pages.Appearance in 'src\UI\Pages\CM.Pages.Appearance.pas',
   CM.Pages.About in 'src\UI\Pages\CM.Pages.About.pas',

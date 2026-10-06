@@ -28,6 +28,9 @@ type
 
 // onde esta instalado o Delphi: a variavel BDS e, se nao existir, a instalacao mais recente do registo ('' se nenhuma)
 function DetectDelphiRoot: string;
+// as variaveis de ambiente definidas no IDE (Ferramentas > Opcoes > Variaveis de ambiente), com o nome em minusculas; sem o PATH
+// (quem chama liberta o dicionario)
+function IdeEnvironmentVars(const ADelphiRoot: string): TDictionary<string, string>;
 // os caminhos da biblioteca do IDE para uma plataforma ('Win64'), com $(BDS) e as outras variaveis expandidas
 function DelphiLibraryPaths(const ADelphiRoot, APlatform: string): TArray<string>;
 // SHA-256 do ficheiro em hexadecimal minusculo; '' se nao se consegue ler
@@ -179,6 +182,35 @@ begin
     .Replace('$(Platform)', APlatform, [rfReplaceAll, rfIgnoreCase])
     .Replace('$(BDSCOMMONDIR)', GetEnvironmentVariable('PUBLIC') + '\Documents\Embarcadero\Studio\' +
       ExtractFileName(ADelphiRoot), [rfReplaceAll, rfIgnoreCase]);
+end;
+
+function IdeEnvironmentVars(const ADelphiRoot: string): TDictionary<string, string>;
+var
+  Reg: TRegistry;
+  Names: TStringList;
+  Name: string;
+begin
+  Result := TDictionary<string, string>.Create;
+  if ADelphiRoot = '' then
+    Exit;
+  Reg := TRegistry.Create(KEY_READ);
+  Names := TStringList.Create;
+  try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if not Reg.OpenKeyReadOnly('\Software\Embarcadero\BDS\' + ExtractFileName(ADelphiRoot) + '\Environment Variables') then
+      Exit;
+    try
+      Reg.GetValueNames(Names);
+      for Name in Names do
+        if not SameText(Name, 'PATH') then
+          Result.AddOrSetValue(LowerCase(Name), Reg.ReadString(Name));
+    finally
+      Reg.CloseKey;
+    end;
+  finally
+    Names.Free;
+    Reg.Free;
+  end;
 end;
 
 function DelphiLibraryPaths(const ADelphiRoot, APlatform: string): TArray<string>;

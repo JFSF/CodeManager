@@ -38,6 +38,7 @@ type
     [Test] procedure NoGraphGivesAnEmptySbom;
     [Test] procedure TheProjectIsKept;
     [Test] procedure ObtainIsCaseInsensitive;
+    [Test] procedure ProjectUnitsAreRememberedEvenWhenNotListed;
   end;
 
 implementation
@@ -278,6 +279,22 @@ begin
     Assert.AreEqual('App', S.Project.Name);
     Assert.AreEqual('1.2.3.4', S.Project.Version);
     Assert.IsTrue(S.Generated > 0);
+  finally
+    S.Free;
+  end;
+end;
+
+procedure TSbomBuildTests.ProjectUnitsAreRememberedEvenWhenNotListed;
+var
+  S: TSbom;
+begin
+  S := BuildSbom(FGraph, FProject, False);
+  try
+    Assert.IsNull(S.Find('UI.Main'));
+    Assert.IsTrue(S.IsProjectUnit('UI.Main'));
+    Assert.IsTrue(S.IsProjectUnit('ui.main'), 'sem distinguir maiusculas');
+    Assert.IsTrue(S.IsProjectUnit('App'));
+    Assert.IsFalse(S.IsProjectUnit('System.SysUtils'));
   finally
     S.Free;
   end;

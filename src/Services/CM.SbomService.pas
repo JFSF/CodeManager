@@ -78,7 +78,7 @@ begin
   if (DelphiRoot = '') and AOptions.AutoDelphi then
     DelphiRoot := DetectDelphiRoot;
 
-  Vars := TDictionary<string, string>.Create;
+  Vars := IdeEnvironmentVars(DelphiRoot);          // as variaveis do IDE (so as que o utilizador definiu)
   try
     if DelphiRoot <> '' then
       Vars.AddOrSetValue('bds', DelphiRoot);
@@ -110,6 +110,10 @@ begin
 
   Result := BuildSbom(AGraph, Project, AOptions.IncludeProjectUnits);
   try
+    // o programa principal (o .dpr) pode estar fora da pasta analisada, mas o mapa traz o seu nome: nao e uma dependencia
+    Result.NoteProjectUnit(Project.Name);
+    if Project.MainSource <> '' then
+      Result.NoteProjectUnit(TPath.GetFileNameWithoutExtension(Project.MainSource));
     if not Dproj.Found then
       Result.Warnings.Add(WarnNoDproj);
     if DelphiRoot = '' then

@@ -11,7 +11,7 @@ uses
 
 type
   // a ordem do enumerado e a dos indices do guiao --dev; a ordem na barra lateral esta em BuildRail
-  TPage = (pgProject, pgMap, pgChecklist, pgDashboard, pgGraph, pgCode, pgAppearance, pgAbout);
+  TPage = (pgProject, pgMap, pgChecklist, pgDashboard, pgGraph, pgCode, pgAppearance, pgAbout, pgSbom);
 
   IPageHost = interface
     ['{6F1D3A52-8C47-4B0E-9E21-5A7C3D90B4E8}']

@@ -143,6 +143,8 @@
         <DCCReference Include="src\UI\Pages\CM.Pages.Checklist.pas"/>
         <DCCReference Include="src\UI\Pages\CM.Pages.Dashboard.pas"/>
         <DCCReference Include="src\UI\Pages\CM.Pages.Graph.pas"/>
+        <DCCReference Include="src\UI\Pages\CM.Pages.Sbom.pas"/>
+        <DCCReference Include="src\UI\CM.SbomView.pas"/>
         <DCCReference Include="src\UI\Pages\CM.Pages.Code.pas"/>
         <DCCReference Include="src\UI\Pages\CM.Pages.Appearance.pas"/>
         <DCCReference Include="src\UI\Pages\CM.Pages.About.pas"/>

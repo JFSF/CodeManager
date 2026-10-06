@@ -85,7 +85,8 @@ begin
       'Detailed map of segments' + #13#10 +
       ' 0001:00000000 000071A4 C=CODE S=.text G=(none) M=System ACBP=A9' + #13#10 +
       ' 0001:000071A4 00000FEC C=CODE S=.text G=(none) M=System.SysUtils ACBP=A9' + #13#10 +
-      ' 0001:000081A4 00000FEC C=CODE S=.text G=(none) M=Chart4D.FMX ACBP=A9' + #13#10);
+      ' 0001:000081A4 00000FEC C=CODE S=.text G=(none) M=Chart4D.FMX ACBP=A9' + #13#10 +
+      ' 0001:000091A4 00000200 C=CODE S=.text G=(none) M=Demo ACBP=A9' + #13#10);
 end;
 
 procedure TSbomServiceTests.Setup;
@@ -203,6 +204,7 @@ begin
     Assert.IsTrue(S.Find('Chart4D.FMX').InMap);
     Assert.IsFalse(S.Find('Vcl.Forms').InMap);
     Assert.IsNotNull(S.Find('System'), 'uma unit que so o mapa conhece passa a componente');
+    Assert.IsNull(S.Find('Demo'), 'o programa principal do projecto nao e uma dependencia');
     Assert.AreEqual(Ord(seMap), Ord(S.Find('System.SysUtils').Evidence));
     Assert.AreEqual(Ord(seFile), Ord(S.Find('Vcl.Forms').Evidence), 'achada em ficheiro, mas fora do mapa');
     Assert.IsTrue(S.NotLinkedCount >= 2, 'Vcl.Forms e System.Classes nao estao no mapa');

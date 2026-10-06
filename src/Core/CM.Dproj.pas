@@ -96,8 +96,10 @@ begin
   end;
 end;
 
-// expande $(Nome): primeiro as variaveis dadas, depois as do ambiente; o que nao se conhece fica como esta
-function Expand(const AText: string; AVars: TDictionary<string, string>): string;
+// expande $(Nome): primeiro as variaveis dadas, depois as do ambiente e por fim as que o proprio projecto define (um valor
+// por omissao, como "<Chart4DDir Condition=...>"); o que nao se conhece fica como esta. Os valores do projecto podem usar
+// outras variaveis, por isso expandem-se de novo (ate 4 niveis)
+function Expand(const AText: string; AVars, AProps: TDictionary<string, string>; ADepth: Integer = 0): string;
 var
   M: TMatch;
   Value: string;
@@ -115,6 +117,8 @@ begin
       else
       begin
         Value := GetEnvironmentVariable(M.Groups[1].Value);
+        if (Value = '') and Assigned(AProps) and (ADepth < 4) and AProps.TryGetValue(LowerCase(M.Groups[1].Value), Value) then
+          Value := Expand(Value, AVars, AProps, ADepth + 1);
         if Value <> '' then
           SB.Append(Value)
         else
@@ -277,10 +281,10 @@ begin
     AInfo.Description := VerInfoValue(Value, 'FileDescription');
     AInfo.Company := VerInfoValue(Value, 'CompanyName');
     AInfo.Copyright := VerInfoValue(Value, 'LegalCopyright');
-    AInfo.UnitSearchPath := SplitList(Expand(Prop('DCC_UnitSearchPath'), Vars));
-    AInfo.Namespaces := SplitList(Expand(Prop('DCC_Namespace'), Vars));
+    AInfo.UnitSearchPath := SplitList(Expand(Prop('DCC_UnitSearchPath'), Vars, Props));
+    AInfo.Namespaces := SplitList(Expand(Prop('DCC_Namespace'), Vars, Props));
     AInfo.MapFileMode := StrToIntDef(Trim(Prop('DCC_MapFile')), 0);
-    AInfo.ExeOutput := Trim(Expand(Prop('DCC_ExeOutput'), Vars));
+    AInfo.ExeOutput := Trim(Expand(Prop('DCC_ExeOutput'), Vars, Props));
   finally
     PlatList.Free;
     CfgList.Free;

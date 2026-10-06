@@ -21,6 +21,8 @@ type
     [Test] procedure LoadsAFileAndIgnoresAMissingOne;
     [Test] procedure MapUnitsConfirmTheExistingComponents;
     [Test] procedure MapUnitsNotInTheCodeBecomeComponents;
+    [Test] procedure ProjectUnitsInTheMapAreNotDependencies;
+    [Test] procedure ProjectUnitsInTheMapConfirmTheListedOnes;
     [Test] procedure ComponentsOutsideTheMapAreCounted;
     [Test] procedure WithoutAMapNothingIsOutside;
     [Test] procedure NilSbomIsIgnored;
@@ -146,6 +148,41 @@ begin
     Assert.AreEqual(Ord(soVcl), Ord(S.Find('Vcl.Forms').Origin));
     Assert.IsTrue(S.Find('System').InMap);
     Assert.AreEqual(Ord(seMap), Ord(S.Find('System').Evidence));
+  finally
+    S.Free;
+  end;
+end;
+
+procedure TMapFileTests.ProjectUnitsInTheMapAreNotDependencies;
+var
+  S: TSbom;
+begin
+  S := TSbom.Create;
+  try
+    S.NoteProjectUnit('Main');                  // uma unit do projecto que o SBOM nao lista
+    ApplyMapUnits(S, ParseMapUnits(SampleMap), 'Demo.map');
+    Assert.IsNull(S.Find('Main'), 'o mapa traz Main, mas e do projecto e o SBOM so lista dependencias');
+    Assert.IsTrue(S.IsProjectUnit('main'));
+    Assert.IsNotNull(S.Find('Chart4D.FMX'));
+  finally
+    S.Free;
+  end;
+end;
+
+procedure TMapFileTests.ProjectUnitsInTheMapConfirmTheListedOnes;
+var
+  S: TSbom;
+  C: TSbomComponent;
+  Created: Boolean;
+begin
+  S := TSbom.Create;
+  try
+    S.NoteProjectUnit('Main');
+    C := S.Obtain('Main', Created);                // desta vez o SBOM lista-a
+    C.Origin := soProject;
+    ApplyMapUnits(S, ParseMapUnits(SampleMap), 'Demo.map');
+    Assert.IsTrue(C.InMap);
+    Assert.AreEqual(Ord(seMap), Ord(C.Evidence));
   finally
     S.Free;
   end;

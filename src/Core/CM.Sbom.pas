@@ -62,6 +62,7 @@ type
     FComponents: TObjectList<TSbomComponent>;
     FWarnings: TList<string>;
     FIndex: TDictionary<string, TSbomComponent>;
+    FProjectUnits: TDictionary<string, Boolean>;
   public
     Project: TSbomProject;
     Generated: TDateTime;
@@ -69,6 +70,9 @@ type
     constructor Create;
     destructor Destroy; override;
     function Find(const AName: string): TSbomComponent;
+    // as units do proprio projecto (estejam ou nao listadas como componentes): nunca sao dependencias
+    procedure NoteProjectUnit(const AName: string);
+    function IsProjectUnit(const AName: string): Boolean;
     // devolve o componente de AName, criando-o se ainda nao existe (ACreated diz se e novo)
     function Obtain(const AName: string; out ACreated: Boolean): TSbomComponent;
     procedure SortComponents;
@@ -193,11 +197,13 @@ begin
   FComponents := TObjectList<TSbomComponent>.Create(True);
   FWarnings := TList<string>.Create;
   FIndex := TDictionary<string, TSbomComponent>.Create;
+  FProjectUnits := TDictionary<string, Boolean>.Create;
   Generated := Now;
 end;
 
 destructor TSbom.Destroy;
 begin
+  FProjectUnits.Free;
   FIndex.Free;
   FWarnings.Free;
   FComponents.Free;
@@ -208,6 +214,16 @@ function TSbom.Find(const AName: string): TSbomComponent;
 begin
   if not FIndex.TryGetValue(LowerCase(AName), Result) then
     Result := nil;
+end;
+
+procedure TSbom.NoteProjectUnit(const AName: string);
+begin
+  FProjectUnits.AddOrSetValue(LowerCase(AName), True);
+end;
+
+function TSbom.IsProjectUnit(const AName: string): Boolean;
+begin
+  Result := FProjectUnits.ContainsKey(LowerCase(AName));
 end;
 
 function TSbom.Obtain(const AName: string; out ACreated: Boolean): TSbomComponent;
@@ -287,6 +303,9 @@ begin
   ASbom.MapFile := AMapFile;
   for Name in AUnits do
   begin
+    // as units do proprio projecto que o mapa tambem traz: so contam se o SBOM as lista
+    if ASbom.IsProjectUnit(Name) and (ASbom.Find(Name) = nil) then
+      Continue;
     C := ASbom.Obtain(Name, Created);
     if Created then
     begin
@@ -325,6 +344,8 @@ begin
   Result.Project := AProject;
   if AGraph = nil then
     Exit;
+  for N in AGraph.Nodes do
+    Result.NoteProjectUnit(N.Name);
   if AIncludeProjectUnits then
     for N in AGraph.Nodes do
     begin

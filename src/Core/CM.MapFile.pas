@@ -37,10 +37,14 @@ begin
     for Line in AText.Replace(#13, '').Split([#10]) do
     begin
       Name := '';
-      M := TRegEx.Match(Line, '^\s*Line numbers for\s+([A-Za-z0-9_\.]+)\s*\(', [roIgnoreCase]);
-      if M.Success then
-        Name := M.Groups[1].Value
-      else
+      // um mapa detalhado tem centenas de milhares de linhas: so as que podem trazer uma unit passam pela expressao regular
+      if Pos('Line numbers for', Line) > 0 then
+      begin
+        M := TRegEx.Match(Line, '^\s*Line numbers for\s+([A-Za-z0-9_\.]+)\s*\(', [roIgnoreCase]);
+        if M.Success then
+          Name := M.Groups[1].Value;
+      end
+      else if Pos(' M=', Line) > 0 then
       begin
         M := TRegEx.Match(Line, '\bM=([A-Za-z0-9_\.]+)\b');
         if M.Success then

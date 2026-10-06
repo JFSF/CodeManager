@@ -5,7 +5,8 @@
 interface
 
 uses
-  System.SysUtils, System.IOUtils, System.Generics.Collections, DUnitX.TestFramework, CM.Dproj, Tests.Helpers;
+  System.SysUtils, System.IOUtils, System.Generics.Collections, Winapi.Windows, DUnitX.TestFramework, CM.Dproj,
+  Tests.Helpers;
 
 type
   [TestFixture]
@@ -27,6 +28,8 @@ type
     [Test] procedure MapFileModeFollowsTheConfiguration;
     [Test] procedure ListsTheConfigurationsAndPlatforms;
     [Test] procedure APackageIsDetected;
+    [Test] procedure PropertiesDefinedByTheProjectExpandVariables;
+    [Test] procedure AnEnvironmentVariableOverridesTheProjectDefault;
     [Test] procedure EmptyTextIsNotFound;
     [Test] procedure XmlEntitiesAreDecoded;
     [Test] procedure FindsTheDprojInTheFolderOrAbove;
@@ -246,6 +249,45 @@ var
 begin
   ParseDproj(StringReplace(Sample, 'Demo.dpr', 'Demo.dpk', []), 'C:\Proj\Demo.dproj', 'Release', 'Win64', nil, D);
   Assert.IsTrue(D.IsPackage);
+end;
+
+procedure TDprojTests.PropertiesDefinedByTheProjectExpandVariables;
+var
+  D: TDprojInfo;
+  Vars: TDictionary<string, string>;
+  Xml: string;
+begin
+  // <CmTestLib Condition="'$(CmTestLib)'==''">$(CM_TEST_HOME)\Libs</CmTestLib> e depois $(CmTestLib)\Source no caminho de procura
+  Xml := StringReplace(Sample, '<Base>True</Base>',
+    '<Base>True</Base><CmTestLib Condition="''$(CmTestLib)''==''''">$(CM_TEST_HOME)\Libs</CmTestLib>', []);
+  Xml := StringReplace(Xml, '$(CM_TEST_LIBDIR)\Source', '$(CmTestLib)\Source', []);
+  Vars := TDictionary<string, string>.Create;
+  try
+    Vars.Add('cm_test_home', 'C:\Casa');
+    ParseDproj(Xml, 'C:\Proj\Demo.dproj', 'Debug', 'Win64', Vars, D);
+  finally
+    Vars.Free;
+  end;
+  Assert.AreEqual('C:\Casa\Libs\Source', D.UnitSearchPath[2], 'a propriedade do projecto usa outra variavel');
+end;
+
+procedure TDprojTests.AnEnvironmentVariableOverridesTheProjectDefault;
+var
+  D: TDprojInfo;
+  Xml: string;
+begin
+  Xml := StringReplace(Sample, '<Base>True</Base>',
+    '<Base>True</Base><CmTestLib2 Condition="''$(CmTestLib2)''==''''">C:\Default</CmTestLib2>', []);
+  Xml := StringReplace(Xml, '$(CM_TEST_LIBDIR)\Source', '$(CmTestLib2)\Source', []);
+  SetEnvironmentVariable('CmTestLib2', 'C:\DoAmbiente');
+  try
+    ParseDproj(Xml, 'C:\Proj\Demo.dproj', 'Debug', 'Win64', nil, D);
+  finally
+    SetEnvironmentVariable('CmTestLib2', nil);
+  end;
+  Assert.AreEqual('C:\DoAmbiente\Source', D.UnitSearchPath[2], 'o ambiente ganha ao valor por omissao do projecto');
+  ParseDproj(Xml, 'C:\Proj\Demo.dproj', 'Debug', 'Win64', nil, D);
+  Assert.AreEqual('C:\Default\Source', D.UnitSearchPath[2], 'sem a variavel, vale o valor do projecto');
 end;
 
 procedure TDprojTests.EmptyTextIsNotFound;
