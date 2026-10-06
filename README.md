@@ -217,11 +217,11 @@ O que mudou na **versão 1.0.1** (a lista completa, versão a versão, está no 
 - **Mais métricas por método** — complexidade cognitiva, número de parâmetros e aninhamento de blocos (no Mapa, na dica, no Painel, no CSV, no JSON e nas páginas HTML).
 - **SonarQube** — medidas do projeto e de cada ficheiro (cobertura, duplicação, dívida técnica, classificações A–E), o detalhe dos problemas e os *hotspots*; vê-se no Mapa, na página Código e no Painel.
 - **Subversion** — «alterado desde a revisão» também em cópias de trabalho do Subversion (além do Git).
-- **Idiomas** — português, inglês, francês e alemão, incluindo as páginas HTML exportadas.
+- **Idiomas** — português, inglês, francês e alemão, incluindo as páginas HTML exportadas; o relatório de dependências troca de idioma na própria página.
 - **Repositórios do GitHub** — analisar um repositório em vez de uma pasta (só leitura).
 
 **Nos bastidores**
-- Cerca de 200 testes automáticos novos (agora mais de 710), incluindo testes contra um repositório Subversion real.
+- Cerca de 200 testes automáticos novos (agora mais de 740), incluindo testes contra um repositório Subversion real.
 - Gerador de traduções corrigido, e documentação e imagens atualizadas.
 
 ## Documentação
@@ -237,7 +237,7 @@ O que mudou na **versão 1.0.1** (a lista completa, versão a versão, está no 
 
 ## Estado do projeto
 
-Versão **1.0.1**. Em desenvolvimento ativo, desenvolvido e testado em **Windows / Win64** com **Delphi 13**. Mais de 710 testes
+Versão **1.0.1**. Em desenvolvimento ativo, desenvolvido e testado em **Windows / Win64** com **Delphi 13**. Mais de 740 testes
 automáticos cobrem o motor, as exportações, o vigia e as regras de arquitetura; a interface é verificada com o
 [modo de desenvolvimento](docs/DESENVOLVIMENTO.md#modo-de-desenvolvimento---dev).
 

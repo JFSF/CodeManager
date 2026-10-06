@@ -66,7 +66,7 @@ Enquanto o projeto não tem análise, a lista mostra os **Primeiros passos**.
 ### Idioma
 
 O cartão **Idioma**, no topo da página, muda a aplicação entre **Português**, **English**, **Français** e
-**Deutsch**; a interface reconstrói-se logo, e os relatórios exportados (Markdown, CSV, relatório de dependências e as páginas HTML do mapa e da checklist) passam a seguir o idioma escolhido. Na
+**Deutsch**; a interface reconstrói-se logo, e os relatórios exportados (Markdown, CSV, relatório de dependências e as páginas HTML do mapa e da checklist) passam a seguir o idioma escolhido (o relatório de dependências em HTML também se pode trocar de idioma na própria página). Na
 primeira execução usa o idioma do Windows (português, francês ou alemão; qualquer outro usa o inglês).
 
 ### Repositório do GitHub
@@ -294,6 +294,13 @@ contadas como *units externas*.
 - O cartão **Ciclos** avisa quando há units que se usam em círculo.
 - O **relatório de dependências** exporta-se em **HTML** (autónomo, com o mapa em SVG, tabelas ordenáveis e filtro)
   ou em **Markdown**.
+
+![Relatório de dependências em HTML, trocado para alemão](images/20-relatorio-dependencias.png)
+
+A página HTML nasce no idioma da aplicação, mas leva as frases em **português, inglês, francês e alemão**: os botões
+**PT · EN · FR · DE** no canto superior direito trocam o texto na hora (títulos, cartões, tabelas, dicas do mapa e o
+filtro), sem recarregar e sem servidor. Os nomes das units, das camadas e do projeto não se traduzem. Assim podes
+enviar o relatório a quem lê noutro idioma. O Markdown continua a seguir só o idioma da aplicação.
 
 ## Código
 

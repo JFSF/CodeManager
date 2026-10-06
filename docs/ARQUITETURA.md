@@ -349,7 +349,7 @@ classDiagram
 | `Pages.Project` | Lista e configura projetos, lança a análise (numa thread), liga o vigia, exporta as páginas HTML. |
 | `Pages.Map` | Árvore pastas → ficheiros → métodos, estatísticas (e cobertura do plano), exportar/imprimir a estrutura. |
 | `Pages.Checklist` | Conclusão por ficheiro e método, prioridade, notas, filtros por camada, cobertura do plano, importar/exportar progresso. |
-| `Pages.Graph` | Mapa de dependências entre units (`Core.Deps` + `UI.GraphView`), resumo, ciclos, detalhes e relatório HTML/Markdown (`Services.DepsReport`). O grafo calcula-se em segundo plano. |
+| `Pages.Graph` | Mapa de dependências entre units (`Core.Deps` + `UI.GraphView`), resumo, ciclos, detalhes e relatório HTML/Markdown (`Services.DepsReport`; o HTML leva as frases nos quatro idiomas e troca-as na própria página). O grafo calcula-se em segundo plano. |
 | `Pages.Code` | Leitura do código em separadores (`UI.CodeView` desenha; `Core.Highlight` parte em linhas, realça a sintaxe e encontra a linha de um método). Abre-se por duplo clique (`UI.Clicks`) no Grafo, no Mapa e na Checklist, via `IPageHost.OpenCode`. |
 | `Core.SonarModel` / `Infrastructure.Sonar` | O retrato do Sonar (por ficheiro: problemas, medidas, hotspots; do projeto: medidas e classificações) e o cliente de leitura da API; os analisadores das respostas são puros. Alimentam o Mapa, a Checklist, a página Código e o Painel. |
 | `Infrastructure.Vcs` / `Git` / `Svn` / `Hg` | `Vcs` descobre se a pasta é Git, Subversion ou Mercurial (o marcador `.git` / `.svn` / `.hg` mais próximo) e despacha para o cliente; `Proc` corre os programas sem janela. Só leitura. `Services.GitReview` usa só `Vcs`. |

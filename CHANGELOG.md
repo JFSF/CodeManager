@@ -18,6 +18,10 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
   métodos anónimos aninham. Aparece no Mapa e na Checklist (`cg 25`, âmbar acima de 15 e vermelha acima de 25), na dica,
   nas páginas HTML, no CSV e no JSON, e no Painel (os 10 mais difíceis de ler e a distribuição por nível).
 
+- **Relatório de dependências multi-idioma:** a página HTML leva as frases em português, inglês, francês e alemão e
+  um seletor **PT · EN · FR · DE**; troca o texto na própria página (título, cartões, tabelas, dicas do mapa e filtro),
+  sem recarregar. Nasce no idioma ativo da aplicação.
+
 ### Melhorias
 
 - **Mapa:** os **parâmetros** (`p 3`) e o **aninhamento** (`n 2`) de cada método aparecem ao lado das linhas e da

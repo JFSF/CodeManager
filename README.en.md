@@ -94,11 +94,11 @@ What changed in **version 1.0.1** (the full history is in the [changelog](CHANGE
 - **More metrics per method** — cognitive complexity, number of parameters and block nesting (on the Map, in the tooltip, CSV, JSON and the HTML pages).
 - **SonarQube** — project and per-file measures (coverage, duplication, technical debt, A–E ratings), issue details and hotspots; shown in the Map, the Code page and the Dashboard.
 - **Subversion** — «changed since review» also works in Subversion working copies (besides Git).
-- **Languages** — Portuguese, English, French and German, including the exported HTML pages.
+- **Languages** — Portuguese, English, French and German, including the exported HTML pages; the dependency report even switches language inside the page.
 - **GitHub repositories** — analyse a repository instead of a folder (read-only).
 
 **Behind the scenes**
-- About 200 new automated tests (now over 710), including tests against a real Subversion repository.
+- About 200 new automated tests (now over 740), including tests against a real Subversion repository.
 - Fixed translation generator, updated documentation and images.
 
 ## Documentation (Portuguese)

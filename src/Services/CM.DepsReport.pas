@@ -1,7 +1,8 @@
 ﻿unit CM.DepsReport;
 
 { Relatorio de dependencias entre as units: Markdown e uma pagina HTML autonoma (sem servidor, com o mapa em SVG,
-  tabelas ordenaveis e filtro). O texto segue o idioma activo (CM.Lang). }
+  tabelas ordenaveis e filtro). O Markdown segue o idioma activo (CM.Lang). A pagina HTML nasce no idioma activo mas
+  leva as frases nos quatro idiomas (pt, en, fr, de) e um seletor de idioma, para quem a abrir noutro idioma. }
 
 interface
 
@@ -230,6 +231,115 @@ end;
 
 { HTML + SVG }
 
+type
+  // as frases fixas da pagina: cada elemento traduzivel leva data-k com o indice da frase na tabela, e a tabela com a
+  // frase nos quatro idiomas vai embutida na pagina (o seletor de idioma troca o texto sem recarregar)
+  TStrTable = class
+  private
+    FKeys: TList<string>;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    function Idx(const APt: string): Integer;
+    // <ATag ...AAttrs data-k="n">frase no idioma activo</ATag>
+    function El(const ATag, APt: string; const AAttrs: string = ''): string;
+    // data-k="n" para um elemento cujo texto o chamador escreve
+    function Attr(const APt: string): string;
+    // {"pt":[...],"en":[...],"fr":[...],"de":[...]} (JavaScript)
+    function Json: string;
+  end;
+
+constructor TStrTable.Create;
+begin
+  inherited;
+  FKeys := TList<string>.Create;
+end;
+
+destructor TStrTable.Destroy;
+begin
+  FKeys.Free;
+  inherited;
+end;
+
+function TStrTable.Idx(const APt: string): Integer;
+begin
+  Result := FKeys.IndexOf(APt);
+  if Result < 0 then
+    Result := FKeys.Add(APt);
+end;
+
+function TStrTable.Attr(const APt: string): string;
+begin
+  Result := 'data-k="' + IntToStr(Idx(APt)) + '"';
+end;
+
+function TStrTable.El(const ATag, APt, AAttrs: string): string;
+begin
+  Result := '<' + ATag + ' ';
+  if AAttrs <> '' then
+    Result := Result + AAttrs + ' ';
+  Result := Result + Attr(APt) + '>' + HtmlEsc(Tr(APt)) + '</' + ATag + '>';
+end;
+
+// texto entre aspas para JavaScript (e sem nenhum "<" para nunca fechar o <script>)
+function JsLit(const AText: string): string;
+var
+  C: Char;
+  SB: TStringBuilder;
+begin
+  SB := TStringBuilder.Create;
+  try
+    SB.Append('"');
+    for C in AText do
+      case C of
+        '"': SB.Append('\"');
+        '\': SB.Append('\\');
+        #10: SB.Append('\n');
+        #13: SB.Append('\r');
+        #9: SB.Append('\t');
+        '<': SB.Append('\u003c');
+      else
+        if C < ' ' then
+          SB.Append('\u').Append(IntToHex(Ord(C), 4))
+        else
+          SB.Append(C);
+      end;
+    SB.Append('"');
+    Result := SB.ToString;
+  finally
+    SB.Free;
+  end;
+end;
+
+function TStrTable.Json: string;
+var
+  SB: TStringBuilder;
+  L: TLang;
+  I: Integer;
+begin
+  SB := TStringBuilder.Create;
+  try
+    SB.Append('{');
+    for L := Low(TLang) to High(TLang) do
+    begin
+      if L > Low(TLang) then
+        SB.Append(',');
+      SB.Append('"').Append(LangCodes[L]).Append('":[');
+      for I := 0 to FKeys.Count - 1 do
+      begin
+        if I > 0 then
+          SB.Append(',');
+        SB.Append(JsLit(TranslateTo(L, FKeys[I])));
+      end;
+      SB.Append(']');
+    end;
+    SB.Append('}');
+    Result := SB.ToString;
+  finally
+    SB.Free;
+  end;
+end;
+
 const
   HtmlCss =
     ':root{--bg:#f6f7f4;--surface:#fff;--surface2:#eef0eb;--border:#dcded7;--text:#1b1d1a;--dim:#5a5f58;--faint:#8b908a;' +
@@ -261,7 +371,11 @@ const
     'svg.sel .node.on,svg.sel .node.src,svg.sel .node.dst{opacity:1}svg .edge.out{stroke:var(--accent);stroke-opacity:1;stroke-width:2.2}' +
     'svg .edge.in{stroke:var(--blue);stroke-opacity:1;stroke-width:2.2}svg .node.on rect.b{stroke:var(--accent);stroke-width:2}' +
     'svg .node.src rect.b{stroke:var(--blue);stroke-width:2}svg .node.dst rect.b{stroke:var(--accent);stroke-width:2}' +
-    '.names{color:var(--dim);font-family:Consolas,monospace;font-size:12.5px}';
+    '.names{color:var(--dim);font-family:Consolas,monospace;font-size:12.5px}' +
+    '.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}' +
+    '.lang{display:flex;gap:4px}.lang button{font:600 12px "Segoe UI",system-ui,sans-serif;padding:4px 10px;' +
+    'border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--dim);cursor:pointer}' +
+    '.lang button.on{background:var(--accent2);border-color:var(--accent);color:var(--accent)}';
 
   HtmlJs =
     '(function(){var svg=document.getElementById("g");if(!svg)return;var N=svg.querySelectorAll(".node"),E=svg.querySelectorAll(".edge");' +
@@ -280,12 +394,23 @@ const
     'var f=document.getElementById("flt");if(f)f.addEventListener("input",function(){var q=f.value.toLowerCase();' +
     'document.querySelectorAll("#all tbody tr").forEach(function(r){r.style.display=r.textContent.toLowerCase().indexOf(q)<0?"none":""})});})();';
 
+  // seletor de idioma: o objecto T (frases nos quatro idiomas) e o idioma inicial vao antes deste texto
+  HtmlLangJs =
+    '(function(){function fmt(s,a){var k=0;return s.replace(/%(?:(\d+):)?d/g,function(m,i){return a[i!==undefined?+i:k++]})}' +
+    'var bs=document.querySelectorAll(".lang button");' +
+    'function ap(l){var tr=T[l];if(!tr)return;document.documentElement.lang=l;' +
+    'document.querySelectorAll("[data-k]").forEach(function(e){var s=tr[+e.dataset.k];' +
+    'if(e.dataset.a)s=fmt(s,e.dataset.a.split(","));e.textContent=(e.dataset.pre||"")+s+(e.dataset.suf||"")});' +
+    'document.querySelectorAll("[data-ph]").forEach(function(e){e.placeholder=tr[+e.dataset.ph]});' +
+    'bs.forEach(function(b){b.classList.toggle("on",b.dataset.l===l)})}' +
+    'bs.forEach(function(b){b.addEventListener("click",function(){ap(b.dataset.l)})})})();';
+
 function NodeX(N: TDepNode): Integer;
 begin
   Result := Margin + N.Level * ColW;
 end;
 
-function BuildSvg(AGraph: TDepGraph): string;
+function BuildSvg(AGraph: TDepGraph; ATable: TStrTable): string;
 var
   SB: TStringBuilder;
   ColSizes: TArray<Integer>;
@@ -364,7 +489,9 @@ begin
       Y := NodeY(N);
       Name := HtmlEsc(N.Name);
       Cls := 'node';
-      SB.Append('<g class="').Append(Cls).Append('" data-i="').Append(N.Index).Append('"><title>')
+      SB.Append('<g class="').Append(Cls).Append('" data-i="').Append(N.Index).Append('"><title ')
+        .Append(ATable.Attr('usa %d · usada por %d')).Append(' data-a="').Append(N.FanOut).Append(',').Append(N.FanIn)
+        .Append('" data-pre="').Append(HtmlEsc(N.Path + ' — ')).Append('">')
         .Append(HtmlEsc(N.Path)).Append(' — ').Append(HtmlEsc(TrF('usa %d · usada por %d', [N.FanOut, N.FanIn])))
         .Append('</title>');
       SB.Append('<rect class="b" x="').Append(F(X)).Append('" y="').Append(F(Y)).Append('" width="').Append(NodeW)
@@ -376,8 +503,9 @@ begin
           .AppendLine('" width="6" height="6" rx="3" fill="#c5523d"/>');
       SB.Append('<text x="').Append(F(X + 14)).Append('" y="').Append(F(Y + 14)).Append('" font-size="11.5" font-weight="700">')
         .Append(Name).AppendLine('</text>');
-      SB.Append('<text class="sub" x="').Append(F(X + 14)).Append('" y="').Append(F(Y + 27)).Append('">')
-        .Append(HtmlEsc(TrF('usa %d · usada por %d', [N.FanOut, N.FanIn]))).AppendLine('</text></g>');
+      SB.Append('<text class="sub" x="').Append(F(X + 14)).Append('" y="').Append(F(Y + 27)).Append('" ')
+        .Append(ATable.Attr('usa %d · usada por %d')).Append(' data-a="').Append(N.FanOut).Append(',').Append(N.FanIn)
+        .Append('">').Append(HtmlEsc(TrF('usa %d · usada por %d', [N.FanOut, N.FanIn]))).AppendLine('</text></g>');
     end;
     SB.AppendLine('</svg>');
     Result := SB.ToString;
@@ -386,18 +514,17 @@ begin
   end;
 end;
 
-procedure AppendCard(SB: TStringBuilder; const ALabel: string; AValue: Integer);
+procedure AppendCard(SB: TStringBuilder; ATable: TStrTable; const ALabel: string; AValue: Integer);
 begin
-  SB.Append('<div class="card"><b>').Append(AValue).Append('</b><span>').Append(HtmlEsc(ALabel)).AppendLine('</span></div>');
+  SB.Append('<div class="card"><b>').Append(AValue).Append('</b>').Append(ATable.El('span', ALabel)).AppendLine('</div>');
 end;
 
-procedure AppendTh(SB: TStringBuilder; const AText: string; ANumeric: Boolean);
+procedure AppendTh(SB: TStringBuilder; ATable: TStrTable; const AText: string; ANumeric: Boolean);
 begin
   if ANumeric then
-    SB.Append('<th class="n">')
+    SB.Append(ATable.El('th', AText, 'class="n"'))
   else
-    SB.Append('<th>');
-  SB.Append(HtmlEsc(AText)).Append('</th>');
+    SB.Append(ATable.El('th', AText));
 end;
 
 function DepsHtml(AGraph: TDepGraph; const AProjectName, ARootDisplay: string): string;
@@ -413,48 +540,63 @@ var
   Top: TArray<TDepNode>;
   MaxFan: Integer;
   Fmt: TFormatSettings;
+  Tbl: TStrTable;
+  L: TLang;
 begin
   Fmt := TFormatSettings.Invariant;
   MaxFan := 1;
   for N in AGraph.Nodes do
     MaxFan := Max(MaxFan, Max(N.FanIn, N.FanOut));
   SB := TStringBuilder.Create;
+  Tbl := TStrTable.Create;
   try
     SB.Append('<!doctype html><html lang="').Append(LangCodes[CurrentLang]).AppendLine('"><head><meta charset="utf-8">');
     SB.AppendLine('<meta name="viewport" content="width=device-width,initial-scale=1">');
-    SB.Append('<title>').Append(HtmlEsc(AProjectName)).Append(' — ').Append(HtmlEsc(Tr('Dependências entre units')))
-      .AppendLine('</title>');
+    SB.Append('<title ').Append(Tbl.Attr('Dependências entre units')).Append(' data-pre="')
+      .Append(HtmlEsc(AProjectName + ' — ')).Append('">').Append(HtmlEsc(AProjectName)).Append(' — ')
+      .Append(HtmlEsc(Tr('Dependências entre units'))).AppendLine('</title>');
     SB.Append('<style>').Append(HtmlCss).AppendLine('</style></head><body><div class="wrap">');
-    SB.Append('<h1>').Append(HtmlEsc(Tr('Dependências entre units'))).Append(' — ').Append(HtmlEsc(AProjectName))
-      .AppendLine('</h1>');
-    SB.Append('<p class="sub">').Append(HtmlEsc(Tr('Gerado em: '))).Append(FormatDateTime('yyyy-mm-dd hh:nn', Now))
+    SB.AppendLine('<div class="top"><div>');
+    SB.Append('<h1 ').Append(Tbl.Attr('Dependências entre units')).Append(' data-suf="')
+      .Append(HtmlEsc(' — ' + AProjectName)).Append('">').Append(HtmlEsc(Tr('Dependências entre units'))).Append(' — ')
+      .Append(HtmlEsc(AProjectName)).AppendLine('</h1>');
+    SB.Append('<p class="sub">').Append(Tbl.El('span', 'Gerado em: ')).Append(FormatDateTime('yyyy-mm-dd hh:nn', Now))
       .Append(' · ').Append(HtmlEsc(ARootDisplay)).AppendLine('</p>');
+    SB.AppendLine('</div><div class="lang">');
+    for L := Low(TLang) to High(TLang) do
+    begin
+      SB.Append('<button type="button" data-l="').Append(LangCodes[L]).Append('" title="').Append(HtmlEsc(LangNames[L]))
+        .Append('"');
+      if L = CurrentLang then
+        SB.Append(' class="on"');
+      SB.Append('>').Append(UpperCase(LangCodes[L])).AppendLine('</button>');
+    end;
+    SB.AppendLine('</div></div>');
 
     SB.AppendLine('<div class="cards">');
-    AppendCard(SB, Tr('Units'), AGraph.Nodes.Count);
-    AppendCard(SB, Tr('Ligações'), AGraph.Edges.Count);
-    AppendCard(SB, Tr('Units externas'), AGraph.ExternalCount);
-    AppendCard(SB, Tr('Ciclos'), Length(AGraph.Cycles));
-    AppendCard(SB, Tr('Colunas do mapa'), AGraph.LevelCount);
-    AppendCard(SB, Tr('Units sem uso'), Length(AGraph.Unused));
+    AppendCard(SB, Tbl, 'Units', AGraph.Nodes.Count);
+    AppendCard(SB, Tbl, 'Ligações', AGraph.Edges.Count);
+    AppendCard(SB, Tbl, 'Units externas', AGraph.ExternalCount);
+    AppendCard(SB, Tbl, 'Ciclos', Length(AGraph.Cycles));
+    AppendCard(SB, Tbl, 'Colunas do mapa', AGraph.LevelCount);
+    AppendCard(SB, Tbl, 'Units sem uso', Length(AGraph.Unused));
     SB.AppendLine('</div>');
 
     // mapa
-    SB.Append('<h2>').Append(HtmlEsc(Tr('Mapa de dependências'))).AppendLine('</h2>');
-    SB.Append('<p class="hint">').Append(HtmlEsc(Tr('Clique numa unit para realçar o que ela usa (verde) e o que a usa (azul). Linhas a tracejado: só na implementation; a vermelho: ciclos.')))
-      .AppendLine('</p>');
+    SB.AppendLine(Tbl.El('h2', 'Mapa de dependências'));
+    SB.AppendLine(Tbl.El('p', 'Clique numa unit para realçar o que ela usa (verde) e o que a usa (azul). Linhas a tracejado: só na implementation; a vermelho: ciclos.', 'class="hint"'));
     Layers := AGraph.Layers;
     SB.Append('<div class="legend">');
     for I := 0 to High(Layers) do
       SB.Append('<span><i style="background:').Append(ColorHex(DepLayerPalette[I mod Length(DepLayerPalette)])).Append('"></i>')
         .Append(HtmlEsc(Layers[I])).Append('</span>');
     SB.AppendLine('</div>');
-    SB.Append('<div class="map">').Append(BuildSvg(AGraph)).AppendLine('</div>');
+    SB.Append('<div class="map">').Append(BuildSvg(AGraph, Tbl)).AppendLine('</div>');
 
     // ciclos
-    SB.Append('<h2>').Append(HtmlEsc(Tr('Ciclos'))).AppendLine('</h2>');
+    SB.AppendLine(Tbl.El('h2', 'Ciclos'));
     if Length(AGraph.Cycles) = 0 then
-      SB.Append('<p class="sub">').Append(HtmlEsc(Tr('Nenhum ciclo: as units não se usam em círculo.'))).AppendLine('</p>')
+      SB.AppendLine(Tbl.El('p', 'Nenhum ciclo: as units não se usam em círculo.', 'class="sub"'))
     else
     begin
       SB.AppendLine('<table><tbody>');
@@ -465,11 +607,11 @@ begin
     end;
 
     // mais usadas / mais dependentes
-    SB.Append('<h2>').Append(HtmlEsc(Tr('Mais usadas'))).AppendLine('</h2>');
+    SB.AppendLine(Tbl.El('h2', 'Mais usadas'));
     SB.Append('<table><thead><tr>');
-    AppendTh(SB, Tr('Unit'), False);
-    AppendTh(SB, Tr('Camada'), False);
-    AppendTh(SB, Tr('Usada por'), True);
+    AppendTh(SB, Tbl, 'Unit', False);
+    AppendTh(SB, Tbl, 'Camada', False);
+    AppendTh(SB, Tbl, 'Usada por', True);
     SB.AppendLine('</tr></thead><tbody>');
     Top := AGraph.TopFanIn(10);
     for N in Top do
@@ -479,11 +621,11 @@ begin
           .Append('px"></span>').Append(N.FanIn).AppendLine('</td></tr>');
     SB.AppendLine('</tbody></table>');
 
-    SB.Append('<h2>').Append(HtmlEsc(Tr('Mais dependentes'))).AppendLine('</h2>');
+    SB.AppendLine(Tbl.El('h2', 'Mais dependentes'));
     SB.Append('<table><thead><tr>');
-    AppendTh(SB, Tr('Unit'), False);
-    AppendTh(SB, Tr('Camada'), False);
-    AppendTh(SB, Tr('Usa'), True);
+    AppendTh(SB, Tbl, 'Unit', False);
+    AppendTh(SB, Tbl, 'Camada', False);
+    AppendTh(SB, Tbl, 'Usa', True);
     SB.AppendLine('</tr></thead><tbody>');
     Top := AGraph.TopFanOut(10);
     for N in Top do
@@ -494,16 +636,16 @@ begin
     SB.AppendLine('</tbody></table>');
 
     // camadas
-    SB.Append('<h2>').Append(HtmlEsc(Tr('Ligações entre camadas'))).AppendLine('</h2>');
+    SB.AppendLine(Tbl.El('h2', 'Ligações entre camadas'));
     Links := AGraph.LayerLinks;
     if Length(Links) = 0 then
-      SB.Append('<p class="sub">').Append(HtmlEsc(Tr('Não há ligações entre camadas diferentes.'))).AppendLine('</p>')
+      SB.AppendLine(Tbl.El('p', 'Não há ligações entre camadas diferentes.', 'class="sub"'))
     else
     begin
       SB.Append('<table><thead><tr>');
-      AppendTh(SB, Tr('De'), False);
-      AppendTh(SB, Tr('Para'), False);
-      AppendTh(SB, Tr('Ligações'), True);
+      AppendTh(SB, Tbl, 'De', False);
+      AppendTh(SB, Tbl, 'Para', False);
+      AppendTh(SB, Tbl, 'Ligações', True);
       SB.AppendLine('</tr></thead><tbody>');
       for I := 0 to High(Links) do
         SB.Append('<tr><td>').Append(HtmlEsc(Links[I].FromLayer)).Append('</td><td>').Append(HtmlEsc(Links[I].ToLayer))
@@ -512,10 +654,10 @@ begin
     end;
 
     // sem uso
-    SB.Append('<h2>').Append(HtmlEsc(Tr('Units sem uso'))).AppendLine('</h2>');
+    SB.AppendLine(Tbl.El('h2', 'Units sem uso'));
     Unused := AGraph.Unused;
     if Length(Unused) = 0 then
-      SB.Append('<p class="sub">').Append(HtmlEsc(Tr('Todas as units são usadas por outra.'))).AppendLine('</p>')
+      SB.AppendLine(Tbl.El('p', 'Todas as units são usadas por outra.', 'class="sub"'))
     else
     begin
       SB.Append('<p class="names">');
@@ -529,11 +671,11 @@ begin
     end;
 
     // externas
-    SB.Append('<h2>').Append(HtmlEsc(Tr('Units de fora mais usadas'))).AppendLine('</h2>');
+    SB.AppendLine(Tbl.El('h2', 'Units de fora mais usadas'));
     ExternalUsage(AGraph, Names, Counts);
     SB.Append('<table><thead><tr>');
-    AppendTh(SB, Tr('Unit'), False);
-    AppendTh(SB, Tr('Usada por'), True);
+    AppendTh(SB, Tbl, 'Unit', False);
+    AppendTh(SB, Tbl, 'Usada por', True);
     SB.AppendLine('</tr></thead><tbody>');
     for I := 0 to Min(15, Length(Names)) - 1 do
       SB.Append('<tr><td class="m">').Append(HtmlEsc(Names[I])).Append('</td><td class="n">').Append(Counts[I])
@@ -541,25 +683,25 @@ begin
     SB.AppendLine('</tbody></table>');
 
     // todas
-    SB.Append('<h2>').Append(HtmlEsc(Tr('Todas as units'))).AppendLine('</h2>');
-    SB.Append('<input class="f" id="flt" type="search" placeholder="').Append(HtmlEsc(Tr('Filtrar por unit ou camada…')))
-      .AppendLine('">');
+    SB.AppendLine(Tbl.El('h2', 'Todas as units'));
+    SB.Append('<input class="f" id="flt" type="search" data-ph="').Append(Tbl.Idx('Filtrar por unit ou camada…'))
+      .Append('" placeholder="').Append(HtmlEsc(Tr('Filtrar por unit ou camada…'))).AppendLine('">');
     SB.Append('<table class="sort" id="all"><thead><tr>');
-    AppendTh(SB, Tr('Unit'), False);
-    AppendTh(SB, Tr('Camada'), False);
-    AppendTh(SB, Tr('Métodos'), True);
-    AppendTh(SB, Tr('Linhas'), True);
-    AppendTh(SB, Tr('Complexidade'), True);
-    AppendTh(SB, Tr('Usa'), True);
-    AppendTh(SB, Tr('Usada por'), True);
-    AppendTh(SB, Tr('Instabilidade'), True);
-    AppendTh(SB, Tr('Units externas'), True);
+    AppendTh(SB, Tbl, 'Unit', False);
+    AppendTh(SB, Tbl, 'Camada', False);
+    AppendTh(SB, Tbl, 'Métodos', True);
+    AppendTh(SB, Tbl, 'Linhas', True);
+    AppendTh(SB, Tbl, 'Complexidade', True);
+    AppendTh(SB, Tbl, 'Usa', True);
+    AppendTh(SB, Tbl, 'Usada por', True);
+    AppendTh(SB, Tbl, 'Instabilidade', True);
+    AppendTh(SB, Tbl, 'Units externas', True);
     SB.AppendLine('</tr></thead><tbody>');
     for N in AGraph.Nodes do
     begin
       SB.Append('<tr><td class="m">').Append(HtmlEsc(N.Name));
       if N.Cycle >= 0 then
-        SB.Append(' <span class="tag red">').Append(HtmlEsc(Tr('ciclo'))).Append('</span>');
+        SB.Append(' ').Append(Tbl.El('span', 'ciclo', 'class="tag red"'));
       SB.Append('</td><td>').Append(HtmlEsc(N.Layer)).Append('</td><td class="n">').Append(N.Methods)
         .Append('</td><td class="n">').Append(N.Lines).Append('</td><td class="n">').Append(N.MaxComplexity)
         .Append('</td><td class="n">').Append(N.FanOut).Append('</td><td class="n">').Append(N.FanIn)
@@ -567,9 +709,11 @@ begin
         .Append(Length(N.External)).AppendLine('</td></tr>');
     end;
     SB.AppendLine('</tbody></table>');
-    SB.Append('</div><script>').Append(HtmlJs).AppendLine('</script></body></html>');
+    SB.Append('</div><script>var T=').Append(Tbl.Json).Append(';').Append(HtmlLangJs).Append(HtmlJs)
+      .AppendLine('</script></body></html>');
     Result := SB.ToString;
   finally
+    Tbl.Free;
     SB.Free;
   end;
 end;
