@@ -28,6 +28,7 @@ uses
   CM.Hg in '..\src\Infrastructure\CM.Hg.pas',
   CM.WidthShare in '..\src\Core\CM.WidthShare.pas',
   CM.Sbom in '..\src\Core\CM.Sbom.pas',
+  CM.Dproj in '..\src\Core\CM.Dproj.pas',
   CM.Vcs in '..\src\Infrastructure\CM.Vcs.pas',
   CM.SysInfo in '..\src\Infrastructure\CM.SysInfo.pas',
   CM.GitHub in '..\src\Infrastructure\CM.GitHub.pas',
@@ -73,6 +74,7 @@ uses
   Tests.Hg in 'Tests.Hg.pas',
   Tests.WidthShare in 'Tests.WidthShare.pas',
   Tests.Sbom in 'Tests.Sbom.pas',
+  Tests.Dproj in 'Tests.Dproj.pas',
   Tests.Colors in 'Tests.Colors.pas',
   Tests.Appearance in 'Tests.Appearance.pas',
   Tests.AppInfo in 'Tests.AppInfo.pas';
