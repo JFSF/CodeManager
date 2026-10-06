@@ -154,7 +154,7 @@ Os comandos separam-se por `;`; os argumentos de cada um, por `,`.
 | `theme:dark` ou `theme:light` | Muda o tema |
 | `size:largura,altura` | Redimensiona a área cliente (testar janelas pequenas ou altas) |
 | `click:x,y` · `dblclick:x,y` · `move:x,y` · `wheel:x,y,delta` | Rato, em coordenadas da janela (`dblclick` = dois cliques seguidos) |
-| `page:7` | A página Acerca (a ordem dos índices é a de `TPage`: 0 Projeto, 1 Mapa, 2 Checklist, 3 Painel, 4 Grafo, 5 Código, 6 Aspeto, 7 Acerca, 8 SBOM) |
+| `page:7` | A página Acerca (a ordem dos índices é a de `TPage`: 0 Projeto, 1 Mapa, 2 Checklist, 3 Painel, 4 Grafo, 5 Código, 6 Aspeto, 7 Acerca, 8 SBOM, 9 Classes) |
 | `sonardemo` | Enche o SonarQube com dados **inventados** (medidas, problemas em linhas reais, hotspots), só para as imagens e para testar a interface |
 | `code:caminho[#método]` | Abre o código de uma unit (e salta para o método) na página Código e regista o separador no `dev.log` |
 | `hint:x,y` | Põe o rato em (x,y) e regista no `dev.log` a dica que apareceria |
@@ -164,6 +164,7 @@ Os comandos separam-se por `;`; os argumentos de cada um, por `,`.
 | `select:N` | Seleciona o projeto N da lista |
 | `exportmap` · `exportck` | Exporta as páginas HTML |
 | `exportsbom:fmt,ficheiro` | Grava o SBOM que a página SBOM já gerou (espera-se com `page:8;wait:N` antes); `fmt` = `cdx`, `spdx`, `html` ou `md` |
+| `exportclasses:fmt,ficheiro` | Grava o relatório das classes (a página Classes constrói a hierarquia ao abrir); `fmt` = `md` ou `csv` |
 | `exportstruct:fmt,ficheiro,metodos,estado` | Exporta a estrutura; `fmt` = `md`, `txt`, `csv` ou `json`; `metodos` e `estado` = `0` ou `1` |
 | `printprev:pagina,dpi,horizontal,ficheiro.png` | Desenha uma página de impressão num bitmap |
 | `printto:nome` | Imprime na impressora cujo nome contenha o texto |

@@ -302,6 +302,37 @@ A página HTML nasce no idioma da aplicação, mas leva as frases em **portuguê
 filtro), sem recarregar e sem servidor. Os nomes das units, das camadas e do projeto não se traduzem. Assim podes
 enviar o relatório a quem lê noutro idioma. O Markdown continua a seguir só o idioma da aplicação.
 
+## Classes e herança
+
+A página **Classes** mostra o que o projeto declara: classes, interfaces e records. Para cada classe diz a **profundidade
+de herança**, quantas classes herdam dela diretamente (**filhas**), quantos métodos declara e onde está.
+
+![Classes do próprio CodeManager](images/23-classes.png)
+
+### O que mostra
+
+- **Profundidade:** os níveis acima da classe. `TObject` conta 0, por isso uma classe sem ancestral explícito tem 1. A
+  cor segue a escala **1 a 4** normal, **5 e 6** moderada, **7 ou mais** alta: cadeias muito fundas são difíceis de
+  seguir e de mudar.
+- **«>=»:** se a classe herda de uma classe de fora do projeto de que o CodeManager não conhece a cadeia (um componente de
+  terceiros, por exemplo), só se sabe que a profundidade é *pelo menos* essa. As classes comuns da RTL e do FMX (como
+  `TComponent`, `TStringList`, `Exception` ou `TLayout`) são conhecidas e dão valores exatos.
+- **Interfaces** têm a sua própria hierarquia; um tipo **record** conta-se no resumo mas não tem herança.
+- A **dica** de cada linha mostra a cadeia completa de ancestrais, os descendentes e as interfaces implementadas.
+
+### Usar a lista
+
+- Por omissão a lista está em **árvore**: cada classe fica por baixo da sua ancestral, recuada.
+- Clica nos títulos **Classe**, **Profundidade**, **Filhas** ou **Métodos** para ordenar; um segundo clique inverte e um
+  terceiro volta à árvore.
+- A caixa de cima filtra por nome, ancestral ou ficheiro (a tecla `/` salta para ela).
+- **Duplo clique** abre o código na linha da declaração.
+- **Exportar:** o botão **Markdown** grava um relatório (resumo, as mais profundas, as com mais filhas e a árvore) e o
+  **CSV** uma linha por classe, com a profundidade, se é exata, as filhas, os descendentes e o ficheiro. Segue o idioma
+  da aplicação.
+
+No **Painel** há dois gráficos novos: as **classes mais profundas** e quantas classes há em cada profundidade.
+
 ## SBOM
 
 Uma **SBOM** (*software bill of materials*, lista de materiais de software) lista o que entra no teu programa. A página
@@ -424,6 +455,8 @@ Uma vista de conjunto, com gráficos que seguem o tema.
 - **Métodos com mais parâmetros** e **Métodos mais aninhados** (os 10 de cada, só com valor acima de zero).
 - **Métodos de maior complexidade cognitiva** (os 10 com mais) e **Complexidade cognitiva dos métodos** (quantos há em
   cada nível: simples até 15, moderada até 25).
+- **Classes mais profundas** (as 10 com maior profundidade de herança) e **Profundidade de herança** (quantas classes em
+  cada profundidade).
 - Passa o rato pelos gráficos para ver os valores.
 - Em janelas estreitas os cartões reorganizam-se em menos colunas.
 

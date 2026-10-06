@@ -164,6 +164,7 @@ $steps = @(
   'size:1344,821;wait:1'
   'page:4;wait:4;click:1070,117;wait:1;shot:{IMG}\13-grafo.png'
   'size:1344,1000;page:8;wait:12;shot:{IMG}\21-sbom.png;exportsbom:html,{WORK}\sbom.html;size:1344,821;wait:1'
+  'size:1344,1000;page:9;wait:2;shot:{IMG}\23-classes.png;size:1344,821;wait:1'
   'code:src/Core/CM.Highlight.pas#FindRoutineLine;wait:2;shot:{IMG}\14-codigo.png'
   'theme:dark;wait:2;shot:{IMG}\07-painel-escuro.png'
   'page:2;wait:1;shot:{IMG}\08-checklist-escuro.png'

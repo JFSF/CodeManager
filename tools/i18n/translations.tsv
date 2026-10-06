@@ -642,6 +642,15 @@ Exata	Exact	Exacte	Exakt
 Profundidade no projeto	Depth in the project	Profondeur dans le projet	Tiefe im Projekt
 Descendentes	Descendants	Descendants	Nachfahren
 Linha	Line	Ligne	Zeile
+Filtrar por classe, ancestral ou ficheiro…   ( / )	Filter by class, ancestor or file…   ( / )	Filtrer par classe, ancêtre ou fichier…   ( / )	Nach Klasse, Vorfahre oder Datei filtern…   ( / )
+Mostrar as interfaces	Show interfaces	Afficher les interfaces	Schnittstellen anzeigen
+Analise um projeto para ver as classes.	Analyse a project to see its classes.	Analysez un projet pour voir ses classes.	Analysieren Sie ein Projekt, um seine Klassen zu sehen.
+Este projeto não declara classes.	This project declares no classes.	Ce projet ne déclare aucune classe.	Dieses Projekt deklariert keine Klassen.
+Com profundidade mínima	With a minimum depth	Avec une profondeur minimale	Mit Mindesttiefe
+Duplo clique numa classe abre o código na sua declaração. Os títulos ordenam a lista.	Double-click a class to open the code at its declaration. The headings sort the list.	Double-cliquez sur une classe pour ouvrir le code à sa déclaration. Les titres trient la liste.	Doppelklick auf eine Klasse öffnet den Code an ihrer Deklaration. Die Überschriften sortieren die Liste.
+As %d com maior profundidade de herança	The %d with the deepest inheritance	Les %d à la plus grande profondeur d’héritage	Die %d mit der größten Vererbungstiefe
+Profundidade de herança	Inheritance depth	Profondeur d'héritage	Vererbungstiefe
+Quantas classes em cada profundidade (1 = sem ancestral do projeto)	How many classes at each depth (1 = no ancestor in the project)	Combien de classes à chaque profondeur (1 = sans ancêtre dans le projet)	Wie viele Klassen in jeder Tiefe (1 = ohne Vorfahre im Projekt)
 #!html
 # Textos dos modelos HTML (res\templates): cada chave e um troco exacto do modelo; so se aplicam ao modelo, antes de
 # se preencherem os marcadores __XXX__. Nas traducoes nao se usam aspas ASCII duplas (estao em strings JS e atributos).

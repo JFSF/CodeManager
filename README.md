@@ -20,6 +20,7 @@ documento com o que o projeto *devia* ter, compara os dois.
 
 - 🗺️ **Mapa** — a árvore pastas → ficheiros → métodos, com pesquisa, estatísticas e as **linhas, a complexidade (ciclomática e cognitiva), os parâmetros e o aninhamento** de cada método.
 - ✅ **Checklist** — marca o que reviste, o que está em revisão ou precisa de alteração, o que compila, o que passou no Sonar, o que é prioritário; com notas.
+- 🧬 **Classes** — as classes e interfaces do projeto com a **profundidade de herança** de cada uma, as filhas e a declaração, com exportação para Markdown e CSV.
 - 🧾 **SBOM** — a lista de materiais de software do projeto (que units de fora usa, de onde vêm e com que confiança) em **CycloneDX** e **SPDX**, mais um relatório em quatro idiomas.
 - 📊 **Painel** — números e gráficos do progresso e da distribuição do código, incluindo a evolução dia a dia.
 - 📝 **Plano em Markdown** — escreve a estrutura prevista num `.md` e vê o que está implementado, o que falta e o que sobra.
@@ -85,6 +86,15 @@ O **Grafo** desenha quem usa quem, a partir das cláusulas `uses`: colunas por n
 (usa / usada por), **ciclos** assinalados e um relatório em HTML (com o mapa em SVG) ou Markdown.
 
 ![Grafo de dependências](docs/images/13-grafo.png)
+
+### Classes e profundidade de herança
+
+A página **Classes** lista as classes, interfaces e records que o projeto declara e a **profundidade de herança** de cada
+classe (quantos níveis tem acima dela, com `TObject` a 0), as filhas diretas e os métodos. Um duplo clique abre o código
+na declaração. Quando a cadeia passa por uma classe de fora que não se conhece, a profundidade vem com «>=». O Painel
+mostra as classes mais profundas e a distribuição, e a página exporta Markdown e CSV.
+
+![Classes](docs/images/23-classes.png)
 
 ### Lista de materiais de software (SBOM)
 

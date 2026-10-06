@@ -61,6 +61,8 @@ type
     procedure Reset;
     // abre (ou volta a mostrar) o codigo da unit; AMethodIndex >= 0 salta para o metodo (indice em AUnit.Methods)
     function OpenUnit(AUnit: TUnitInfo; AMethodIndex: Integer = -1): Boolean;
+    // abre a unit e salta para a linha ALine (1 = primeira)
+    function OpenUnitAt(AUnit: TUnitInfo; ALine: Integer): Boolean;
     // a pagina passou a estar visivel: se o ficheiro aberto mudou no disco, volta a le-lo
     procedure Activate;
     // chegou uma consulta nova ao SonarQube (ou deixou de haver): refaz os pontos da margem e a lista
@@ -338,6 +340,13 @@ begin
       FHost.Toast(Tr('Não foi possível localizar o método no ficheiro.'));
   end;
   Result := True;
+end;
+
+function TCodePage.OpenUnitAt(AUnit: TUnitInfo; ALine: Integer): Boolean;
+begin
+  Result := OpenUnit(AUnit, -1);
+  if Result and (ALine > 0) then
+    FView.ShowLine(ALine - 1);
 end;
 
 procedure TCodePage.ReloadIfChanged(ATab: TCodeTab);

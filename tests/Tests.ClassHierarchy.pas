@@ -37,6 +37,7 @@ type
     [Test] procedure ChainListsTheAncestors;
     [Test] procedure DepthLevelsUseTheirLimits;
     [Test] procedure KnownDepthIgnoresCaseAndQualification;
+    [Test] procedure FmxOnlyClassesAreKnownButTControlIsNot;
     [Test] procedure NilScanIsEmpty;
     [Test] procedure FindIgnoresQualificationAndCase;
     [Test] procedure UnitLayerAndLineAreKept;
@@ -275,6 +276,17 @@ begin
   Assert.AreEqual(1, D);
   Assert.IsFalse(KnownDepth('TForm', D), 'depende do framework: nao consta');
   Assert.IsFalse(KnownDepth('', D));
+end;
+
+procedure TClassHierarchyTests.FmxOnlyClassesAreKnownButTControlIsNot;
+var
+  D: Integer;
+begin
+  Assert.IsTrue(KnownDepth('FMX.Layouts.TLayout', D));
+  Assert.AreEqual(5, D);
+  Assert.IsTrue(KnownDepth('TFmxObject', D));
+  Assert.AreEqual(3, D);
+  Assert.IsFalse(KnownDepth('TControl', D));   // existe no VCL e no FMX com cadeias diferentes
 end;
 
 procedure TClassHierarchyTests.NilScanIsEmpty;

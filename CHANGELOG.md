@@ -6,6 +6,16 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
 
 ## [Não lançado]
 
+### Funcionalidades
+
+- **Classes e herança:** nova página **Classes** com as classes, interfaces e records do projeto e a **profundidade de
+  herança** de cada uma (os níveis acima dela, com `TObject` a 0). Mostra as filhas diretas, os métodos e a declaração;
+  ordena-se pelos títulos, filtra-se por nome, ancestral ou ficheiro e o duplo clique abre o código na linha da classe.
+  Quando a cadeia sai do projeto para uma classe de que não se conhece a ascendência (por exemplo, de um componente de
+  terceiros), a profundidade é um mínimo e aparece com «>=». Exporta Markdown e CSV.
+- **Painel:** duas medidas novas, as **classes mais profundas** e a **profundidade de herança** (quantas classes em cada
+  profundidade).
+
 ## [1.0.3] - 2026-10-06
 
 Lista de materiais de software (SBOM) em CycloneDX e SPDX.

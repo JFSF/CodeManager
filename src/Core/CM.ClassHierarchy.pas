@@ -79,7 +79,9 @@ const
     'TObject=0,TPersistent=1,TInterfacedObject=1,TInterfacedPersistent=2,TComponent=2,TThread=1,TList=1,TStream=1,' +
     'THandleStream=2,TFileStream=3,TCustomMemoryStream=2,TMemoryStream=3,TStrings=2,TStringList=3,TCollection=2,' +
     'TCollectionItem=2,TDataModule=3,TCustomAttribute=1,Exception=1,EAbort=2,EConvertError=2,EInvalidOperation=2,' +
-    'IInterface=0,IUnknown=0,IDispatch=1';
+    'IInterface=0,IUnknown=0,IDispatch=1,' +
+    // so existem no FMX (o TControl existe nos dois, com cadeias diferentes, e por isso nao consta)
+    'TFmxObject=3,TStyledControl=5,TLayout=5';
 
 var
   GKnown: TDictionary<string, Integer>;

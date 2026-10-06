@@ -23,9 +23,10 @@ type
     FKpiRow: TCMCardRow;
     FKpi: array[0..3] of TCMKpi;
     FEvoRow: TCMControl;
-    FRows: array[0..6] of TCMCardRow;           // a ultima so aparece quando ha plano
+    FRows: array[0..7] of TCMCardRow;           // a ultima so aparece quando ha plano
     FEvolution, FLayers, FStatus, FTop, FHist, FLayerMethods, FCompilaSonar: TChart4D;
     FPlanLayers, FPlanOverview, FComplexTop, FComplexDist, FParamsTop, FNestingTop, FCogTop, FCogDist: TChart4D;
+    FClassesTop, FClassesDepth: TChart4D;
     FSonarKpiRow: TCMCardRow;                   // so aparecem com medidas do SonarQube
     FSonarKpi: array[0..3] of TCMKpi;
     FSonarRow: TCMCardRow;
@@ -51,6 +52,7 @@ type
     procedure FillComplexity;
     procedure FillShape;
     procedure FillCognitive;
+    procedure FillClasses;
     // grafico de barras dos AN metodos com maior valor de uma medida (so conta metodos com corpo e valor > 0)
     procedure FillTopMethods(AChart: TChart4D; const ATitle, ASubtitle, ASeries: string; AColor: TAlphaColor;
       const AMeasure: TFunc<TMethodInfo, Integer>);
@@ -73,7 +75,7 @@ implementation
 
 
 uses
-  CM.Lang;
+  CM.Lang, CM.Classes, CM.ClassHierarchy;
 const
   ChartScale = 0.6;
   KpiHeight = 100;
@@ -176,8 +178,10 @@ begin
   FNestingTop := AddChartCard(4);
   FCogTop := AddChartCard(5);
   FCogDist := AddChartCard(5);
-  FPlanLayers := AddChartCard(6);
-  FPlanOverview := AddChartCard(6);
+  FClassesTop := AddChartCard(6);
+  FClassesDepth := AddChartCard(6);
+  FPlanLayers := AddChartCard(7);
+  FPlanOverview := AddChartCard(7);
   StyleAll;
   Relayout;
 end;
@@ -207,11 +211,11 @@ begin
     if Narrow then FRows[I].Columns := 1 else FRows[I].Columns := 2;
     FRows[I].Height := FRows[I].HeightFor(Cell);
   end;
-  FRows[6].Visible := FHost.HasPlan;
+  FRows[7].Visible := FHost.HasPlan;
   FBody.Height := FKpiRow.Height + FEvoRow.Height + FRows[0].Height + FRows[1].Height + FRows[2].Height;
-  FBody.Height := FBody.Height + FRows[3].Height + FRows[4].Height + FRows[5].Height;
-  if FRows[6].Visible then
-    FBody.Height := FBody.Height + FRows[6].Height;
+  FBody.Height := FBody.Height + FRows[3].Height + FRows[4].Height + FRows[5].Height + FRows[6].Height;
+  if FRows[7].Visible then
+    FBody.Height := FBody.Height + FRows[7].Height;
   if FSonarOn then
   begin
     if Narrow then FSonarKpiRow.Columns := 2 else FSonarKpiRow.Columns := 4;
@@ -248,7 +252,7 @@ procedure TDashboardPage.StyleAll;
 var
   C: TChart4D;
 begin
-  for C in [FEvolution, FLayers, FStatus, FTop, FHist, FLayerMethods, FCompilaSonar, FPlanLayers, FPlanOverview, FComplexTop, FComplexDist, FParamsTop, FNestingTop, FCogTop, FCogDist, FSonarDebt, FSonarTop] do
+  for C in [FEvolution, FLayers, FStatus, FTop, FHist, FLayerMethods, FCompilaSonar, FPlanLayers, FPlanOverview, FComplexTop, FComplexDist, FParamsTop, FNestingTop, FCogTop, FCogDist, FClassesTop, FClassesDepth, FSonarDebt, FSonarTop] do
     C.Plot.Style := ThemedStyle;
 end;
 
@@ -321,6 +325,7 @@ begin
   FillComplexity;
   FillShape;
   FillCognitive;
+  FillClasses;
   FillPlan;
   FillSonar;
   Relayout;                // a linha do plano aparece ou desaparece conforme ha plano
@@ -701,6 +706,51 @@ begin
   FCogDist.Plot.Categories := [Tr('Simples'), Tr('Moderada'), Tr('Alta')];
   FCogDist.Plot.AddSeries(Tr('Métodos'),
     [Levels[cxNone] + Levels[cxLow], Levels[cxModerate], Levels[cxHigh]]).Color := Pal.Accent;
+end;
+
+// heranca: as classes mais profundas e quantas ha em cada profundidade (so classes e interfaces do projeto)
+procedure TDashboardPage.FillClasses;
+const
+  TopN = 10;
+var
+  H: THierarchy;
+  Top: TArray<TClassNode>;
+  Counts: TArray<Integer>;
+  Names, Depths: TArray<string>;
+  Values, Amounts: TArray<Double>;
+  I: Integer;
+begin
+  H := BuildHierarchy(FHost.CurrentScan);
+  try
+    Top := H.Deepest(TopN);
+    SetLength(Names, Length(Top));
+    SetLength(Values, Length(Top));
+    for I := 0 to High(Top) do
+    begin
+      Names[I] := Top[I].Name;
+      Values[I] := Top[I].Depth;
+    end;
+    Counts := H.Histogram;
+    SetLength(Depths, 0);
+    SetLength(Amounts, 0);
+    for I := 1 to High(Counts) do
+    begin
+      Depths := Depths + [IntToStr(I)];
+      Amounts := Amounts + [Counts[I]];
+    end;
+  finally
+    H.Free;
+  end;
+  Reset(FClassesTop, TChartKind.Bar, Tr('Classes mais profundas'),
+    Format(Tr('As %d com maior profundidade de herança'), [Length(Top)]));
+  FClassesTop.Plot.Orientation := TChartOrientation.Horizontal;
+  FClassesTop.Plot.Categories := Names;
+  FClassesTop.Plot.AddSeries(Tr('Profundidade'), Values).Color := Pal.FlagCompila;
+
+  Reset(FClassesDepth, TChartKind.Bar, Tr('Profundidade de herança'),
+    Tr('Quantas classes em cada profundidade (1 = sem ancestral do projeto)'));
+  FClassesDepth.Plot.Categories := Depths;
+  FClassesDepth.Plot.AddSeries(Tr('Classes'), Amounts).Color := Pal.Accent;
 end;
 
 // cobertura do plano: por camada (ficheiros) e o total de ficheiros e metodos; so com plano

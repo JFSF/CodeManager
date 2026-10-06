@@ -12,7 +12,7 @@ uses
   System.Generics.Collections, System.StrUtils,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Edit, FMX.Printer,
   CM.Lang, CM.Deps, CM.DepsReport, CM.Theme, CM.Controls, CM.TreeList, CM.Analyzer, CM.Store, CM.SafeFile, CM.SonarModel, CM.Sonar, CM.Secrets, CM.Stats, CM.History, CM.Plan, CM.Export, CM.Print,
-  CM.GitHub, CM.Pages.Host, CM.Pages.Project, CM.Pages.Map, CM.Pages.Checklist, CM.Pages.Dashboard, CM.Pages.Graph, CM.Pages.Sbom, CM.Pages.Code, CM.Pages.Appearance, CM.Pages.About;
+  CM.GitHub, CM.Pages.Host, CM.Pages.Project, CM.Pages.Map, CM.Pages.Checklist, CM.Pages.Dashboard, CM.Pages.Graph, CM.Pages.Sbom, CM.Pages.Classes, CM.Pages.Code, CM.Pages.Appearance, CM.Pages.About;
 
 type
   TMainForm = class(TForm, IPageHost)
@@ -65,6 +65,7 @@ type
     FDashboard: TDashboardPage;
     FGraph: TGraphPage;
     FSbom: TSbomPage;
+    FClasses: TClassesPage;
     FCode: TCodePage;
     FAppearance: TAppearancePage;
     FAbout: TAboutPage;
@@ -110,6 +111,7 @@ type
     procedure ShowPage(APage: TPage);
     procedure AppearanceChanged(ARebuild: Boolean);
     procedure OpenCode(AUnit: TUnitInfo; AMethodIndex: Integer);
+    procedure OpenCodeAt(AUnit: TUnitInfo; ALine: Integer);
     procedure SelectProject(AProfile: TProjectProfile);
     procedure DetachProfile;
     procedure BindScan(AScan, APlan: TProjectScan);
@@ -299,6 +301,7 @@ begin
   FDashboard := TDashboardPage.Create(Self, FPages, Self);
   FGraph := TGraphPage.Create(Self, FPages, Self);
   FSbom := TSbomPage.Create(Self, FPages, Self);
+  FClasses := TClassesPage.Create(Self, FPages, Self);
   FCode := TCodePage.Create(Self, FPages, Self);
   FAppearance := TAppearancePage.Create(Self, FPages, Self);
   FAbout := TAboutPage.Create(Self, FPages, Self);
@@ -310,6 +313,7 @@ begin
   FPageBox[pgDashboard] := FDashboard;
   FPageBox[pgGraph] := FGraph;
   FPageBox[pgSbom] := FSbom;
+  FPageBox[pgClasses] := FClasses;
   FPageBox[pgCode] := FCode;
   FPageBox[pgAppearance] := FAppearance;
   FPageBox[pgAbout] := FAbout;
@@ -320,8 +324,8 @@ end;
 
 procedure TMainForm.BuildRail;
 const
-  Icons: array[TPage] of TIconKind = (icDashboard, icMap, icChecklist, icChart, icGraph, icCode, icPalette, icInfo, icBox);
-  NavOrder: array[0..8] of TPage = (pgProject, pgMap, pgGraph, pgSbom, pgCode, pgChecklist, pgDashboard, pgAppearance, pgAbout);
+  Icons: array[TPage] of TIconKind = (icDashboard, icMap, icChecklist, icChart, icGraph, icCode, icPalette, icInfo, icBox, icClasses);
+  NavOrder: array[0..9] of TPage = (pgProject, pgMap, pgGraph, pgClasses, pgSbom, pgCode, pgChecklist, pgDashboard, pgAppearance, pgAbout);
 var
   P: TPage;
   K: Integer;
@@ -335,6 +339,7 @@ begin
   Names[pgDashboard] := Tr('Painel');
   Names[pgGraph] := Tr('Grafo');
   Names[pgSbom] := Tr('SBOM');
+  Names[pgClasses] := Tr('Classes');
   Names[pgCode] := Tr('Código');
   Names[pgAppearance] := Tr('Aspeto');
   Names[pgAbout] := Tr('Acerca');
@@ -418,6 +423,7 @@ begin
   FDashboard.ApplyTheme;
   FGraph.ApplyTheme;
   FSbom.ApplyTheme;
+  FClasses.ApplyTheme;
   FCode.ApplyTheme;
   FAppearance.ApplyTheme;
   FAbout.ApplyTheme;
@@ -480,6 +486,8 @@ begin
     FGraph.Activate;
   if APage = pgSbom then
     FSbom.Activate;
+  if APage = pgClasses then
+    FClasses.Activate;
   if APage = pgCode then
     FCode.Activate;
   if APage = pgAppearance then
@@ -508,6 +516,12 @@ end;
 procedure TMainForm.OpenCode(AUnit: TUnitInfo; AMethodIndex: Integer);
 begin
   if FCode.OpenUnit(AUnit, AMethodIndex) then
+    ShowPage(pgCode);
+end;
+
+procedure TMainForm.OpenCodeAt(AUnit: TUnitInfo; ALine: Integer);
+begin
+  if FCode.OpenUnitAt(AUnit, ALine) then
     ShowPage(pgCode);
 end;
 
@@ -883,10 +897,13 @@ begin
   RequestSonarRefresh;
   FGraph.Invalidate;
   FSbom.Invalidate;
+  FClasses.Invalidate;
   if FPage = pgGraph then
     FGraph.Activate;
   if FPage = pgSbom then
     FSbom.Activate;
+  if FPage = pgClasses then
+    FClasses.Activate;
   UpdateAll;
   UpdateHeader;
   if FScan <> nil then
@@ -917,10 +934,13 @@ begin
   FCk.RequestGitRefresh;
   FGraph.Invalidate;
   FSbom.Invalidate;
+  FClasses.Invalidate;
   if FPage = pgGraph then
     FGraph.Activate;
   if FPage = pgSbom then
     FSbom.Activate;
+  if FPage = pgClasses then
+    FClasses.Activate;
   UpdateAll;
   UpdateHeader;
 end;
@@ -967,13 +987,14 @@ begin
         FTitle.Text := Tr('Aspeto');
         FSubtitle.Text := Tr('Cor de destaque, fontes e tamanho do texto. As escolhas são só tuas.');
       end;
-    pgMap, pgChecklist, pgDashboard, pgGraph, pgCode, pgSbom:
+    pgMap, pgChecklist, pgDashboard, pgGraph, pgCode, pgSbom, pgClasses:
       begin
         case FPage of
           pgMap: FTitle.Text := Tr('Mapa de código');
           pgChecklist: FTitle.Text := Tr('Checklist de código');
           pgGraph: FTitle.Text := Tr('Grafo de dependências');
           pgSbom: FTitle.Text := Tr('SBOM: lista de materiais de software');
+          pgClasses: FTitle.Text := Tr('Classes e herança');
           pgCode: FTitle.Text := Tr('Código-fonte');
         else
           FTitle.Text := Tr('Painel');
@@ -1290,6 +1311,13 @@ begin
     Parts := Arg.Split([',']);
     FSbom.WriteExport(IndexText(Parts[0], ['cdx', 'spdx', 'html', 'md']), Parts[1]);
   end
+  else if Cmd = 'exportclasses' then
+  begin
+    // exportclasses:md|csv,ficheiro - grava o relatorio das classes (a pagina Classes constroi a hierarquia ao abrir)
+    Parts := Arg.Split([',']);
+    FClasses.Activate;
+    FClasses.WriteExport(IndexText(Parts[0], ['md', 'csv']), Parts[1]);
+  end
   else if Cmd = 'printprev' then
   begin
     // printprev:pagina,dpi,horizontal(0/1),ficheiro.png - desenha uma pagina num bitmap (A4)
@@ -1418,6 +1446,7 @@ begin
     pgChecklist: Target := FCk.Search;
     pgGraph: Target := FGraph.Search;
     pgSbom: Target := FSbom.Search;
+    pgClasses: Target := FClasses.Search;
   else
     Target := nil;
   end;
