@@ -35,6 +35,10 @@ type
     [Test] procedure HtmlPhraseTableNeverClosesTheScriptTag;
     [Test] procedure HtmlHasNoLeftoverPlaceholders;
     [Test] procedure ReportFileNameFollowsTheLanguage;
+    [Test] procedure MarkdownShowsLibraryVersionAndLicense;
+    [Test] procedure MarkdownListsThirdPartyWithoutLicense;
+    [Test] procedure MarkdownSaysSeeTheFileForAnUnrecognisedLicense;
+    [Test] procedure HtmlShowsLicenseColumnsAndCards;
     [Test] procedure EmptySbomStillMakesAReport;
     [Test] procedure LongListsOfUnconfirmedAreShortened;
     [Test] procedure WithAMapTheReportsShowWhatIsOutsideIt;
@@ -152,6 +156,8 @@ var
   Md: string;
 begin
   FSbom.Find('Chart4D.FMX').Confidence := scMedium;
+  FSbom.Find('Chart4D.FMX').License := 'MIT';
+  FSbom.Find('Spring.Collections').License := 'Apache-2.0';
   Md := SbomMarkdown(FSbom, '');
   Assert.Contains(Md, 'Nada a assinalar: todos os componentes foram confirmados.');
 end;
@@ -184,7 +190,7 @@ begin
   Html := SbomHtml(FSbom, 'C:\Proj');
   Assert.Contains(Html, '<!doctype html>');
   Assert.Contains(Html, 'lang="pt"');
-  Assert.AreEqual(6, Count(Html, '<div class="card">'));
+  Assert.AreEqual(8, Count(Html, '<div class="card">'));
   Assert.AreEqual(4, Count(Html, '<button type="button" data-l="'));
   Assert.Contains(Html, 'data-l="pt" title="Português" class="on">PT</button>');
   Assert.Contains(Html, 'id="flt"');
@@ -343,7 +349,7 @@ begin
   Assert.Contains(Md, '| Mapa de ligação | Demo.map |');
   Assert.IsFalse(Md.Contains('C:\out'), 'so o nome do mapa vai para o relatorio');
   Html := SbomHtml(FSbom, '');
-  Assert.AreEqual(7, Count(Html, '<div class="card">'));
+  Assert.AreEqual(9, Count(Html, '<div class="card">'));
   Assert.Contains(Html, 'Fora do mapa');
   Assert.Contains(Html, '<li><span class="names">Vcl.Forms</span></li>');
   SetLang(lgEn);
@@ -357,7 +363,69 @@ begin
   Md := SbomMarkdown(FSbom, '');
   Assert.IsFalse(Md.Contains('Fora do mapa'));
   Assert.IsFalse(Md.Contains('ausentes do mapa'));
-  Assert.AreEqual(6, Count(SbomHtml(FSbom, ''), '<div class="card">'));
+  Assert.AreEqual(8, Count(SbomHtml(FSbom, ''), '<div class="card">'));
+end;
+
+procedure TSbomReportTests.MarkdownShowsLibraryVersionAndLicense;
+var
+  Md: string;
+begin
+  with FSbom.Find('Chart4D.FMX') do
+  begin
+    LibraryName := 'Chart4D';
+    Version := '0.9.1';
+    License := 'MIT';
+  end;
+  Md := SbomMarkdown(FSbom, '');
+  Assert.Contains(Md, '| Biblioteca | Versão | Licença |');
+  Assert.Contains(Md, '| Chart4D | 0.9.1 | MIT |');
+  Assert.Contains(Md, '- Com licença conhecida: 1');
+  Assert.Contains(Md, '- Sem licença conhecida: 1');   // a Spring.Collections ficou sem licença
+end;
+
+procedure TSbomReportTests.MarkdownListsThirdPartyWithoutLicense;
+var
+  Md: string;
+begin
+  FSbom.Find('Chart4D.FMX').Confidence := scMedium;
+  Md := SbomMarkdown(FSbom, '');
+  Assert.Contains(Md, 'Units de terceiros sem licença reconhecida');
+  Assert.Contains(Md, '- Sem licença conhecida: 2');
+  Assert.IsFalse(Md.Contains('Nada a assinalar'));
+end;
+
+procedure TSbomReportTests.MarkdownSaysSeeTheFileForAnUnrecognisedLicense;
+var
+  Md: string;
+begin
+  with FSbom.Find('Chart4D.FMX') do
+  begin
+    LicenseName := 'See LICENSE';
+    LicenseSource := 'LICENSE';
+  end;
+  Assert.Contains(SbomMarkdown(FSbom, ''), '| Ver LICENSE |');
+  SetLang(lgEn);
+  Md := SbomMarkdown(FSbom, '');
+  Assert.Contains(Md, '| See LICENSE |');
+end;
+
+procedure TSbomReportTests.HtmlShowsLicenseColumnsAndCards;
+var
+  Html: string;
+begin
+  with FSbom.Find('Chart4D.FMX') do
+  begin
+    LibraryName := 'Chart4D';
+    Version := '0.9.1';
+    License := 'MIT';
+  end;
+  Html := SbomHtml(FSbom, '');
+  Assert.Contains(Html, '>0.9.1<');
+  Assert.Contains(Html, '>MIT<');
+  Assert.Contains(Html, '>Chart4D<');
+  Assert.Contains(Html, 'Licença');
+  Assert.Contains(Html, 'Sem licença conhecida');
+  Assert.Contains(Html, 'Lizenz', 'a coluna vem nos quatro idiomas');
 end;
 
 end.

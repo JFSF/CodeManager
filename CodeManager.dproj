@@ -109,11 +109,13 @@
         <DCCReference Include="src\Infrastructure\CM.Hg.pas"/>
         <DCCReference Include="src\Core\CM.WidthShare.pas"/>
         <DCCReference Include="src\Core\CM.Classes.pas"/>
+        <DCCReference Include="src\Core\CM.Licenses.pas"/>
         <DCCReference Include="src\Core\CM.ClassHierarchy.pas"/>
         <DCCReference Include="src\Core\CM.Sbom.pas"/>
         <DCCReference Include="src\Core\CM.MapFile.pas"/>
         <DCCReference Include="src\Core\CM.Dproj.pas"/>
         <DCCReference Include="src\Infrastructure\CM.SbomResolve.pas"/>
+        <DCCReference Include="src\Infrastructure\CM.SbomLibs.pas"/>
         <DCCReference Include="src\Services\CM.SbomFormats.pas"/>
         <DCCReference Include="src\Services\CM.HtmlLang.pas"/>
         <DCCReference Include="src\Services\CM.ClassReport.pas"/>

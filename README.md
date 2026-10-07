@@ -99,7 +99,8 @@ mostra as classes mais profundas e a distribuição, e a página exporta Markdow
 ### Lista de materiais de software (SBOM)
 
 A página **SBOM** lista as units de fora que o projeto usa, de onde vem cada uma (Embarcadero ou terceiros) e com que
-confiança, com o **SHA-256** de cada ficheiro. Exporta **CycloneDX 1.5** e **SPDX 2.3** (JSON) e um relatório em HTML
+confiança, com o **SHA-256** de cada ficheiro e, nas bibliotecas de terceiros, a **versão e a licença** (do `boss.json`, do
+`boss-lock.json`, do GetIt e do ficheiro de licença). Exporta **CycloneDX 1.5** e **SPDX 2.3** (JSON) e um relatório em HTML
 (nos quatro idiomas) ou Markdown. Parte do código-fonte e do `.dproj`, sem compilar, e usa o ficheiro `.map` se existir.
 Adapta ideias do [DX.Comply](https://github.com/omonien/DX.Comply).
 

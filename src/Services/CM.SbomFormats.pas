@@ -35,7 +35,7 @@ procedure SaveSbomFile(const AFileName, AContent: string);
 implementation
 
 uses
-  System.Classes, System.IOUtils, System.JSON, System.DateUtils, System.TimeSpan, System.Generics.Collections, System.RegularExpressions;
+  System.Classes, System.IOUtils, System.JSON, System.DateUtils, System.TimeSpan, System.Generics.Collections, System.RegularExpressions, System.StrUtils;
 
 const
   CdxSpecVersion = '1.5';
@@ -109,22 +109,67 @@ begin
     Result.Add(Prop('codemanager:layer', C.Layer));
   if C.InMap then
     Result.Add(Prop('codemanager:linked', 'true'));
+  if C.LibraryName <> '' then
+    Result.Add(Prop('codemanager:library', C.LibraryName));
+  if C.VersionSource <> '' then
+    Result.Add(Prop('codemanager:version-source', C.VersionSource));
+  if C.LicenseSource <> '' then
+    Result.Add(Prop('codemanager:license-source', C.LicenseSource));
+end;
+
+// so se escreve uma ligacao web que seja mesmo http(s)
+function IsWebUrl(const AUrl: string): Boolean;
+begin
+  Result := StartsText('https://', AUrl) or StartsText('http://', AUrl);
+end;
+
+// [{"license":{"id":"MIT"}}] com a licenca reconhecida, ou {"name":...} quando so se sabe que ha um ficheiro; nil sem licenca
+function CdxLicenses(C: TSbomComponent): TJSONArray;
+var
+  Entry, Lic: TJSONObject;
+begin
+  Result := nil;
+  if (C.License = '') and (C.LicenseName = '') then
+    Exit;
+  Lic := TJSONObject.Create;
+  if C.License <> '' then
+    Lic.AddPair('id', C.License)
+  else
+    Lic.AddPair('name', C.LicenseName);
+  Entry := TJSONObject.Create;
+  Entry.AddPair('license', Lic);
+  Result := TJSONArray.Create;
+  Result.Add(Entry);
 end;
 
 function CdxComponent(C: TSbomComponent): TJSONObject;
 var
-  Hashes: TJSONArray;
-  H, Sup: TJSONObject;
+  Hashes, Lics, Refs: TJSONArray;
+  H, Sup, Ref: TJSONObject;
 begin
   Result := TJSONObject.Create;
   Result.AddPair('type', 'library');
   Result.AddPair('bom-ref', UnitRef(C.Name));
   Result.AddPair('name', C.Name);
+  if C.Version <> '' then
+    Result.AddPair('version', C.Version);
   if SupplierOf(C.Origin) <> '' then
   begin
     Sup := TJSONObject.Create;
     Sup.AddPair('name', SupplierOf(C.Origin));
     Result.AddPair('supplier', Sup);
+  end;
+  Lics := CdxLicenses(C);
+  if Lics <> nil then
+    Result.AddPair('licenses', Lics);
+  if IsWebUrl(C.HomePage) then
+  begin
+    Refs := TJSONArray.Create;
+    Ref := TJSONObject.Create;
+    Ref.AddPair('type', 'website');
+    Ref.AddPair('url', C.HomePage);
+    Refs.Add(Ref);
+    Result.AddPair('externalReferences', Refs);
   end;
   if C.Hash <> '' then
   begin
@@ -288,7 +333,8 @@ begin
       Result := Result + '-';
 end;
 
-function SpdxPackage(const ASpdxId, AName, AVersion, ASupplier, AHash, ADescription: string): TJSONObject;
+function SpdxPackage(const ASpdxId, AName, AVersion, ASupplier, AHash, ADescription: string; const ALicense: string = '';
+  const AHomePage: string = ''): TJSONObject;
 var
   Sums: TJSONArray;
   Sum: TJSONObject;
@@ -305,7 +351,12 @@ begin
   else
     Result.AddPair('supplier', 'NOASSERTION');
   Result.AddPair('licenseConcluded', 'NOASSERTION');
-  Result.AddPair('licenseDeclared', 'NOASSERTION');
+  if ALicense <> '' then
+    Result.AddPair('licenseDeclared', ALicense)
+  else
+    Result.AddPair('licenseDeclared', 'NOASSERTION');
+  if IsWebUrl(AHomePage) then
+    Result.AddPair('homepage', AHomePage);
   Result.AddPair('copyrightText', 'NOASSERTION');
   if AHash <> '' then
   begin
@@ -380,8 +431,10 @@ begin
     Packages := TJSONArray.Create;
     Packages.Add(SpdxPackage(RootId, ProjectNameOf(ASbom), P.Version, P.Company, '', P.Description));
     for C in ASbom.Components do
-      Packages.Add(SpdxPackage(Ids[LowerCase(C.Name)], C.Name, '', SupplierOf(C.Origin), C.Hash,
-        OriginName(C.Origin) + ' · ' + EvidenceName(C.Evidence) + ' · ' + ConfidenceName(C.Confidence)));
+      Packages.Add(SpdxPackage(Ids[LowerCase(C.Name)], C.Name, C.Version, SupplierOf(C.Origin), C.Hash,
+        OriginName(C.Origin) + ' · ' + EvidenceName(C.Evidence) + ' · ' + ConfidenceName(C.Confidence) +
+        IfThen(C.LibraryName <> '', ' · ' + C.LibraryName, '') + IfThen(C.LicenseName <> '', ' · ' + C.LicenseName, ''),
+        C.License, C.HomePage));
     Root.AddPair('packages', Packages);
 
     Rels := TJSONArray.Create;
@@ -438,7 +491,7 @@ end;
 function ValidateCycloneDx(const AJson: string; out AProblem: string): Boolean;
 var
   Root, Meta, C, D, H: TJSONObject;
-  Comps, Deps, DepList, Hashes: TJSONArray;
+  Comps, Deps, DepList, Hashes, Lics: TJSONArray;
   Refs: TDictionary<string, Boolean>;
   V: TJSONValue;
   I, J, K: Integer;
@@ -515,6 +568,24 @@ begin
       begin
         AProblem := 'bom-ref repetido: ' + Ref;
         Exit;
+      end;
+      if C.GetValue('licenses') is TJSONArray then
+      begin
+        Lics := TJSONArray(C.GetValue('licenses'));
+        for J := 0 to Lics.Count - 1 do
+        begin
+          if (not (Lics.Items[J] is TJSONObject)) or (not (TJSONObject(Lics.Items[J]).GetValue('license') is TJSONObject)) then
+          begin
+            AProblem := Format('licença mal formada em %s', [C.GetValue<string>('name', '')]);
+            Exit;
+          end;
+          H := TJSONObject(TJSONObject(Lics.Items[J]).GetValue('license'));
+          if (H.GetValue<string>('id', '') = '') and (H.GetValue<string>('name', '') = '') then
+          begin
+            AProblem := Format('a licença de %s precisa de id ou name', [C.GetValue<string>('name', '')]);
+            Exit;
+          end;
+        end;
       end;
       if C.GetValue('hashes') is TJSONArray then
       begin

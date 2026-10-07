@@ -1263,7 +1263,13 @@ begin
     ShowPage(TPage(StrToInt(Arg)))
   else if Cmd = 'search' then
   begin
-    if FPage = pgMap then FMap.Search.Text := Arg else FCk.Search.Text := Arg;
+    case FPage of
+      pgMap: FMap.Search.Text := Arg;
+      pgSbom: FSbom.Search.Text := Arg;
+      pgClasses: FClasses.Search.Text := Arg;
+    else
+      FCk.Search.Text := Arg;
+    end;
   end
   else if Cmd = 'theme' then
   begin

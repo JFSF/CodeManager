@@ -117,7 +117,7 @@ begin
   FSearch.Parent := Bar;
   FSearch.Align := TAlignLayout.Client;
   FSearch.SetLeadingIcon(icSearch);
-  FSearch.Placeholder := Tr('Filtrar por unit ou origem…   ( / )');
+  FSearch.Placeholder := Tr('Filtrar por unit, origem ou licença…   ( / )');
   FSearch.OnChangeText := SearchChanged;
 
   Side := SideBox(Self, Self, 320);
@@ -179,7 +179,7 @@ begin
   FList := TCMSbomList.Create(Self);
   FList.Parent := Holder;
   FList.Align := TAlignLayout.Client;
-  FList.SetHeaders(Tr('Unit'), Tr('Origem'), Tr('Confiança'), Tr('Usada por'), 'SHA-256');
+  FList.SetHeaders(Tr('Unit'), Tr('Origem'), Tr('Licença'), Tr('Confiança'), Tr('Usada por'), 'SHA-256');
   FList.EmptyText := Tr('Analise um projeto para gerar o SBOM.');
   ShowSummary;
   ShowNote;
@@ -326,7 +326,7 @@ begin
   Dash := '—';
   if FSbom = nil then
     Rows := [KV(Tr('Componentes'), Dash), KV(Tr('Com ficheiro encontrado'), Dash), KV(Tr('Da Embarcadero'), Dash),
-      KV(Tr('De terceiros'), Dash), KV(Tr('Do projeto'), Dash), KV(Tr('Por confirmar'), Dash)]
+      KV(Tr('De terceiros'), Dash), KV(Tr('Do projeto'), Dash), KV(Tr('Por confirmar'), Dash), KV(Tr('Sem licença conhecida'), Dash)]
   else
   begin
     Rows := [KV(Tr('Componentes'), IntToStr(FSbom.Components.Count)),
@@ -334,7 +334,8 @@ begin
       KV(Tr('Da Embarcadero'), IntToStr(FSbom.CountOf(soRtl) + FSbom.CountOf(soVcl) + FSbom.CountOf(soFmx))),
       KV(Tr('De terceiros'), IntToStr(FSbom.CountOf(soThirdParty))),
       KV(Tr('Do projeto'), IntToStr(FSbom.CountOf(soProject))),
-      KV(Tr('Por confirmar'), IntToStr(FSbom.CountByConfidence(scWeak)), FSbom.CountByConfidence(scWeak) > 0)];
+      KV(Tr('Por confirmar'), IntToStr(FSbom.CountByConfidence(scWeak)), FSbom.CountByConfidence(scWeak) > 0),
+      KV(Tr('Sem licença conhecida'), IntToStr(FSbom.ThirdPartyUnlicensedCount), FSbom.ThirdPartyUnlicensedCount > 0)];
     if FSbom.MapFile <> '' then
       Rows := Rows + [KV(Tr('Fora do mapa'), IntToStr(FSbom.NotLinkedCount), FSbom.NotLinkedCount > 0)];
   end;
@@ -366,9 +367,15 @@ begin
     R.ConfidenceText := ConfidenceText(C.Confidence);
     R.ConfidenceColor := ConfidenceColor(C.Confidence);
     R.UsedBy := Length(C.UsedBy);
+    R.LicenseKnown := C.License <> '';
+    if C.License <> '' then
+      R.LicenseText := C.License
+    else if C.LicenseName <> '' then
+      R.LicenseText := Tr('Ver') + ' ' + C.LicenseSource;
     if C.Hash <> '' then
       R.HashText := Copy(C.Hash, 1, 16);
-    if (Q <> '') and (Pos(Q, LowerCase(C.Name)) = 0) and (Pos(Q, LowerCase(R.OriginText)) = 0) then
+    if (Q <> '') and (Pos(Q, LowerCase(C.Name)) = 0) and (Pos(Q, LowerCase(R.OriginText)) = 0) and
+       (Pos(Q, LowerCase(C.LibraryName)) = 0) and (Pos(Q, LowerCase(C.License)) = 0) then
       Continue;
     Used := '';
     for I := 0 to Min(8, Length(C.UsedBy)) - 1 do
@@ -382,6 +389,14 @@ begin
     R.Hint := C.Name + sLineBreak + R.OriginText + ' · ' + EvidenceText(C.Evidence) + ' · ' + R.ConfidenceText;
     if Used <> '' then
       R.Hint := R.Hint + sLineBreak + Tr('Usada por') + ': ' + Used;
+    if C.LibraryName <> '' then
+    begin
+      R.Hint := R.Hint + sLineBreak + Tr('Biblioteca') + ': ' + C.LibraryName;
+      if C.Version <> '' then
+        R.Hint := R.Hint + ' ' + C.Version;
+    end;
+    if R.LicenseText <> '' then
+      R.Hint := R.Hint + sLineBreak + Tr('Licença') + ': ' + R.LicenseText;
     if C.Path <> '' then
       R.Hint := R.Hint + sLineBreak + ExtractFileName(C.Path)
     else

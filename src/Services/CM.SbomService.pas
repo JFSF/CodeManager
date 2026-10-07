@@ -32,7 +32,7 @@ function SbomFileName(const AProjectName, AExt: string): string;
 implementation
 
 uses
-  System.Classes, System.IOUtils, System.Generics.Collections, CM.Dproj, CM.MapFile, CM.SbomResolve;
+  System.Classes, System.IOUtils, System.Generics.Collections, CM.Dproj, CM.MapFile, CM.SbomResolve, CM.SbomLibs;
 
 const
   WarnNoDproj = 'Não se encontrou o ficheiro .dproj: a versão e os caminhos de procura ficam por preencher.';
@@ -147,6 +147,7 @@ begin
         Resolve.LibraryPaths := DelphiLibraryPaths(DelphiRoot, 'Win64');
     end;
     ResolveSbom(Result, Resolve, AProgress);
+    AttachLibraries(Result, ARoot);          // biblioteca, versao e licenca das units de terceiros
   except
     Result.Free;
     raise;

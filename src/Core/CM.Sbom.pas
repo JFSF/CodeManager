@@ -38,6 +38,14 @@ type
     RelPath: string;               // so as units do projecto: caminho relativo a pasta do projecto, com '/'
     UsedBy: TArray<string>;        // units do projecto que a usam, por ordem alfabetica
     InMap: Boolean;                // confirmada no ficheiro .map (esta realmente ligada ao executavel)
+    // a biblioteca de terceiros a que a unit pertence (CM.SbomLibs); tudo vazio quando nao se sabe
+    LibraryName: string;           // o nome da biblioteca (boss.json, pasta do GetIt ou da propria biblioteca)
+    Version: string;               // a versao da biblioteca; '' = nao se sabe
+    VersionSource: string;         // de onde veio: 'boss.json', 'boss-lock.json' ou 'GetIt' (ou o nome da pasta)
+    License: string;               // identificador SPDX ('MIT'); '' = nao reconhecida
+    LicenseName: string;           // quando ha ficheiro de licenca que nao se reconhece: 'Ver LICENSE.txt'
+    LicenseSource: string;         // de onde veio: o nome do ficheiro ou 'boss.json'
+    HomePage: string;
   end;
 
   // o que se sabe do projecto (vem do .dproj, quando existe)
@@ -81,6 +89,9 @@ type
     function ResolvedCount: Integer;
     // com um .map: quantos componentes nao aparecem nele (so se sabem pelas clausulas uses); 0 sem mapa
     function NotLinkedCount: Integer;
+    // as units de terceiros: quantas tem licenca reconhecida e quantas nao (a biblioteca da Embarcadero e a do proprio projecto nao contam)
+    function ThirdPartyLicensedCount: Integer;
+    function ThirdPartyUnlicensedCount: Integer;
     property Components: TObjectList<TSbomComponent> read FComponents;
     property Warnings: TList<string> read FWarnings;
   end;
@@ -248,6 +259,26 @@ begin
       if Result = 0 then
         Result := CompareText(A.Name, B.Name);
     end));
+end;
+
+function TSbom.ThirdPartyLicensedCount: Integer;
+var
+  C: TSbomComponent;
+begin
+  Result := 0;
+  for C in FComponents do
+    if (C.Origin = soThirdParty) and (C.License <> '') then
+      Inc(Result);
+end;
+
+function TSbom.ThirdPartyUnlicensedCount: Integer;
+var
+  C: TSbomComponent;
+begin
+  Result := 0;
+  for C in FComponents do
+    if (C.Origin = soThirdParty) and (C.License = '') then
+      Inc(Result);
 end;
 
 function TSbom.CountOf(AOrigin: TSbomOrigin): Integer;
