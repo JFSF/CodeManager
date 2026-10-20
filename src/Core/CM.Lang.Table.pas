@@ -6,7 +6,7 @@
 interface
 
 const
-  LangRows: array[0..618] of array[0..3] of string = (
+  LangRows: array[0..624] of array[0..3] of string = (
   ('Projeto', 'Project', 'Projet', 'Projekt'),
   ('Mapa', 'Map', 'Carte', 'Karte'),
   ('Checklist', 'Checklist', 'Checklist', 'Checkliste'),
@@ -602,7 +602,7 @@ const
   ('Referenciadas no código mas ausentes do mapa de ligação (podem não ficar no executável):', 'Referenced in the code but missing from the link map (they may not end up in the executable):', 'Référencées dans le code mais absentes de la map de liaison (elles peuvent ne pas finir dans l''exécutable) :', 'Im Code referenziert, aber in der Link-Map nicht vorhanden (sie landen möglicherweise nicht in der ausführbaren Datei):'),
   ('SBOM', 'SBOM', 'SBOM', 'SBOM'),
   ('SBOM: lista de materiais de software', 'SBOM: software bill of materials', 'SBOM : nomenclature logicielle', 'SBOM: Software-Stückliste'),
-  ('Filtrar por unit ou origem…   ( / )', 'Filter by unit or origin…   ( / )', 'Filtrer par unité ou origine…   ( / )', 'Nach Unit oder Herkunft filtern…   ( / )'),
+  ('Filtrar por unit, origem ou licença…   ( / )', 'Filter by unit, origin or license…   ( / )', 'Filtrer par unité, origine ou licence…   ( / )', 'Nach Unit, Herkunft oder Lizenz filtern…   ( / )'),
   ('Opções', 'Options', 'Options', 'Optionen'),
   ('Incluir as units do projeto', 'Include the project units', 'Inclure les unités du projet', 'Units des Projekts einbeziehen'),
   ('Confirmar com o ficheiro .map', 'Confirm with the .map file', 'Confirmer avec le fichier .map', 'Mit der .map-Datei bestätigen'),
@@ -657,7 +657,21 @@ const
   ('Duplo clique numa classe abre o código na sua declaração. Os títulos ordenam a lista.', 'Double-click a class to open the code at its declaration. The headings sort the list.', 'Double-cliquez sur une classe pour ouvrir le code à sa déclaration. Les titres trient la liste.', 'Doppelklick auf eine Klasse öffnet den Code an ihrer Deklaration. Die Überschriften sortieren die Liste.'),
   ('As %d com maior profundidade de herança', 'The %d with the deepest inheritance', 'Les %d à la plus grande profondeur d’héritage', 'Die %d mit der größten Vererbungstiefe'),
   ('Profundidade de herança', 'Inheritance depth', 'Profondeur d''héritage', 'Vererbungstiefe'),
-  ('Quantas classes em cada profundidade (1 = sem ancestral do projeto)', 'How many classes at each depth (1 = no ancestor in the project)', 'Combien de classes à chaque profondeur (1 = sans ancêtre dans le projet)', 'Wie viele Klassen in jeder Tiefe (1 = ohne Vorfahre im Projekt)')
+  ('Quantas classes em cada profundidade (1 = sem ancestral do projeto)', 'How many classes at each depth (1 = no ancestor in the project)', 'Combien de classes à chaque profondeur (1 = sans ancêtre dans le projet)', 'Wie viele Klassen in jeder Tiefe (1 = ohne Vorfahre im Projekt)'),
+  ('Biblioteca', 'Library', 'Bibliothèque', 'Bibliothek'),
+  ('Ver', 'See', 'Voir', 'Siehe'),
+  ('Com licença conhecida', 'With a known license', 'Avec licence connue', 'Mit bekannter Lizenz'),
+  ('Sem licença conhecida', 'Without a known license', 'Sans licence connue', 'Ohne bekannte Lizenz'),
+  ('Units de terceiros sem licença reconhecida: confirma a licença da biblioteca antes de distribuir o programa.', 'Third-party units without a recognised license: check the library license before distributing the program.', 'Unités tierces sans licence reconnue : vérifiez la licence de la bibliothèque avant de distribuer le programme.', 'Drittanbieter-Units ohne erkannte Lizenz: Prüfen Sie die Lizenz der Bibliothek, bevor Sie das Programm weitergeben.'),
+  (
+      'A biblioteca, a versão e a licença das units de terceiros vêm do boss.json, do boss-lock.json, do nome da pasta do GetIt e do ficheiro de licença da pasta da bi'
+    + 'blioteca; uma licença só aparece quando o texto a justifica.', 
+      'The library, version and license of third-party units come from boss.json, boss-lock.json, the GetIt folder name and the license file in the library folder; a l'
+    + 'icense only appears when the text justifies it.', 
+      'La bibliothèque, la version et la licence des unités tierces viennent de boss.json, de boss-lock.json, du nom du dossier GetIt et du fichier de licence du dossi'
+    + 'er de la bibliothèque ; une licence n’apparaît que si le texte la justifie.', 
+      'Bibliothek, Version und Lizenz der Drittanbieter-Units stammen aus boss.json, boss-lock.json, dem GetIt-Ordnernamen und der Lizenzdatei im Bibliotheksordner; ei'
+    + 'ne Lizenz erscheint nur, wenn der Text sie belegt.')
   );
 
   // trocos dos modelos HTML (res/templates), por ordem de leitura

@@ -132,6 +132,25 @@ begin
   Result := ASbom.CountByConfidence(scWeak);
 end;
 
+// a licenca como se le num relatorio: o identificador SPDX, 'Ver <ficheiro>' se ha ficheiro que nao se reconhece, '—' sem nada
+function LicenseText(C: TSbomComponent): string;
+begin
+  if C.License <> '' then
+    Result := C.License
+  else if C.LicenseName <> '' then
+    Result := Tr('Ver') + ' ' + C.LicenseSource
+  else
+    Result := '—';
+end;
+
+function DashIfEmpty(const AText: string): string;
+begin
+  if AText = '' then
+    Result := '—'
+  else
+    Result := AText;
+end;
+
 function UserList(C: TSbomComponent; AMax: Integer): string;
 var
   I: Integer;
@@ -190,6 +209,11 @@ begin
     SB.Append('- ').Append(Tr('De terceiros')).Append(': ').AppendLine(IntToStr(ASbom.CountOf(soThirdParty)));
     SB.Append('- ').Append(Tr('Do projeto')).Append(': ').AppendLine(IntToStr(ASbom.CountOf(soProject)));
     SB.Append('- ').Append(Tr('Por confirmar')).Append(': ').AppendLine(IntToStr(Unconfirmed(ASbom)));
+    if ASbom.CountOf(soThirdParty) > 0 then
+    begin
+      SB.Append('- ').Append(Tr('Com licença conhecida')).Append(': ').AppendLine(IntToStr(ASbom.ThirdPartyLicensedCount));
+      SB.Append('- ').Append(Tr('Sem licença conhecida')).Append(': ').AppendLine(IntToStr(ASbom.ThirdPartyUnlicensedCount));
+    end;
     if ASbom.MapFile <> '' then
       SB.Append('- ').Append(Tr('Fora do mapa')).Append(': ').AppendLine(IntToStr(ASbom.NotLinkedCount));
     SB.AppendLine;
@@ -230,17 +254,20 @@ begin
     SB.AppendLine;
 
     SB.Append('## ').AppendLine(Tr('Componentes')).AppendLine;
-    SB.Append('| ').Append(Tr('Unit')).Append(' | ').Append(Tr('Origem')).Append(' | ').Append(Tr('Evidência')).Append(' | ')
+    SB.Append('| ').Append(Tr('Unit')).Append(' | ').Append(Tr('Origem')).Append(' | ').Append(Tr('Biblioteca')).Append(' | ')
+      .Append(Tr('Versão')).Append(' | ').Append(Tr('Licença')).Append(' | ').Append(Tr('Evidência')).Append(' | ')
       .Append(Tr('Confiança')).Append(' | ').Append(Tr('Usada por')).AppendLine(' | SHA-256 |');
-    SB.AppendLine('|---|---|---|---|---:|---|');
+    SB.AppendLine('|---|---|---|---|---|---|---|---:|---|');
     for C in ASbom.Components do
-      SB.Append('| `').Append(C.Name).Append('` | ').Append(Tr(OriginKey(C.Origin))).Append(' | ').Append(Tr(EvidenceKey(C.Evidence)))
+      SB.Append('| `').Append(C.Name).Append('` | ').Append(Tr(OriginKey(C.Origin))).Append(' | ')
+        .Append(MdCell(DashIfEmpty(C.LibraryName))).Append(' | ').Append(MdCell(DashIfEmpty(C.Version))).Append(' | ')
+        .Append(MdCell(LicenseText(C))).Append(' | ').Append(Tr(EvidenceKey(C.Evidence)))
         .Append(' | ').Append(Tr(ConfidenceKey(C.Confidence))).Append(' | ').Append(Length(C.UsedBy)).Append(' | ')
         .Append(ShortHash(C.Hash)).AppendLine(' |');
     SB.AppendLine;
 
     SB.Append('## ').AppendLine(Tr('Pontos de atenção')).AppendLine;
-    if (Unconfirmed(ASbom) = 0) and (ASbom.NotLinkedCount = 0) then
+    if (Unconfirmed(ASbom) = 0) and (ASbom.NotLinkedCount = 0) and (ASbom.ThirdPartyUnlicensedCount = 0) then
       SB.AppendLine(Tr('Nada a assinalar: todos os componentes foram confirmados.')).AppendLine;
     if Unconfirmed(ASbom) > 0 then
     begin
@@ -255,6 +282,26 @@ begin
             Break;
           end;
           SB.Append('- `').Append(C.Name).Append('` — ').AppendLine(UserList(C, 4));
+          Inc(Shown);
+        end;
+      SB.AppendLine;
+    end;
+    if ASbom.ThirdPartyUnlicensedCount > 0 then
+    begin
+      SB.AppendLine(Tr('Units de terceiros sem licença reconhecida: confirma a licença da biblioteca antes de distribuir o programa.')).AppendLine;
+      Shown := 0;
+      for C in ASbom.Components do
+        if (C.Origin = soThirdParty) and (C.License = '') then
+        begin
+          if Shown >= AttnLimit then
+          begin
+            SB.Append('- … ').AppendLine(IntToStr(ASbom.ThirdPartyUnlicensedCount - AttnLimit));
+            Break;
+          end;
+          SB.Append('- `').Append(C.Name).Append('`');
+          if C.LibraryName <> '' then
+            SB.Append(' — ').Append(C.LibraryName);
+          SB.AppendLine;
           Inc(Shown);
         end;
       SB.AppendLine;
@@ -280,7 +327,8 @@ begin
     SB.Append('## ').AppendLine(Tr('Como ler este relatório')).AppendLine;
     SB.AppendLine(Tr('Um SBOM lista o que entra no teu software: aqui, as units que o projeto usa e de onde vêm.')).AppendLine;
     SB.AppendLine(Tr('Confiança forte: o ficheiro da unit foi encontrado (e tem hash SHA-256). Média: só se conhece pelo nome, mas é uma biblioteca da Embarcadero. Fraca: só se conhece pelo nome e não se sabe de onde vem.')).AppendLine;
-    SB.AppendLine(Tr('O relatório vem da análise do código-fonte (cláusulas uses e .dproj), sem compilar: uma unit referenciada pode não ficar no executável. Com um ficheiro .map as units realmente ligadas ficam confirmadas.'));
+    SB.AppendLine(Tr('O relatório vem da análise do código-fonte (cláusulas uses e .dproj), sem compilar: uma unit referenciada pode não ficar no executável. Com um ficheiro .map as units realmente ligadas ficam confirmadas.')).AppendLine;
+    SB.AppendLine(Tr('A biblioteca, a versão e a licença das units de terceiros vêm do boss.json, do boss-lock.json, do nome da pasta do GetIt e do ficheiro de licença da pasta da biblioteca; uma licença só aparece quando o texto a justifica.'));
     Result := SB.ToString;
   finally
     SB.Free;
@@ -323,6 +371,17 @@ var
     Result := Tbl.El('span', ConfidenceKey(AConfidence), 'class="' + Cls + '"');
   end;
 
+  // a licenca na tabela: o identificador, 'Ver <ficheiro>' (traduzido na pagina) ou um travessao
+  function HtmlLicense(AComponent: TSbomComponent): string;
+  begin
+    if AComponent.License <> '' then
+      Result := HtmlEscape(AComponent.License)
+    else if AComponent.LicenseName <> '' then
+      Result := Tbl.El('span', 'Ver') + ' ' + HtmlEscape(AComponent.LicenseSource)
+    else
+      Result := '—';
+  end;
+
 begin
   P := ASbom.Project;
   SB := TStringBuilder.Create;
@@ -353,6 +412,11 @@ begin
     Card('De terceiros', ASbom.CountOf(soThirdParty));
     Card('Do projeto', ASbom.CountOf(soProject));
     Card('Por confirmar', Unconfirmed(ASbom));
+    if ASbom.CountOf(soThirdParty) > 0 then
+    begin
+      Card('Com licença conhecida', ASbom.ThirdPartyLicensedCount);
+      Card('Sem licença conhecida', ASbom.ThirdPartyUnlicensedCount);
+    end;
     if ASbom.MapFile <> '' then
       Card('Fora do mapa', ASbom.NotLinkedCount);
     SB.AppendLine('</div>');
@@ -390,7 +454,7 @@ begin
 
     // pontos de atencao
     SB.AppendLine(Tbl.El('h2', 'Pontos de atenção'));
-    if (Unconfirmed(ASbom) = 0) and (ASbom.NotLinkedCount = 0) then
+    if (Unconfirmed(ASbom) = 0) and (ASbom.NotLinkedCount = 0) and (ASbom.ThirdPartyUnlicensedCount = 0) then
       SB.AppendLine(Tbl.El('p', 'Nada a assinalar: todos os componentes foram confirmados.', 'class="note"'));
     if Unconfirmed(ASbom) > 0 then
     begin
@@ -407,6 +471,27 @@ begin
           end;
           SB.Append('<li><span class="names">').Append(HtmlEscape(C.Name)).Append('</span> — ')
             .Append(HtmlEscape(UserList(C, 4))).AppendLine('</li>');
+          Inc(Shown);
+        end;
+      SB.AppendLine('</ul>');
+    end;
+    if ASbom.ThirdPartyUnlicensedCount > 0 then
+    begin
+      SB.AppendLine(Tbl.El('p', 'Units de terceiros sem licença reconhecida: confirma a licença da biblioteca antes de distribuir o programa.', 'class="note"'));
+      SB.AppendLine('<ul class="attn">');
+      Shown := 0;
+      for C in ASbom.Components do
+        if (C.Origin = soThirdParty) and (C.License = '') then
+        begin
+          if Shown >= AttnLimit then
+          begin
+            SB.Append('<li>… ').Append(ASbom.ThirdPartyUnlicensedCount - AttnLimit).AppendLine('</li>');
+            Break;
+          end;
+          SB.Append('<li><span class="names">').Append(HtmlEscape(C.Name)).Append('</span>');
+          if C.LibraryName <> '' then
+            SB.Append(' — ').Append(HtmlEscape(C.LibraryName));
+          SB.AppendLine('</li>');
           Inc(Shown);
         end;
       SB.AppendLine('</ul>');
@@ -435,11 +520,14 @@ begin
     SB.Append('<input class="f" id="flt" type="search" data-ph="').Append(Tbl.Idx('Filtrar por unit ou origem…'))
       .Append('" placeholder="').Append(HtmlEscape(Tr('Filtrar por unit ou origem…'))).AppendLine('">');
     SB.Append('<table class="sort" id="all"><thead><tr>').Append(Tbl.El('th', 'Unit')).Append(Tbl.El('th', 'Origem'))
+      .Append(Tbl.El('th', 'Biblioteca')).Append(Tbl.El('th', 'Versão')).Append(Tbl.El('th', 'Licença'))
       .Append(Tbl.El('th', 'Evidência')).Append(Tbl.El('th', 'Confiança')).Append(Tbl.El('th', 'Usada por', 'class="n"'))
       .AppendLine('<th>SHA-256</th></tr></thead><tbody>');
     for C in ASbom.Components do
     begin
       SB.Append('<tr><td class="m">').Append(HtmlEscape(C.Name)).Append('</td><td>').Append(Tbl.El('span', OriginKey(C.Origin)))
+        .Append('</td><td>').Append(HtmlEscape(DashIfEmpty(C.LibraryName))).Append('</td><td class="m">')
+        .Append(HtmlEscape(DashIfEmpty(C.Version))).Append('</td><td class="m">').Append(HtmlLicense(C))
         .Append('</td><td>').Append(Tbl.El('span', EvidenceKey(C.Evidence))).Append('</td><td>')
         .Append(ConfidenceTag(C.Confidence)).Append('</td><td class="n" title="').Append(HtmlEscape(UserList(C, 12))).Append('">')
         .Append(Length(C.UsedBy)).Append('</td><td class="m" title="').Append(HtmlEscape(C.Hash)).Append('">')
@@ -452,6 +540,7 @@ begin
     SB.AppendLine(Tbl.El('p', 'Um SBOM lista o que entra no teu software: aqui, as units que o projeto usa e de onde vêm.', 'class="note"'));
     SB.AppendLine(Tbl.El('p', 'Confiança forte: o ficheiro da unit foi encontrado (e tem hash SHA-256). Média: só se conhece pelo nome, mas é uma biblioteca da Embarcadero. Fraca: só se conhece pelo nome e não se sabe de onde vem.', 'class="note"'));
     SB.AppendLine(Tbl.El('p', 'O relatório vem da análise do código-fonte (cláusulas uses e .dproj), sem compilar: uma unit referenciada pode não ficar no executável. Com um ficheiro .map as units realmente ligadas ficam confirmadas.', 'class="note"'));
+    SB.AppendLine(Tbl.El('p', 'A biblioteca, a versão e a licença das units de terceiros vêm do boss.json, do boss-lock.json, do nome da pasta do GetIt e do ficheiro de licença da pasta da biblioteca; uma licença só aparece quando o texto a justifica.', 'class="note"'));
 
     SB.Append('</div><script>var T=').Append(Tbl.Json).Append(';').Append(LangSwitchJs).Append(ReportJs)
       .AppendLine('</script></body></html>');

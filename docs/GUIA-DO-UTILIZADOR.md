@@ -344,11 +344,12 @@ esta documentação a quem fabrica software.
 
 ### O que mostra
 
-- A **lista** de componentes: a unit, a **origem** (RTL, VCL ou FMX da Embarcadero, ou de terceiros), a **confiança**,
-  quantas units do projeto a usam e o início do SHA-256 do ficheiro. A dica de cada linha traz os pormenores (quem a usa,
-  a evidência, o ficheiro, o hash completo). A pesquisa (tecla `/`) filtra por unit ou origem.
-- O **resumo**: componentes, quantos têm ficheiro encontrado, da Embarcadero, de terceiros, do projeto, por confirmar e,
-  com mapa, os que ficam fora dele.
+- A **lista** de componentes: a unit, a **origem** (RTL, VCL ou FMX da Embarcadero, ou de terceiros), a **licença**, a
+  **confiança**, quantas units do projeto a usam e o início do SHA-256 do ficheiro. A dica de cada linha traz os
+  pormenores (quem a usa, a evidência, a biblioteca e a versão, a licença, o ficheiro, o hash completo). A pesquisa
+  (tecla `/`) filtra por unit, origem, biblioteca ou licença.
+- O **resumo**: componentes, quantos têm ficheiro encontrado, da Embarcadero, de terceiros, do projeto, por confirmar,
+  os de terceiros **sem licença conhecida** e, com mapa, os que ficam fora dele.
 
 ### De onde vem a informação
 
@@ -371,6 +372,27 @@ A **confiança** diz quanto se sabe de cada componente:
 | **Forte** | o ficheiro da unit foi encontrado (e tem hash) |
 | **Média** | só se conhece pelo nome, mas é uma biblioteca da Embarcadero |
 | **Fraca** | só se conhece pelo nome e não se sabe de onde vem (acrescenta a pasta da biblioteca aos caminhos de procura) |
+
+### Versões e licenças das bibliotecas de terceiros
+
+Para cada unit de terceiros com ficheiro, o CodeManager sobe pelas pastas até achar a **raiz da biblioteca**: a primeira
+pasta que tem um `boss.json`, um ficheiro de licença (`LICENSE`, `COPYING`...), um repositório (`.git`) ou que é uma
+pasta do **GetIt** (`CatalogRepository\Pacote-13\1.2.0`) ou do **Boss** (`modules\nome`). Nunca sobe acima da pasta do
+projeto. Daí tira:
+
+| Dado | De onde vem |
+|---|---|
+| **Biblioteca** | o `name` do `boss.json` ou o nome da pasta (sem o sufixo da versão) |
+| **Versão** | o `version` do `boss.json`, o `boss-lock.json` do projeto (Boss) ou o nome da pasta do GetIt (`Spring4D-2.0`, `Chart4D-13\1.2.0`) |
+| **Licença** | o campo `license` do `boss.json` ou, se não diz, o **texto** do ficheiro de licença |
+
+O texto reconhece as licenças comuns (MIT, Apache-2.0, BSD-2/3-Clause, MPL, GPL, LGPL, AGPL, ISC, Zlib, Unlicense,
+Boost, EPL, CC0...) e só devolve um identificador SPDX quando as palavras o justificam. Um ficheiro de licença que não
+se reconhece aparece como **«Ver LICENSE»** (a licença não se adivinha). Sem ficheiro nem `boss.json`, a licença fica por
+declarar e a unit entra nos **pontos de atenção** («units de terceiros sem licença reconhecida»). O que se apurou vai
+para o CycloneDX (`version`, `licenses`, ligação do projeto) e para o SPDX (`versionInfo`, `licenseDeclared`).
+
+A deteção é uma ajuda e não um parecer jurídico: confirma sempre a licença na fonte da biblioteca.
 
 ### O ficheiro `.map` (opcional)
 
@@ -408,8 +430,9 @@ relativo), para não mostrar a estrutura das tuas pastas.
 
 ### Limites
 
-- O SBOM é de **units**, não de pacotes: o Delphi não guarda versões nem licenças nas units, por isso o fornecedor só se
-  indica para a Embarcadero e as licenças ficam `NOASSERTION` (não declaradas).
+- O SBOM é de **units**, não de pacotes: o Delphi não guarda versões nem licenças nas units. A versão e a licença vêm
+  dos ficheiros que acompanham a biblioteca (acima); sem eles ficam por declarar (`NOASSERTION` no SPDX) e o fornecedor
+  só se indica para a Embarcadero. As units da Embarcadero não têm licença nem versão no relatório.
 - Sem `.map` a lista vem das cláusulas `uses` e pode não coincidir exatamente com o executável.
 - É só leitura: nunca altera o projeto.
 

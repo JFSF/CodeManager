@@ -17,6 +17,8 @@ type
     OriginColor: TAlphaColor;
     ConfidenceText: string;
     ConfidenceColor: TAlphaColor;
+    LicenseText: string;        // o identificador SPDX, ou '' (mostra-se um travessao)
+    LicenseKnown: Boolean;
     UsedBy: Integer;
     HashText: string;           // o inicio do hash ('' = sem hash)
     Hint: string;
@@ -28,7 +30,7 @@ type
     FScrollY: Single;
     FHover: Integer;
     FEmptyText: string;
-    FHeaders: array[0..4] of string;
+    FHeaders: array[0..5] of string;
     function MaxScroll: Single;
     function RowAt(Y: Single): Integer;
   protected
@@ -39,8 +41,8 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     procedure SetRows(const ARows: TArray<TSbomRow>);
-    // os titulos das colunas: Unit, Origem, Confianca, Usada por, SHA-256
-    procedure SetHeaders(const AUnit, AOrigin, AConfidence, AUsedBy, AHash: string);
+    // os titulos das colunas: Unit, Origem, Licenca, Confianca, Usada por, SHA-256
+    procedure SetHeaders(const AUnit, AOrigin, ALicense, AConfidence, AUsedBy, AHash: string);
     property EmptyText: string read FEmptyText write FEmptyText;
     function RowCount: Integer;
   end;
@@ -51,6 +53,7 @@ const
   RowH = 30;
   HeadH = 30;
   OriginW = 150;
+  LicenseW = 112;
   ConfW = 84;
   UsedW = 70;
   HashW = 140;
@@ -76,13 +79,14 @@ begin
   Repaint;
 end;
 
-procedure TCMSbomList.SetHeaders(const AUnit, AOrigin, AConfidence, AUsedBy, AHash: string);
+procedure TCMSbomList.SetHeaders(const AUnit, AOrigin, ALicense, AConfidence, AUsedBy, AHash: string);
 begin
   FHeaders[0] := AUnit;
   FHeaders[1] := AOrigin;
   FHeaders[2] := AConfidence;
   FHeaders[3] := AUsedBy;
   FHeaders[4] := AHash;
+  FHeaders[5] := ALicense;
   Repaint;
 end;
 
@@ -118,13 +122,15 @@ var
   end;
 
 begin
-  NameW := Width - 16 - OriginW - ConfW - UsedW - HashW - 20;
+  NameW := Max(120, Width - 16 - OriginW - LicenseW - ConfW - UsedW - HashW - 20);
   // cabecalho
   X := 12;
   DrawTextRect(Canvas, TRectF.Create(X, 0, X + NameW, HeadH), FHeaders[0], Pal.TextFaint, 11, UiFont, [TFontStyle.fsBold]);
   X := X + NameW + 8;
   DrawTextRect(Canvas, TRectF.Create(X, 0, X + OriginW, HeadH), FHeaders[1], Pal.TextFaint, 11, UiFont, [TFontStyle.fsBold]);
   X := X + OriginW;
+  DrawTextRect(Canvas, TRectF.Create(X, 0, X + LicenseW, HeadH), FHeaders[5], Pal.TextFaint, 11, UiFont, [TFontStyle.fsBold]);
+  X := X + LicenseW;
   DrawTextRect(Canvas, TRectF.Create(X, 0, X + ConfW, HeadH), FHeaders[2], Pal.TextFaint, 11, UiFont, [TFontStyle.fsBold]);
   X := X + ConfW;
   DrawTextRect(Canvas, TRectF.Create(X, 0, X + UsedW - 10, HeadH), FHeaders[3], Pal.TextFaint, 11, UiFont,
@@ -156,6 +162,13 @@ begin
     X := X + NameW + 8;
     Tag(Row.OriginText, Row.OriginColor, X, OriginW);
     X := X + OriginW;
+    if Row.LicenseText = '' then
+      DrawTextRect(Canvas, TRectF.Create(X, R.Top, X + LicenseW - 6, R.Bottom), '—', Pal.TextFaint, 11, MonoFont)
+    else if Row.LicenseKnown then
+      DrawTextRect(Canvas, TRectF.Create(X, R.Top, X + LicenseW - 6, R.Bottom), FitText(Canvas, Row.LicenseText, LicenseW - 6), Pal.Text, 11, MonoFont)
+    else
+      DrawTextRect(Canvas, TRectF.Create(X, R.Top, X + LicenseW - 6, R.Bottom), FitText(Canvas, Row.LicenseText, LicenseW - 6), Pal.Pending, 11, MonoFont);
+    X := X + LicenseW;
     Tag(Row.ConfidenceText, Row.ConfidenceColor, X, ConfW);
     X := X + ConfW;
     DrawTextRect(Canvas, TRectF.Create(X, R.Top, X + UsedW - 10, R.Bottom), IntToStr(Row.UsedBy), Pal.TextDim, 11.5,

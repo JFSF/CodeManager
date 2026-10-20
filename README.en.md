@@ -23,7 +23,7 @@ a document describing what the project *should* contain, it compares the two.
 
 - **Map** — the folder → file → method tree, with search, statistics and the **lines, complexity (cyclomatic and cognitive), parameters and nesting** of each method.
 - **Classes** — the project's classes and interfaces with the **inheritance depth** of each, its children and its declaration, exported as Markdown and CSV.
-- **SBOM** — the project's software bill of materials (which outside units it uses, where they come from and how sure we are), exported as **CycloneDX** and **SPDX**, plus a report in four languages.
+- **SBOM** — the project's software bill of materials (which outside units it uses, where they come from and how sure we are), with the **version and license** of third-party libraries, exported as **CycloneDX** and **SPDX**, plus a report in four languages.
 - **Checklist** — mark what you reviewed, what is under review or needs changes, what compiles, what passed Sonar, what is a priority; add notes. In a Git or Mercurial repository, or a Subversion working copy, it flags the files that changed since you reviewed them; SonarQube is optional and per user.
   A file is *done* when **all its methods** are reviewed.
 - **Graph** — a visual map of the dependencies between units (from the `uses` clauses): levels, layer colours, coupling, **cycles**, and an HTML (SVG map) or Markdown report.

@@ -43,6 +43,13 @@ type
     [Test] procedure SavesWithoutBomAndCreatesTheFolder;
     [Test] procedure EmptySbomStillProducesValidFiles;
     [Test] procedure ProjectWithoutNameGetsADefault;
+    [Test] procedure CycloneDxWritesVersionLicenseAndLibrary;
+    [Test] procedure CycloneDxUsesTheLicenseNameWhenNotRecognised;
+    [Test] procedure CycloneDxWritesNoLicenseOrVersionWhenUnknown;
+    [Test] procedure CycloneDxHomePageMustBeWeb;
+    [Test] procedure CycloneDxValidatorRejectsAnEmptyLicense;
+    [Test] procedure SpdxWritesVersionAndDeclaredLicense;
+    [Test] procedure SpdxKeepsNoAssertionWithoutLicense;
   end;
 
 implementation
@@ -516,6 +523,145 @@ begin
     Assert.IsTrue(SbomCycloneDxJson(S, FOptions).Contains('"name": "Project"'));
   finally
     S.Free;
+  end;
+end;
+
+procedure TSbomFormatsTests.CycloneDxWritesVersionLicenseAndLibrary;
+var
+  R, C: TJSONObject;
+  Problem: string;
+begin
+  with FSbom.Find('Chart4D.FMX') do
+  begin
+    LibraryName := 'Chart4D';
+    Version := '0.9.1';
+    VersionSource := 'boss.json';
+    License := 'MIT';
+    LicenseSource := 'LICENSE';
+    HomePage := 'https://github.com/x/chart4d';
+  end;
+  Assert.IsTrue(ValidateCycloneDx(SbomCycloneDxJson(FSbom, FOptions), Problem), Problem);
+  R := Cdx;
+  try
+    C := CdxComponentNamed(R, 'Chart4D.FMX');
+    Assert.AreEqual('0.9.1', C.GetValue<string>('version'));
+    Assert.AreEqual('MIT', C.GetValue<string>('licenses[0].license.id'));
+    Assert.AreEqual('Chart4D', PropValue(C, 'codemanager:library'));
+    Assert.AreEqual('boss.json', PropValue(C, 'codemanager:version-source'));
+    Assert.AreEqual('LICENSE', PropValue(C, 'codemanager:license-source'));
+    Assert.AreEqual('website', C.GetValue<string>('externalReferences[0].type'));
+    Assert.AreEqual('https://github.com/x/chart4d', C.GetValue<string>('externalReferences[0].url'));
+  finally
+    R.Free;
+  end;
+end;
+
+procedure TSbomFormatsTests.CycloneDxUsesTheLicenseNameWhenNotRecognised;
+var
+  R, C: TJSONObject;
+  Problem: string;
+begin
+  FSbom.Find('Chart4D.FMX').LicenseName := 'See LICENSE';
+  Assert.IsTrue(ValidateCycloneDx(SbomCycloneDxJson(FSbom, FOptions), Problem), Problem);
+  R := Cdx;
+  try
+    C := CdxComponentNamed(R, 'Chart4D.FMX');
+    Assert.AreEqual('See LICENSE', C.GetValue<string>('licenses[0].license.name'));
+    Assert.IsNull(C.GetValue('licenses[0].license.id'));
+  finally
+    R.Free;
+  end;
+end;
+
+procedure TSbomFormatsTests.CycloneDxWritesNoLicenseOrVersionWhenUnknown;
+var
+  R, C: TJSONObject;
+begin
+  R := Cdx;
+  try
+    C := CdxComponentNamed(R, 'Chart4D.FMX');
+    Assert.IsNull(C.GetValue('licenses'));
+    Assert.IsNull(C.GetValue('version'));
+    Assert.IsNull(C.GetValue('externalReferences'));
+    Assert.AreEqual('', PropValue(C, 'codemanager:library'));
+  finally
+    R.Free;
+  end;
+end;
+
+procedure TSbomFormatsTests.CycloneDxHomePageMustBeWeb;
+var
+  R: TJSONObject;
+begin
+  FSbom.Find('Chart4D.FMX').HomePage := 'javascript:alert(1)';
+  R := Cdx;
+  try
+    Assert.IsNull(CdxComponentNamed(R, 'Chart4D.FMX').GetValue('externalReferences'));
+  finally
+    R.Free;
+  end;
+end;
+
+procedure TSbomFormatsTests.CycloneDxValidatorRejectsAnEmptyLicense;
+var
+  Problem: string;
+  Json: string;
+begin
+  FSbom.Find('Chart4D.FMX').License := 'MIT';
+  Json := SbomCycloneDxJson(FSbom, FOptions);
+  Assert.IsFalse(ValidateCycloneDx(Json.Replace('"id": "MIT"', '"id": ""'), Problem));
+  Assert.IsNotEmpty(Problem);
+end;
+
+procedure TSbomFormatsTests.SpdxWritesVersionAndDeclaredLicense;
+var
+  R, P: TJSONObject;
+  Arr: TJSONArray;
+  I: Integer;
+  Problem: string;
+begin
+  with FSbom.Find('Chart4D.FMX') do
+  begin
+    Version := '0.9.1';
+    License := 'Apache-2.0';
+    LibraryName := 'Chart4D';
+  end;
+  Assert.IsTrue(ValidateSpdx(SbomSpdxJson(FSbom, FOptions), Problem), Problem);
+  R := Spdx;
+  try
+    Arr := R.GetValue('packages') as TJSONArray;
+    for I := 0 to Arr.Count - 1 do
+    begin
+      P := Arr.Items[I] as TJSONObject;
+      if P.GetValue<string>('name') = 'Chart4D.FMX' then
+      begin
+        Assert.AreEqual('0.9.1', P.GetValue<string>('versionInfo'));
+        Assert.AreEqual('Apache-2.0', P.GetValue<string>('licenseDeclared'));
+        Assert.AreEqual('NOASSERTION', P.GetValue<string>('licenseConcluded'));
+        Assert.Contains(P.GetValue<string>('comment'), 'Chart4D');
+      end;
+    end;
+  finally
+    R.Free;
+  end;
+end;
+
+procedure TSbomFormatsTests.SpdxKeepsNoAssertionWithoutLicense;
+var
+  R, P: TJSONObject;
+  Arr: TJSONArray;
+  I: Integer;
+begin
+  R := Spdx;
+  try
+    Arr := R.GetValue('packages') as TJSONArray;
+    for I := 0 to Arr.Count - 1 do
+    begin
+      P := Arr.Items[I] as TJSONObject;
+      Assert.AreEqual('NOASSERTION', P.GetValue<string>('licenseDeclared'));
+    end;
+  finally
+    R.Free;
   end;
 end;
 

@@ -6,6 +6,16 @@ Todas as alterações relevantes ficam registadas aqui. O formato segue o
 
 ## [Não lançado]
 
+### Funcionalidades
+
+- **SBOM, versões e licenças:** para cada unit de terceiros com ficheiro, o SBOM apura a **biblioteca**, a **versão** e a
+  **licença**. A raiz da biblioteca acha-se subindo pelas pastas (um `boss.json`, um ficheiro `LICENSE`/`COPYING`, um
+  `.git` ou uma pasta do GetIt ou do Boss), sem nunca passar da pasta do projeto. A versão vem do `boss.json`, do
+  `boss-lock.json` ou do nome da pasta do GetIt; a licença, do `boss.json` ou do texto do ficheiro de licença
+  (MIT, Apache-2.0, BSD, MPL, GPL, LGPL, ISC, Zlib e outras), e só quando o texto a justifica. A lista ganha a coluna
+  Licença; o resumo e os relatórios, o número de componentes sem licença conhecida e um ponto de atenção; o CycloneDX
+  escreve `version`, `licenses` e a ligação do projeto, e o SPDX `versionInfo` e `licenseDeclared`.
+
 ## [1.0.4] - 2026-10-06
 
 Profundidade de herança por classe.
